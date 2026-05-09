@@ -192,8 +192,9 @@ def gather_actions_animations(export_settings):
             # Set it back to the initial value, in case some objects were hidden in viewport before export
             obj.hide_viewport = default_hide_viewport
 
-    # Material animation
     if export_settings['gltf_export_anim_pointer']:
+
+        # Material animation
         for mat_id in export_settings['material_identifiers'].keys(
         ) if 'material_identifiers' in export_settings.keys() else []:
 
@@ -1403,7 +1404,11 @@ def __get_obj_blender_actions(obj_uuid: str,
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
         if blender_object and blender_object.data and \
                 blender_object.data.animation_data and \
+                blender_object.type != "ARMATURE" and \
                 blender_object.data.animation_data.action and blender_object.data.animation_data.action_slot:
+
+            # Ignore Armature slots, (for extras for examples), as there is no easy
+            # way to know where put these data of glTF
 
             # Check the action is not in list of actions to ignore
             if hasattr(bpy.data.scenes[0], "gltf_action_filter") and id(blender_object.data.animation_data.action) in [

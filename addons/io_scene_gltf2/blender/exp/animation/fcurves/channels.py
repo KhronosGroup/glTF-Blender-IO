@@ -359,6 +359,29 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                             target_data['properties'] = target_properties
                             targets_extras[target] = target_data
                             continue
+
+                elif "pose.bones[" in object_path and "][" in fcurve.data_path and fcurve.data_path.endswith('"]'):
+                    # This is a custom property on bone, we can export it as extra
+                    tab = fcurve.data_path.split("][")
+                    bone_name = tab[0][12:-1]
+                    custom_prop = tab[1][1:-2]
+
+                    armature_object = export_settings['vtree'].nodes[obj_uuid].blender_object
+                    extra_target = armature_object.pose.bones[bone_name].get(custom_prop)
+
+                    if extra_target:
+                        target_data = targets_extras.get(target, {})
+                        target_data['type'] = type_
+                        target_data['obj_uuid'] = obj_uuid
+                        target_data['bone'] = bone_name
+                        target_data['id_type'] = slot.target_id_type
+                        target_properties = target_data.get('properties', {})
+                        channels = target_properties.get(fcurve.data_path, [])
+                        channels.append(fcurve)
+                        target_properties[fcurve.data_path] = tuple(channels)
+                        target_data['properties'] = target_properties
+                        targets_extras[target] = target_data
+                        continue
             else:
 
                 if target_property is None:

@@ -14,6 +14,7 @@
 
 import math
 import numpy as np
+import typing
 from .....com.conversion import PBR_WATTS_TO_LUMENS
 from ....cache import cached
 from ...keyframes import Keyframe
@@ -25,6 +26,7 @@ def gather_data_sampled_keyframes(
         blender_main_type,
         blender_type_data: str,
         blender_id,
+        bone_name: typing.Optional[str],
         channel,
         action_name,
         slot_identifier: str,
@@ -39,6 +41,10 @@ def gather_data_sampled_keyframes(
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
             elif blender_type_data == "objects":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
+            elif blender_type_data == "bones":
+                bone_uuid = export_settings['vtree'].nodes[blender_id].bones[bone_name]
+                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
+                channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
             else:
                 used_blender_id = blender_id
         else:

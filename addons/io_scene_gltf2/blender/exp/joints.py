@@ -108,7 +108,12 @@ def gather_joint_vnode(vnode, export_settings):
         weights=None
     )
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-        export_settings['KHR_animation_pointer']['extras']['bones'][id(blender_bone.bone)]['glTF_extras'] = node
+        export_settings['KHR_animation_pointer']['extras']['bones'][id(blender_bone)]['glTF_extras'] = node
+        arma_uuid = vtree.nodes[vnode].armature
+        export_settings['KHR_animation_pointer']['extras']['bones'][id(
+            blender_bone)]['blender_armature_object'] = vtree.nodes[arma_uuid].blender_object
+        export_settings['KHR_animation_pointer']['extras']['bones'][id(
+            blender_bone)]['blender_bone_name'] = blender_bone.name
 
     export_user_extensions('gather_joint_hook', export_settings, node, blender_bone)
 
@@ -119,5 +124,5 @@ def gather_joint_vnode(vnode, export_settings):
 
 def __gather_extras(blender_bone, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_bone.bone, 'bones', export_settings)
+        return generate_extras(blender_bone, 'bones', export_settings)
     return None

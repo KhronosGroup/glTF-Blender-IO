@@ -14,6 +14,7 @@
 
 from ......io.com import gltf2_io
 from ....cache import cached
+import typing
 
 
 @cached
@@ -21,6 +22,7 @@ def gather_data_sampled_channel_target(
         blender_main_type: str,
         blender_type_data: str,
         blender_id,
+        bone_name: typing.Optional[str],
         channel: str,
         additional_key: str,  # Used to differentiate between material / material node_tree
         export_settings
@@ -29,8 +31,8 @@ def gather_data_sampled_channel_target(
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=__gather_extensions(blender_type_data, blender_id, channel, export_settings),
         extras=__gather_extras(blender_type_data, blender_id, channel, export_settings),
-        node=__gather_node(blender_main_type, blender_type_data, blender_id, export_settings),
-        path=__gather_path(blender_main_type, blender_type_data, blender_id, channel, export_settings)
+        node=__gather_node(blender_main_type, blender_type_data, blender_id, bone_name, export_settings),
+        path=__gather_path(blender_main_type, blender_type_data, blender_id, bone_name, channel, export_settings)
     )
 
     return animation_channel_target
@@ -44,7 +46,7 @@ def __gather_extras(blender_type_data, blender_id, channel, export_settings):
     return None
 
 
-def __gather_node(blender_main_type, blender_type_data, blender_id, export_settings):
+def __gather_node(blender_main_type, blender_type_data, blender_id, bone_name, export_settings):
     if blender_main_type is None:
         if blender_type_data == "materials":
             return export_settings['KHR_animation_pointer'][blender_main_type]['materials'][blender_id]['glTF_material']
@@ -61,6 +63,9 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
                     used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
                 elif blender_type_data == "objects":
                     used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
+                elif blender_type_data == "bones":
+                    bone_uuid = export_settings['vtree'].nodes[blender_id].bones[bone_name]
+                    used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
                 else:
                     used_blender_id = blender_id
             else:
@@ -70,7 +75,7 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, export_setti
         pass  # This should never happen
 
 
-def __gather_path(blender_main_type, blender_type_data, blender_id, channel, export_settings):
+def __gather_path(blender_main_type, blender_type_data, blender_id, bone_name, channel, export_settings):
     # TODO, centralize this logic, used multiple times in the codebase (not only in this file)
     if blender_main_type == "extras":
         if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
@@ -78,6 +83,10 @@ def __gather_path(blender_main_type, blender_type_data, blender_id, channel, exp
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
             elif blender_type_data == "objects":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
+            elif blender_type_data == "bones":
+                bone_uuid = export_settings['vtree'].nodes[blender_id].bones[bone_name]
+                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
+                channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
             else:
                 used_blender_id = blender_id
         else:

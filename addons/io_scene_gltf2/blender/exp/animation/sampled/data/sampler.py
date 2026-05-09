@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import typing
 from ......io.com import gltf2_io
 from ......io.exp import binary_data as gltf2_io_binary_data
 from ......io.com import constants as gltf2_io_constants
@@ -26,6 +27,7 @@ def gather_data_sampled_animation_sampler(
         blender_main_type,
         blender_type_data: str,
         blender_id: str,
+        bone_name: typing.Optional[str],
         channel: str,
         action_name: str,
         slot_identifier: str,
@@ -39,6 +41,7 @@ def gather_data_sampled_animation_sampler(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         action_name,
         slot_identifier,
@@ -63,6 +66,7 @@ def __gather_keyframes(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         action_name,
         slot_identifier,
@@ -74,6 +78,7 @@ def __gather_keyframes(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         action_name,
         slot_identifier,

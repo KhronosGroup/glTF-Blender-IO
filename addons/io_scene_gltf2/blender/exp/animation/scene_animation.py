@@ -241,22 +241,9 @@ def gather_scene_animations(export_settings):
                 if extra_type == 'objects':
                     blender_element = [obj for obj in bpy.data.objects if id(obj) == extra][0]
                 elif extra_type == 'bones':
-                    # We have to find the bone name, as we only have the armature and the bone id
-                    armature_id = None
-                    bone_id = None
-                    for arm_uuid in export_settings['KHR_animation_pointer']['extras']['bones'].keys():
-                        for bone_uuid in export_settings['KHR_animation_pointer']['extras']['bones'][arm_uuid].keys():
-                            if bone_uuid == extra:
-                                armature_id = arm_uuid
-                                bone_id = bone_uuid
-                                break
-
-                    if armature_id is None or bone_id is None:
-                        continue
-
-                    armature = [obj for obj in bpy.data.objects if id(obj) == armature_id][0]
-                    blender_element = armature.data.bones[[bone.name for bone in armature.data.bones].index(
-                        [bone.name for bone in armature.data.bones if id(bone) == bone_id][0])]
+                    blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_armature_object']
+                    blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_bone_name']
+                    blender_element = blender_arma_object
                 elif extra_type == 'materials':
                     blender_element = export_settings['material_identifiers'][extra]['blender']
                 elif extra_type == 'lights':

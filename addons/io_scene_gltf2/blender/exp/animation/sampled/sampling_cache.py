@@ -745,8 +745,9 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
             if extra_type == "objects":
                 blender_element = [m for m in bpy.data.objects if id(m) == extra][0]
             elif extra_type == "bones":
-                # TODO need to store the armature
-                pass
+                blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_armature_object']
+                blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_bone_name']
+                blender_element = blender_arma_object
             elif extra_type == "materials":
                 blender_element = export_settings['material_identifiers'][extra]['blender']
             elif extra_type == "lights":
@@ -799,7 +800,10 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
                 if path not in data[key1][key2][key3][key4].keys():
                     data[key1][key2][key3][key4][path] = {}
 
-                val = blender_element.path_resolve(path)
+                if extra_type != "bones":
+                    val = blender_element.path_resolve(path)
+                else:
+                    val = blender_element.pose.bones[blender_bone_name].path_resolve(path)
                 if type(val).__name__ in ["float", "int", "bool"]:
                     data[key1][key2][key3][key4][path][frame] = val
                 else:

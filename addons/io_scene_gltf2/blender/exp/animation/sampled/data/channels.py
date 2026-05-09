@@ -56,6 +56,7 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                 blender_main_type,
                 blender_type_data,
                 blender_id,
+                None,
                 path,
                 blender_action_name,
                 slot_identifier,
@@ -81,13 +82,14 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                     'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
                 continue
 
-            if path.startswith("node_tree.") and not slot_identifier.startswith("NT"):
+            if slot_identifier is not None and not slot_identifier.startswith("NT") and path.startswith("node_tree."):
                 continue
 
             channel = gather_sampled_data_channel(
                 blender_main_type,
                 blender_type_data,
                 blender_id,
+                None,
                 path,
                 blender_action_name,
                 slot_identifier,
@@ -111,6 +113,7 @@ def gather_sampled_data_channel(
         blender_main_type,
         blender_type_data: str,
         blender_id: str,
+        bone_name: typing.Optional[str],
         channel: str,
         action_name: str,
         slot_identifier: str,
@@ -124,6 +127,7 @@ def gather_sampled_data_channel(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         additional_key,
         export_settings)
@@ -132,6 +136,7 @@ def gather_sampled_data_channel(
             blender_main_type,
             blender_type_data,
             blender_id,
+            bone_name,
             channel,
             action_name,
             slot_identifier,
@@ -162,19 +167,21 @@ def __gather_target(
     blender_main_type,
     blender_type_data: str,
     blender_id: str,
+    bone_name: typing.Optional[str],
     channel: str,
     additional_key: str,  # Used to differentiate between material / material node_tree
     export_settings
 ) -> gltf2_io.AnimationChannelTarget:
 
     return gather_data_sampled_channel_target(
-        blender_main_type, blender_type_data, blender_id, channel, additional_key, export_settings)
+        blender_main_type, blender_type_data, blender_id, bone_name, channel, additional_key, export_settings)
 
 
 def __gather_sampler(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         action_name,
         slot_identifier,
@@ -186,6 +193,7 @@ def __gather_sampler(
         blender_main_type,
         blender_type_data,
         blender_id,
+        bone_name,
         channel,
         action_name,
         slot_identifier,

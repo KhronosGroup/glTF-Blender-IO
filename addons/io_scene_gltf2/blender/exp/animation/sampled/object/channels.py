@@ -75,12 +75,14 @@ def gather_object_sampled_channels(object_uuid: str, blender_action_name: str, s
                 "extras",
                 "objects",
                 object_uuid,
+                None,
                 custom_prop,
                 blender_action_name,
                 slot_identifier,  # TODOSLOT
                 True,  # Extras channels are always animated (otherwise they are not exported)
                 get_gltf_interpolation(
-                    export_settings['gltf_sampling_interpolation_fallback'], export_settings),  # Keep user choice for interpolation of extras channels
+                    # Keep user choice for interpolation of extras channels
+                    export_settings['gltf_sampling_interpolation_fallback'], export_settings),
                 None,  # No additional key for object extras channels
                 export_settings
             )
