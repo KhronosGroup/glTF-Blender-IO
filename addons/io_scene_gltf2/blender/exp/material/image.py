@@ -155,6 +155,8 @@ def __gather_mime_type(sockets, export_image, export_settings):
                 image = export_image.blender_image(export_settings)
                 if image is not None and __is_blender_image_a_webp(image):
                     return "image/webp"
+                elif image is not None and __is_blender_image_a_ktx2(image):
+                    return "image/ktx2"
                 return "image/png"
 
     if export_settings["gltf_image_format"] == "AUTO":
@@ -168,6 +170,8 @@ def __gather_mime_type(sockets, export_image, export_settings):
             return "image/jpeg"
         elif image is not None and __is_blender_image_a_webp(image):
             return "image/webp"
+        elif image is not None and __is_blender_image_a_ktx2(image):
+            return "image/ktx2"
         return "image/png"
 
     elif export_settings["gltf_image_format"] == "WEBP":
@@ -486,6 +490,17 @@ def __is_blender_image_a_webp(image: bpy.types.Image) -> bool:
         return path.endswith('.webp')
 
 
+def __is_blender_image_a_ktx2(image: bpy.types.Image) -> bool:
+    if image.source not in ['FILE', 'TILED']:
+        return False
+    if image.filepath_raw == '' and image.packed_file:
+        # Magic of ktx2
+        return image.packed_file.data[:12] == b'\xABKTX 22\xBB\r\n\x1A\n'
+    else:
+        path = image.filepath_raw.lower()
+        return path.endswith('.ktx2')
+
+
 def get_gltf_image_from_blender_image(blender_image_name, export_settings):
     export_image = ExportImage.from_blender_image(bpy.data.images[blender_image_name])
 
@@ -518,7 +533,15 @@ def __get_mime_type_of_image(blender_image_name, export_settings):
             return "image/jpeg"
         elif __is_blender_image_a_webp(image):
             return "image/webp"
+        elif __is_blender_image_a_ktx2(image):
+            return "image/ktx2"
         return "image/png"
 
     elif export_settings["gltf_image_format"] == "JPEG":
         return "image/jpeg"
+    elif export_settings["gltf_image_format"] == "WEBP":
+        return "image/webp"
+    elif export_settings["gltf_image_format"] == "KTX2":
+        return "image/ktx2"
+    else:
+        return "image/png"

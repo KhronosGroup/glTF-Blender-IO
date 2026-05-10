@@ -1565,6 +1565,9 @@ def export_panel_data_material(layout, operator):
             'PLACEHOLDER', 'NONE', 'VIEWPORT']
         col.prop(operator, "export_image_add_compressed_images")
         col = body.column()
+        col.active = operator.export_image_add_compressed_images
+        col.prop(operator, "export_compressed_images_type")
+        col = body.column()
         col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
             'PLACEHOLDER', 'NONE', 'VIEWPORT']
         col.prop(operator, "export_compressed_images_fallback")

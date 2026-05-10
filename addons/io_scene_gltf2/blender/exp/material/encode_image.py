@@ -229,7 +229,8 @@ class ExportImage:
         self.file_format = {
             "image/jpeg": "JPEG",
             "image/png": "PNG",
-            "image/webp": "WEBP"
+            "image/webp": "WEBP",
+            "image/ktx2": "KTX2",
         }.get(mime_type, "PNG")
 
         # Happy path = we can just use an existing Blender image
@@ -415,6 +416,9 @@ class ExportImage:
             elif self.file_format == 'WEBP':
                 if data[8:12] == b'WEBP':
                     return data
+            elif self.file_format == 'KTX2':
+                if data[0:12] == b'\xABKTX 20\xBB\r\n\x1A\n':
+                    return data
 
         # Copy to a temp image and save.
         with TmpImageGuard() as guard:
@@ -440,7 +444,9 @@ class ExportImage:
             elif self.file_format == 'WEBP':
                 if data[8:12] == b'WEBP':
                     return data
-
+            elif self.file_format == 'KTX2':
+                if data[0:12] == b'\xABKTX 20\xBB\r\n\x1A\n':
+                    return data
         # We don't manage UDIM packed image, so this could not happen to be here
         # Lets display an error
         export_settings['log'].error(
@@ -459,6 +465,8 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
             # if image is jpeg, use quality export settings
             if file_format in ["JPEG", "WEBP"]:
                 tmp_image.save(quality=export_settings['gltf_image_quality'])
+            elif file_format == "KTX2":
+                tmp_image.save()  # TODO add KTX2 options
             else:
                 tmp_image.save()
 

@@ -2142,6 +2142,23 @@ describe('Exporter', function () {
                 }
             });
 
+            it('exports auto mode + ktx2 fallback', function () {
+                let gltfPath_1 = path.resolve(outDirPath, '32_ktx2_mode_auto_with_fallback.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                var texture_ktx2 = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
+
+                for (var i = 0; i < asset.textures.length; i++) {
+                    if (i == texture_ktx2) {
+                        assert.ok("extensions" in asset.textures[i]);
+                        assert.ok(asset.textures[i].source != undefined);
+                    } else {
+                        assert.ok(asset.textures[i].source != undefined);
+                        assert.ok(!("extensions" in asset.textures[i]));
+                    }
+                }
+            });
+
             it('exports auto mode + create WebP', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_auto_with_create_webp.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
@@ -2159,8 +2176,35 @@ describe('Exporter', function () {
                 }
             });
 
+            it('exports auto mode + create ktx2', function () {
+                let gltfPath_1 = path.resolve(outDirPath, '32_ktx2_mode_auto_with_create_ktx2.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                var texture_ktx2 = asset.materials[0].pbrMetallicRoughness.baseColorTexture.index;
+
+                for (var i = 0; i < asset.textures.length; i++) {
+                    if (i == texture_ktx2) {
+                        assert.ok("extensions" in asset.textures[i]);
+                        assert.strictEqual(asset.textures[i].source, undefined);
+                    } else {
+                        assert.ok(asset.textures[i].source != undefined);
+                        assert.ok("extensions" in asset.textures[i]);
+                    }
+                }
+            });
+
             it('exports auto mode + create WebP + fallback', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_auto_with_fallback_and_create_webp.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                for (var i = 0; i < asset.textures.length; i++) {
+                    assert.ok("extensions" in asset.textures[i]);
+                    assert.ok(asset.textures[i].source != undefined);
+                }
+            });
+
+            it('exports auto mode + create ktx2 + fallback', function () {
+                let gltfPath_1 = path.resolve(outDirPath, '32_ktx2_mode_auto_with_fallback_and_create_ktx2.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
                 for (var i = 0; i < asset.textures.length; i++) {
