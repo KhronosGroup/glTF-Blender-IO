@@ -2125,6 +2125,21 @@ describe('Exporter', function () {
 
             });
 
+            it('exports KTX2 mode', function () {
+                let gltfPath_1 = path.resolve(outDirPath, '32_ktx2_mode_ktx2.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath_1));
+
+                for (var i = 0; i < asset.images.length; i++) {
+                    assert.strictEqual(asset.images[i].mimeType, 'image/ktx2');
+                }
+
+                for (var i = 0; i < asset.textures.length; i++) {
+                    assert.strictEqual(asset.textures[i].source, undefined);
+                    assert.ok("extensions" in asset.textures[i]);
+                }
+
+            });
+
             it('exports auto mode + webp fallback', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '32_webp_mode_auto_with_fallback.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));

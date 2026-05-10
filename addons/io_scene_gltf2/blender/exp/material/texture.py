@@ -109,6 +109,13 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, ktx2_image, 
         remove_source = True
         required_webp = True
 
+# If user want to export in KTX2 format (so without fallback in png/jpg)
+    if export_settings['gltf_image_format'] == "KTX2":
+        # We create all image without fallback
+        ext_ktx2["source"] = source
+        remove_source = True
+        required_ktx2 = True
+
 # If user doesn't want to export in WebP format, but want WebP too. Texture is not WebP
     if export_settings['gltf_image_format'] != "WEBP" \
             and export_settings['gltf_add_compressed_images'] is True \

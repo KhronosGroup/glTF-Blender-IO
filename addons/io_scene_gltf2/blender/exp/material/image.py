@@ -150,6 +150,8 @@ def __gather_mime_type(sockets, export_image, export_settings):
         if socket.socket.identifier == "Alpha":
             if export_settings["gltf_image_format"] == "WEBP":
                 return "image/webp"
+            elif export_settings["gltf_image_format"] == "KTX2":
+                return "image/ktx2"
             else:
                 # If we keep image as is (no channel composition), we need to keep original format (for WebP)
                 image = export_image.blender_image(export_settings)
@@ -178,6 +180,8 @@ def __gather_mime_type(sockets, export_image, export_settings):
         return "image/webp"
     elif export_settings["gltf_image_format"] == "JPEG":
         return "image/jpeg"
+    elif export_settings["gltf_image_format"] == "KTX2":
+        return "image/ktx2"
 
 
 def __gather_name(export_image, use_tile, export_settings):

@@ -360,8 +360,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 'Be aware of a possible loss in quality'),
                ('WEBP', 'WebP Format',
                 'Save images as WebPs as main image (no fallback)'),
-               # ('KTX2', 'KTX2 Format',
-               # 'Save images as KTX2 with BasisU supercompression'),
+               ('KTX2', 'KTX2 Format',
+               'Save images as KTX2 with BasisU supercompression'),
                ('NONE', 'None',
                 'Don\'t export images'),
                ),
@@ -1561,7 +1561,7 @@ def export_panel_data_material(layout, operator):
         if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
             col.prop(operator, 'export_image_quality')
         col = body.column()
-        col.active = operator.export_image_format != "WEBP" and operator.export_materials not in [
+        col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
             'PLACEHOLDER', 'NONE', 'VIEWPORT']
         col.prop(operator, "export_image_add_compressed_images")
         col = body.column()
