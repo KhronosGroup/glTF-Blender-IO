@@ -77,7 +77,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
     extensions = {}
 
     remove_source = False
-    required = False
+    required_webp = False
 
     ext_webp = {}
 
@@ -88,18 +88,19 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
             and source.mime_type == "image/webp":
         ext_webp["source"] = source
         remove_source = True
-        required = True
+        required_webp = True
 
 # If user want to export in WebP format (so without fallback in png/jpg)
     if export_settings['gltf_image_format'] == "WEBP":
         # We create all image without fallback
         ext_webp["source"] = source
         remove_source = True
-        required = True
+        required_webp = True
 
 # If user doesn't want to export in WebP format, but want WebP too. Texture is not WebP
     if export_settings['gltf_image_format'] != "WEBP" \
-            and export_settings['gltf_add_webp'] \
+            and export_settings['gltf_add_compressed_images'] is True \
+            and export_settings['gltf_compressed_images_type'] == "WEBP" \
             and source is not None \
             and source.mime_type != "image/webp":
         # We need here to create some WebP textures
@@ -131,30 +132,32 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, image_data, 
         ext_webp["source"] = webp_image
 
 
-# If user doesn't want to export in WebP format, but want WebP too. Texture is WebP
+# If user doesn't want to export in WebP format, but want WebP too.
+# Texture is WebP => Need to make webp required, an remove original
     if export_settings['gltf_image_format'] != "WEBP" \
             and source is not None \
             and source.mime_type == "image/webp":
 
         # User does not want fallback
-        if export_settings['gltf_webp_fallback'] is False:
+        if export_settings['gltf_compressed_images_fallback'] is False:
             ext_webp["source"] = source
             remove_source = True
-            required = True
+            required_webp = True
 
 # If user doesn't want to export in webp format, but want WebP too as fallback. Texture is WebP
     if export_settings['gltf_image_format'] != "WEBP" \
             and webp_image is not None \
-            and export_settings['gltf_webp_fallback'] is True:
+            and export_settings['gltf_compressed_images_fallback'] is True \
+            and export_settings['gltf_compressed_images_type'] == "WEBP":
         # Already managed in __gather_source, we only have to assign
         ext_webp["source"] = webp_image
 
         # Not needed in code, for for documentation:
         # remove_source = False
-        # required = False
+        # required_webp = False
 
     if len(ext_webp) > 0:
-        extensions["EXT_texture_webp"] = Extension('EXT_texture_webp', ext_webp, required)
+        extensions["EXT_texture_webp"] = Extension('EXT_texture_webp', ext_webp, required_webp)
         return extensions, remove_source
     else:
         return None, False
@@ -232,7 +235,7 @@ def __gather_source(blender_shader_sockets, use_tile, export_settings):
             and source is not None \
             and source.mime_type == "image/webp":
 
-        if export_settings['gltf_webp_fallback'] is False:
+        if export_settings['gltf_compressed_images_fallback'] is False:
             # Already managed in __gather_extensions
             return source, None, image_data, factor, udim_image
         else:
