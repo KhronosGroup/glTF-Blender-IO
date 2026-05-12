@@ -124,6 +124,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(inverse_matrices, gltf2_io_constants.ComponentType.Float)
     return gltf2_blender_gather_accessors.gather_accessor(
+        'IBM',
         binary_data,
         gltf2_io_constants.ComponentType.Float,
         len(inverse_matrices) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),

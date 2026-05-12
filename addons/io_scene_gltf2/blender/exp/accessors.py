@@ -22,13 +22,15 @@ from .cache import cached
 
 
 @cached
-def gather_accessor(buffer_view: gltf2_io_binary_data.BinaryData,
+def gather_accessor(attribute_name: str,
+                    buffer_view: gltf2_io_binary_data.BinaryData,
                     component_type: gltf2_io_constants.ComponentType,
                     count,
                     max,
                     min,
                     type: gltf2_io_constants.DataType,
                     export_settings) -> gltf2_io.Accessor:
+
     return gltf2_io.Accessor(
         buffer_view=buffer_view,
         byte_offset=None,
@@ -66,13 +68,14 @@ def array_to_accessor(
                 gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
             )
 
+            # TODO: tangents
             if attribute_name in ['POSITION', 'NORMAL']:
                 byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
-            elif attribute_name in ['TEXCOORD_0', 'TEXCOORD_1']:
+            elif attribute_name.startswith('TEXCOORD_'):
                 byteStride = 8  # 2 components * 4 bytes per component for float32, because no mesh_quantization
-            elif attribute_name in ['JOINTS']:
+            elif attribute_name == "JOINTS":
                 byteStride = 8 if component_type == gltf2_io_constants.ComponentType.UnsignedShort else 4
-            elif attribute_name in ['WEIGHTS']:
+            elif attribute_name == 'WEIGHTS':
                 if component_type == gltf2_io_constants.ComponentType.UnsignedByte:
                     byteStride = 4  # 4 components * 1 byte per component for uint8, because of mesh_quantization
                 else:
@@ -143,6 +146,24 @@ def array_to_accessor(
     if include_max_and_min:
         amax = np.amax(array, axis=0).tolist()
         amin = np.amin(array, axis=0).tolist()
+
+    if export_settings['gltf_meshopt_compression'] and attribute_name is not None and buffer_view is not None:
+        compressed_data = MeshoptEncoder.encode_attribute(attribute_name, array, export_settings)
+
+        if attribute_name in ['SK_POSITION', 'SK_NORMAL']:
+            byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
+        else:
+            # fallback to uncompressed byte stride, should be correct for non-quantized attributes
+            byteStride = len(array[:1].tobytes())
+
+        buffer_view.set_extension('EXT_meshopt_compression', {
+            'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
+            'byteOffset': None,  # to be filled in later by the exporter
+            'byteStride': byteStride,
+            'byteLength': len(compressed_data),
+            'count': len(array),
+            'mode': 'ATTRIBUTES'
+        })
 
     return gltf2_io.Accessor(
         buffer_view=buffer_view,

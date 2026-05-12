@@ -14,10 +14,12 @@
 
 import bpy
 import os
+import numpy as np
 from typing import List
 
 from ... import get_version_string
 from ...io.com import gltf2_io, gltf2_io_extensions
+from ...io.exp.meshopt import MeshoptEncoder
 from ...io.com.path import uri_to_path
 from ...io.com.constants import ComponentType, DataType
 from ...io.exp import binary_data as gltf2_io_binary_data, buffer as gltf2_io_buffer, image_data as gltf2_io_image_data
@@ -276,10 +278,59 @@ class GlTF2Exporter:
                     scale.append(i)
 
             # Create Accessors for the extension
+
+            if self.export_settings['gltf_meshopt_compression']:
+
+                byteStride_translation = 12
+                byteStride_rotation = 16
+                byteStride_scale = 12
+
+                binary_data_translation = gltf2_io_binary_data.BinaryData.from_list(translation, ComponentType.Float)
+                binary_data_rotation = gltf2_io_binary_data.BinaryData.from_list(rotation, ComponentType.Float)
+                binary_data_scale = gltf2_io_binary_data.BinaryData.from_list(scale, ComponentType.Float)
+
+                num_components_translation = DataType.num_elements(DataType.Vec3)
+                num_components_rotation = DataType.num_elements(DataType.Vec4)
+                num_components_scale = DataType.num_elements(DataType.Vec3)
+                compressed_translation = MeshoptEncoder.encode_attribute('GPU_TRANSLATION', np.array(
+                    translation, dtype=np.float32).reshape(-1, num_components_translation), self.export_settings)
+                compressed_rotation = MeshoptEncoder.encode_attribute('GPU_ROTATION', np.array(
+                    rotation, dtype=np.float32).reshape(-1, num_components_rotation), self.export_settings)
+                compressed_scale = MeshoptEncoder.encode_attribute('GPU_SCALE', np.array(
+                    scale, dtype=np.float32).reshape(-1, num_components_scale), self.export_settings)
+
+                binary_data_translation.set_extension('EXT_meshopt_compression', {
+                    'buffer': compressed_translation,  # to be filled in later by the exporter, use data in placeholder for now
+                    'byteOffset': None,  # to be filled in later by the exporter
+                    'byteLength': len(compressed_translation),
+                    'count': len(translation) // DataType.num_elements(DataType.Vec3),
+                    'byteStride': byteStride_translation,
+                    'mode': 'ATTRIBUTES',
+                })
+
+                binary_data_rotation.set_extension('EXT_meshopt_compression', {
+                    'buffer': compressed_rotation,  # to be filled in later by the exporter, use data in placeholder for now
+                    'byteOffset': None,  # to be filled in later by the exporter
+                    'byteLength': len(compressed_rotation),
+                    'count': len(rotation) // DataType.num_elements(DataType.Vec4),
+                    'byteStride': byteStride_rotation,
+                    'mode': 'ATTRIBUTES',
+                })
+
+                binary_data_scale.set_extension('EXT_meshopt_compression', {
+                    'buffer': compressed_scale,  # to be filled in later by the exporter, use data in placeholder for now
+                    'byteOffset': None,  # to be filled in later by the exporter
+                    'byteLength': len(compressed_scale),
+                    'count': len(scale) // DataType.num_elements(DataType.Vec3),
+                    'byteStride': byteStride_scale,
+                    'mode': 'ATTRIBUTES',
+                })
+
             ext = {}
             ext['attributes'] = {}
             ext['attributes']['TRANSLATION'] = gather_accessor(
-                gltf2_io_binary_data.BinaryData.from_list(translation, ComponentType.Float),
+                'GPU_TRANSLATION',
+                binary_data_translation,
                 ComponentType.Float,
                 len(translation) // 3,
                 None,
@@ -288,7 +339,8 @@ class GlTF2Exporter:
                 None
             )
             ext['attributes']['ROTATION'] = gather_accessor(
-                gltf2_io_binary_data.BinaryData.from_list(rotation, ComponentType.Float),
+                'GPU_ROTATION',
+                binary_data_rotation,
                 ComponentType.Float,
                 len(rotation) // 4,
                 None,
@@ -297,7 +349,8 @@ class GlTF2Exporter:
                 None
             )
             ext['attributes']['SCALE'] = gather_accessor(
-                gltf2_io_binary_data.BinaryData.from_list(scale, ComponentType.Float),
+                'GPU_SCALE',
+                binary_data_scale,
                 ComponentType.Float,
                 len(scale) // 3,
                 None,

@@ -971,6 +971,7 @@ class VExportTree:
                 binary_data = gltf2_io_binary_data.BinaryData.from_list(
                     array.flatten(), gltf2_io_constants.ComponentType.Float)
                 n.node.skin.inverse_bind_matrices = gltf2_blender_gather_accessors.gather_accessor(
+                    'IBM',
                     binary_data,
                     gltf2_io_constants.ComponentType.Float,
                     len(array.flatten()) // gltf2_io_constants.DataType.num_elements(gltf2_io_constants.DataType.Mat4),
