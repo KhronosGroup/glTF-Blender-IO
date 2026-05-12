@@ -26,7 +26,7 @@ def decode_primitive(gltf, prim):
     """
 
     # Load DLL and setup function signatures.
-    dll = cdll.LoadLibrary(str(dll_path('extern_draco', 'Draco').resolve()))
+    dll = cdll.LoadLibrary(str(dll_path('bf_intern_draco_bridge', 'Draco').resolve()))
 
     dll.decoderCreate.restype = c_void_p
     dll.decoderCreate.argtypes = []

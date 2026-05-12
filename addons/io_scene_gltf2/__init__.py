@@ -171,7 +171,7 @@ def is_draco_available():
     # Initialize on first use
     if not hasattr(is_draco_available, "draco_exists"):
         from .io.com import library as gltf2_compression_extension
-        is_draco_available.draco_exists = gltf2_compression_extension.dll_exists('extern_draco', 'Draco')
+        is_draco_available.draco_exists = gltf2_compression_extension.dll_exists('bf_intern_draco_bridge', 'Draco')
 
     return is_draco_available.draco_exists
 
