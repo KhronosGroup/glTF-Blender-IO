@@ -270,7 +270,7 @@ describe('Exporter', function () {
                                 done();
                             }
                         }, args);
-                        //validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
+                        // validateGltf(dstPath, done); // uncomment this and comment blenderFileToGltf to not re-export all files
                     });
                 });
             });
@@ -3522,6 +3522,98 @@ describe('Exporter', function () {
 
             });
 
+            it('exports dispersion', function () {
+                let gltfPath = path.resolve(outDirPath, '01_dispersion.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // no dispersion
+                const mat_no_dispersion = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_no_disp")[0].mesh].primitives[0].material];
+                //assert.strictEqual(mat_no_dispersion.extensions['KHR_materials_dispersion'], undefined);
+                // todo: when detected material by material, this will be undefined
+                // See https://github.com/KhronosGroup/glTF-Blender-IO/pull/2667/changes/735b010b9d159aefa6d70012d9cab852a040ba2b
+                assert.deepStrictEqual(mat_no_dispersion.extensions['KHR_materials_dispersion'], {});
+
+                // dispersion 0.2
+                const mat_disp_0_2 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_0.2")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(mat_disp_0_2.extensions['KHR_materials_dispersion'].dispersion, 0.2);
+
+                // no dispersion because no transmission
+                const mat_no_transmission = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_transmission")[0].mesh].primitives[0].material];
+                // no extension at all
+                assert.strictEqual(mat_no_transmission.extensions, undefined);
+                // check we don't have any animation pointer on this material
+                const mat_no_transmission_index = asset.materials.indexOf(mat_no_transmission);
+                const animation_no_transmission = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] === "/materials/" + mat_no_transmission_index + "/extensions/KHR_materials_dispersion/dispersion").length > 0);
+                assert.strictEqual(animation_no_transmission.length, 0);
+
+                // dispersion 1.0 (and animation pointer on this material)
+                const mat_disp_1_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_1_to_0")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(mat_disp_1_0.extensions['KHR_materials_dispersion'].dispersion, 1.0);
+                // get index of the material
+                const mat_disp_1_0_index = asset.materials.indexOf(mat_disp_1_0);
+                // check that there is an animation channel targeting this material
+                const animation = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] == "/materials/" + mat_disp_1_0_index + "/extensions/KHR_materials_dispersion/dispersion").length > 0);
+                assert.strictEqual(animation.length > 0, true);
+
+                // dispersion 0.0 (so empty { }, and animation pointer on this material)
+                const mat_disp_0_0 = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "Cube_disp_0_to_1")[0].mesh].primitives[0].material];
+                // check we have an empty { }
+                assert.deepStrictEqual(mat_disp_0_0.extensions['KHR_materials_dispersion'], {});
+                const mat_disp_0_0_index = asset.materials.indexOf(mat_disp_0_0);
+                const animation_0_0 = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] == "/materials/" + mat_disp_0_0_index + "/extensions/KHR_materials_dispersion/dispersion").length > 0);
+                assert.strictEqual(animation_0_0.length > 0, true);
+
+            });
+
+            it('export iridecence', function () {
+                let gltfPath = path.resolve(outDirPath, '39_iridescence.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // retrieve material of the object "no_iridescence"
+                const noIridescenceMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_iridescence")[0].mesh].primitives[0].material];
+                assert.strictEqual(noIridescenceMat.extensions?.KHR_materials_iridescence, undefined);
+
+                // no animation pointer on this material
+                const mat_no_iridescence_index = asset.materials.indexOf(noIridescenceMat);
+                // Use these 2 lines if one day, there are some animation in this file
+                //const animation_no_iridescnce = asset.animations.filter(animation => animation.channels.filter(channel => channel.target.extensions['KHR_animation_pointer']['pointer'] == "/materials/" + mat_no_iridescence_index + "/extensions/KHR_materials_iridescence/iridescenceFactor").length > 0);
+                //assert.strictEqual(animation_no_iridescnce.length , 0);
+                assert.strictEqual(asset.animations === undefined, true);
+
+                // retrieve material of the object "iridescence"
+                const iridescenceMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "iridescence")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 0.6);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceIor, 1.4);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, 90.0);
+                assert.equalEpsilon(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, 430.0);
+                // Verify we have textures
+                assert.strictEqual(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceTexture !== undefined, true);
+                assert.strictEqual(iridescenceMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture !== undefined, true);
+
+                // retrieve material of the object "no_texture"
+                const noTextureMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "no_texture")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 0.5);
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceIor, 1.33);
+                // if no texture => no need of minimum tickness
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, undefined);
+                assert.equalEpsilon(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, 450.0);
+                // Verify we don't have textures
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceTexture, undefined);
+                assert.strictEqual(noTextureMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture, undefined);
+
+                // retrieve material of the object "all_default"
+                const allDefaultMat = asset.materials[asset.meshes[asset.nodes.filter(a => a.name == "all_default")[0].mesh].primitives[0].material];
+                assert.equalEpsilon(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceFactor, 1.0);
+                // because Ior is default, not exported
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceIor, undefined);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMinimum, undefined);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessMaximum, undefined);
+                // Verify we have textures
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceTexture !== undefined, true);
+                assert.strictEqual(allDefaultMat.extensions?.KHR_materials_iridescence.iridescenceThicknessTexture !== undefined, true);
+
+            });
+
         });
     });
 
@@ -3552,7 +3644,7 @@ describe('Exporter', function () {
                             if (fs.existsSync(gltfOptionsPath)) {
                                 options += ' ' + fs.readFileSync(gltfOptionsPath).toString().replace(/\r?\n|\r/g, '');
                             }
-                            //return done(); // uncomment to not roundtrip all files
+                            // return done(); // uncomment to not roundtrip all files
                             blenderRoundtripGltf(blenderVersion, gltfSrcPath, outDirPath, (error) => {
                                 if (error) {
                                     if (options.indexOf("--no-validate") !== -1) { return done(); }

@@ -403,6 +403,31 @@ Data will be exported using the ``KHR_materials_volume`` extension.
 .. figure:: /images/addons_import-export_scene-gltf2_material-volume.png
 
 
+Dispersion
+^^^^^^^^^^
+
+Dispersion can be exported only if the material also uses the ``KHR_materials_volume`` extension.
+Data will be exported using the ``KHR_materials_dispersion`` extension.
+The dispersion socket of the custom group node ``glTF Material Output`` is used for this extension.
+
+
+Iridescence
+^^^^^^^^^^^
+
+Iridescence can be exported using the ``KHR_materials_iridescence`` extension.
+Data will be exported using the following nodes:
+
+- Iridescence Thickness Maximum can be plugged into the Thickness socket of custom group node ``glTF Material Output``. If a texture is used, it must be plugged on (``R``) Red channel of the image.
+- Iridescence IOR can be plugged into the Thin Film IOR socket of Principled BSDF node.
+- Iridescence Factor can be plugged into the thickness socket of Principled BSDF node.
+- Iridescence Maximum Thickness can be plugged into the Iridescence Thickness Maximum socket of custom group node ``glTF Material Output``
+
+- Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket. You can use a Multiply node to multiply this texture with the Iridescence Factor value.
+- Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image, used as a mix factor for thickness between Minimum and Maximum thickness.
+
+
+.. figure:: /images/addons_import-export_scene-gltf2_material-iridescence.png
+
 glTF Variants
 ^^^^^^^^^^^^^
 
@@ -587,7 +612,7 @@ Lights
 ======
 
 The glTF format supports three types of punctual lights: point, spot, and directional (Sun in Blender).
-Blender's HEMI and AREA light types are not supported by glTF, and will be ignored during export.
+Blender's Area light type and World lighting are not supported by glTF, and will be ignored during export.
 
 To enable light export, make sure to check the *Include Punctual Lights* option in the exporter.
 This will use the ``KHR_lights_punctual`` glTF extension.
@@ -601,14 +626,14 @@ The color of a glTF light is determined by the product of:
 - The color output of an Emission shader node, if the light is using nodes and has an Emission shader connected to its output.
 
 If you are using EEVEE render engine, only the color field on the light object is used, and Emission shader node is ignored.
-(This reflect Viewport rendering)
+(This reflects Viewport rendering)
 
 
 Light Intensity
 ---------------
 
 For Sun lights, the intensity is determined by the strength field on the light object.
-For Point and Spot lights, the intensity can also be determined by the Strength socket of a Quadratic Falloff node.
+For Point and Spot lights, the intensity can also be determined by the Strength socket of a Light Falloff Node.
 
 If you are using EEVEE render engine, the node setup will be ignored, and only the strength field on the light object is used.
 
@@ -635,6 +660,7 @@ are supported directly by this add-on:
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
 - ``KHR_materials_anisotropy``
+- ``KHR_materials_dispersion``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_lights_punctual``
@@ -654,6 +680,7 @@ are supported directly by this add-on:
 - ``KHR_materials_sheen``
 - ``KHR_materials_specular``
 - ``KHR_materials_anisotropy``
+- ``KHR_materials_dispersion``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
 - ``KHR_texture_transform``
