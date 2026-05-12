@@ -70,8 +70,8 @@ class MeshoptEncoder:
         ]
         lib.meshopt_encodeIndexBuffer.restype = ctypes.c_size_t
 
-        lib.encodeVertexBuffer.restype = ctypes.c_int
-        lib.encodeVertexBuffer.argtypes = [
+        lib.meshopt_encodeVertexBuffer.restype = ctypes.c_int
+        lib.meshopt_encodeVertexBuffer.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const void* vertices
@@ -79,16 +79,16 @@ class MeshoptEncoder:
             ctypes.c_size_t,  # size_t vertex_size
         ]
 
-        lib.encodeIndexBuffer.restype = ctypes.c_int
-        lib.encodeIndexBuffer.argtypes = [
+        lib.meshopt_encodeIndexBuffer.restype = ctypes.c_int
+        lib.meshopt_encodeIndexBuffer.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const unsigned int* indices
             ctypes.c_size_t,  # size_t index_size
         ]
 
-        lib.encodeIndexSequence.restype = ctypes.c_int
-        lib.encodeIndexSequence.argtypes = [
+        lib.meshopt_encodeIndexSequence.restype = ctypes.c_int
+        lib.meshopt_encodeIndexSequence.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const unsigned int* indices
@@ -164,7 +164,7 @@ class MeshoptEncoder:
 
         to_be_converted_data = np.ascontiguousarray(data)
 
-        written = lib.encodeVertexBuffer(
+        written = lib.meshopt_encodeVertexBuffer(
             buffer,
             bound,
             to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
