@@ -1957,6 +1957,15 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
         default=False,
     )
 
+    import_ktx_texture: BoolProperty(
+        name='Import KTX Textures',
+        description=(
+            "If a texture exists in KTX format, "
+            "loads the KTX texture instead of the fallback PNG/JPEG one"
+        ),
+        default=False,
+    )
+
     import_unused_materials: BoolProperty(
         name='Import Unused Materials & Images',
         description='Import materials & Images not assigned to any mesh',
@@ -2129,6 +2138,7 @@ def import_texture_panel(layout, operator):
     if body:
         body.prop(operator, 'import_pack_images')
         body.prop(operator, 'import_webp_texture')
+        body.prop(operator, 'import_ktx_texture')
         body.prop(operator, 'import_unused_materials')
 
 
