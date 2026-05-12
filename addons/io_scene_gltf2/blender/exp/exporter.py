@@ -284,10 +284,11 @@ class GlTF2Exporter:
 
             # Create Accessors for the extension
 
+            normalized_rotation = None
             if self.export_settings['gltf_meshopt_compression']:
 
                 byteStride_translation = 12
-                byteStride_rotation = 16
+                byteStride_rotation = 8
                 byteStride_scale = 12
 
                 binary_data_translation = gltf2_io_binary_data.BinaryData.from_list(translation, ComponentType.Float)
@@ -297,12 +298,12 @@ class GlTF2Exporter:
                 num_components_translation = DataType.num_elements(DataType.Vec3)
                 num_components_rotation = DataType.num_elements(DataType.Vec4)
                 num_components_scale = DataType.num_elements(DataType.Vec3)
-                compressed_translation = MeshoptEncoder.encode_attribute('GPU_TRANSLATION', np.array(
-                    translation, dtype=np.float32).reshape(-1, num_components_translation), self.export_settings)
-                compressed_rotation = MeshoptEncoder.encode_attribute('GPU_ROTATION', np.array(
-                    rotation, dtype=np.float32).reshape(-1, num_components_rotation), self.export_settings)
-                compressed_scale = MeshoptEncoder.encode_attribute('GPU_SCALE', np.array(
-                    scale, dtype=np.float32).reshape(-1, num_components_scale), self.export_settings)
+                compressed_translation, filter_translation = MeshoptEncoder.encode_attribute('GPU_TRANSLATION', np.array(
+                    translation, dtype=np.float32).reshape(-1, num_components_translation), byteStride_translation, self.export_settings)
+                compressed_rotation, filter_rotation = MeshoptEncoder.encode_attribute('GPU_ROTATION', np.array(
+                    rotation, dtype=np.float32).reshape(-1, num_components_rotation), byteStride_rotation, self.export_settings)
+                compressed_scale, filter_scale = MeshoptEncoder.encode_attribute('GPU_SCALE', np.array(
+                    scale, dtype=np.float32).reshape(-1, num_components_scale), byteStride_scale, self.export_settings)
 
                 binary_data_translation.set_extension(self.export_settings['gltf_meshopt_extension'], {
                     'buffer': compressed_translation,  # to be filled in later by the exporter, use data in placeholder for now
@@ -311,6 +312,7 @@ class GlTF2Exporter:
                     'count': len(translation) // DataType.num_elements(DataType.Vec3),
                     'byteStride': byteStride_translation,
                     'mode': 'ATTRIBUTES',
+                    'filter': filter_translation
                 })
 
                 binary_data_rotation.set_extension(self.export_settings['gltf_meshopt_extension'], {
@@ -320,6 +322,7 @@ class GlTF2Exporter:
                     'count': len(rotation) // DataType.num_elements(DataType.Vec4),
                     'byteStride': byteStride_rotation,
                     'mode': 'ATTRIBUTES',
+                    'filter': filter_rotation
                 })
 
                 binary_data_scale.set_extension(self.export_settings['gltf_meshopt_extension'], {
@@ -329,7 +332,10 @@ class GlTF2Exporter:
                     'count': len(scale) // DataType.num_elements(DataType.Vec3),
                     'byteStride': byteStride_scale,
                     'mode': 'ATTRIBUTES',
+                    'filter': filter_scale
                 })
+
+                normalized_rotation = True if filter_rotation == 'QUATERNION' else None
 
             ext = {}
             ext['attributes'] = {}
@@ -341,18 +347,23 @@ class GlTF2Exporter:
                 None,
                 None,
                 DataType.Vec3,
-                None
+                None,
+                self.export_settings
             )
-            ext['attributes']['ROTATION'] = gather_accessor(
+            rotation_accessor = gather_accessor(
                 'GPU_ROTATION',
                 binary_data_rotation,
-                ComponentType.Float,
+                ComponentType.Short if filter_rotation == 'QUATERNION' else ComponentType.Float,
                 len(rotation) // 4,
                 None,
                 None,
                 DataType.Vec4,
-                None
+                normalized_rotation,
+                self.export_settings
             )
+            if filter_rotation == 'QUATERNION':
+                rotation_accessor.normalized = True
+            ext['attributes']['ROTATION'] = rotation_accessor
             ext['attributes']['SCALE'] = gather_accessor(
                 'GPU_SCALE',
                 binary_data_scale,
@@ -361,7 +372,8 @@ class GlTF2Exporter:
                 None,
                 None,
                 DataType.Vec3,
-                None
+                None,
+                self.export_settings
             )
 
             # Add extension to the Node, and traverse it

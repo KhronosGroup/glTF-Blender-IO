@@ -17,6 +17,17 @@ import numpy as np
 
 from ...io.com.library import dll_path
 
+# encodeExpMode enum values (from encoder.h)
+ENCODE_EXP_SEPARATE = 0
+ENCODE_EXP_SHARED_VECTOR = 1
+ENCODE_EXP_SHARED_COMPONENT = 2
+ENCODE_EXP_CLAMPED = 3
+
+# Precision bits for filters
+OCT_FILTER_BITS = 8
+EXP_FILTER_BITS = 12
+QUAT_FILTER_BITS = 8
+
 
 class MeshoptEncoder:
     """Meshopt encoder."""
@@ -45,7 +56,6 @@ class MeshoptEncoder:
 
         export_settings['meshopt_encoder'] = lib
 
-        # Define type signatures for the encoder functions
         lib.encodeIndexVersion.argtypes = [ctypes.c_int]
         lib.encodeIndexVersion.restype = None
         lib.encodeIndexVersion(1)
@@ -63,37 +73,67 @@ class MeshoptEncoder:
         lib.encodeIndexBufferBound.restype = ctypes.c_size_t
 
         lib.encodeIndexBuffer.argtypes = [
-            ctypes.POINTER(ctypes.c_ubyte),   # buffer
-            ctypes.c_size_t,                  # buffer_size
-            ctypes.POINTER(ctypes.c_uint),    # indices
-            ctypes.c_size_t,                  # index_count
+            ctypes.c_void_p,  # unsigned char* buffer
+            ctypes.c_size_t,  # size_t buffer_size
+            ctypes.c_void_p,  # const unsigned int* indices
+            ctypes.c_size_t,  # size_t index_count
         ]
         lib.encodeIndexBuffer.restype = ctypes.c_size_t
 
-        lib.encodeVertexBuffer.restype = ctypes.c_int
+        lib.encodeVertexBufferBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
+        lib.encodeVertexBufferBound.restype = ctypes.c_size_t
+
         lib.encodeVertexBuffer.argtypes = [
-            ctypes.c_void_p,  # unsigned char* out
-            ctypes.c_size_t,  # size_t n
+            ctypes.c_void_p,  # unsigned char* buffer
+            ctypes.c_size_t,  # size_t buffer_size
             ctypes.c_void_p,  # const void* vertices
             ctypes.c_size_t,  # size_t vertex_count
             ctypes.c_size_t,  # size_t vertex_size
         ]
+        lib.encodeVertexBuffer.restype = ctypes.c_size_t
 
-        lib.encodeIndexBuffer.restype = ctypes.c_int
-        lib.encodeIndexBuffer.argtypes = [
-            ctypes.c_void_p,  # unsigned char* out
-            ctypes.c_size_t,  # size_t n
-            ctypes.c_void_p,  # const unsigned int* indices
-            ctypes.c_size_t,  # size_t index_size
-        ]
+        lib.encodeIndexSequenceBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
+        lib.encodeIndexSequenceBound.restype = ctypes.c_size_t
 
-        lib.encodeIndexSequence.restype = ctypes.c_int
         lib.encodeIndexSequence.argtypes = [
-            ctypes.c_void_p,  # unsigned char* out
-            ctypes.c_size_t,  # size_t n
+            ctypes.c_void_p,  # unsigned char* buffer
+            ctypes.c_size_t,  # size_t buffer_size
             ctypes.c_void_p,  # const unsigned int* indices
             ctypes.c_size_t,  # size_t index_count
         ]
+        lib.encodeIndexSequence.restype = ctypes.c_size_t
+
+        # API(void) encodeFilterOct(void* destination, size_t count, size_t stride, int bits, const float* data)
+        lib.encodeFilterOct.argtypes = [
+            ctypes.c_void_p,  # void* destination
+            ctypes.c_size_t,  # size_t count
+            ctypes.c_size_t,  # size_t stride
+            ctypes.c_int,     # int bits
+            ctypes.c_void_p,  # const float* data
+        ]
+        lib.encodeFilterOct.restype = None
+
+        # API(void) encodeFilterQuat(void* destination, size_t count, size_t stride, int bits, const float* data)
+        lib.encodeFilterQuat.argtypes = [
+            ctypes.c_void_p,  # void* destination
+            ctypes.c_size_t,  # size_t count
+            ctypes.c_size_t,  # size_t stride
+            ctypes.c_int,     # int bits
+            ctypes.c_void_p,  # const float* data
+        ]
+        lib.encodeFilterQuat.restype = None
+
+        # API(void) encodeFilterExp(void* destination, size_t count, size_t
+        # stride, int bits, const float* data, enum encodeExpMode mode)
+        lib.encodeFilterExp.argtypes = [
+            ctypes.c_void_p,  # void* destination
+            ctypes.c_size_t,  # size_t count
+            ctypes.c_size_t,  # size_t stride
+            ctypes.c_int,     # int bits
+            ctypes.c_void_p,  # const float* data
+            ctypes.c_int,     # enum encodeExpMode mode
+        ]
+        lib.encodeFilterExp.restype = None
 
     @staticmethod
     def encode_indices(mode, data, export_settings):
@@ -105,6 +145,8 @@ class MeshoptEncoder:
 
     @staticmethod
     def encode_index_buffer(data, export_settings):
+
+        filter = None
 
         MeshoptEncoder.load_library(export_settings)
         lib = export_settings['meshopt_encoder']
@@ -120,14 +162,16 @@ class MeshoptEncoder:
         written = lib.encodeIndexBuffer(
             buffer,
             bound,
-            to_be_converted_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint)),
+            to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
             index_count
         )
 
-        return bytes(buffer[:written])
+        return bytes(buffer[:written]), filter
 
     @staticmethod
     def encode_index_sequence(data, export_settings):
+
+        filter = None
 
         MeshoptEncoder.load_library(export_settings)
         lib = export_settings['meshopt_encoder']
@@ -135,7 +179,6 @@ class MeshoptEncoder:
         index_count = len(data)
         vertex_count = int(data.max()) + 1
 
-        # vertex count is not needed for sequence encoding
         bound = lib.encodeIndexSequenceBound(index_count, vertex_count)
         buffer = (ctypes.c_ubyte * bound)()
 
@@ -144,14 +187,24 @@ class MeshoptEncoder:
         written = lib.encodeIndexSequence(
             buffer,
             bound,
-            to_be_converted_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint)),
+            to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
             index_count
         )
 
-        return bytes(buffer[:written])
+        return bytes(buffer[:written]), filter
 
     @staticmethod
-    def encode_attribute(attribute_name, data, export_settings):
+    def encode_attribute(attribute_name, data, byteStride, export_settings):
+
+        filter = None
+        if attribute_name in ["NORMAL", "SK_NORMAL", "TANGENT", "SK_TANGENT"]:
+            filter = 'OCTAHEDRAL'
+        elif attribute_name in ["POSITION", "SK_POSITION", "SCALE", "TIME", "GPU_TRANSLATION", "GPU_SCALE", "SK_ANIM"]:
+            filter = 'EXPONENTIAL'
+        elif attribute_name in ["ROTATION", "SK_ROTATION", "GPU_ROTATION"]:
+            filter = 'QUATERNION'
+        else:
+            export_settings['log'].warning(f"Meshopt encoder: no filter choosen for attribute {attribute_name}")
 
         MeshoptEncoder.load_library(export_settings)
         lib = export_settings['meshopt_encoder']
@@ -159,19 +212,49 @@ class MeshoptEncoder:
         vertex_count = len(data)
         vertex_size = data.strides[0]
 
-        bound = lib.encodeVertexBufferBound(vertex_count, vertex_size)
+        bound = lib.encodeVertexBufferBound(vertex_count, byteStride if filter is not None else vertex_size)
         buffer = (ctypes.c_ubyte * bound)()
 
         to_be_converted_data = np.ascontiguousarray(data)
 
-        written = lib.encodeVertexBuffer(
-            buffer,
-            bound,
-            to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
-            vertex_count,
-            vertex_size
-        )
+        if filter == 'OCTAHEDRAL':
+            filtered_data = np.empty(vertex_count * byteStride, dtype=np.uint8)
+            lib.encodeFilterOct(
+                filtered_data.ctypes.data_as(ctypes.c_void_p),
+                vertex_count,
+                byteStride,
+                OCT_FILTER_BITS,
+                to_be_converted_data.ctypes.data_as(ctypes.c_void_p)
+            )
+        elif filter == 'EXPONENTIAL':
+            filtered_data = np.empty(vertex_count * byteStride, dtype=np.uint8)
+            lib.encodeFilterExp(
+                filtered_data.ctypes.data_as(ctypes.c_void_p),
+                vertex_count,
+                byteStride,
+                EXP_FILTER_BITS,
+                to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
+                ENCODE_EXP_SHARED_VECTOR
+            )
+        elif filter == 'QUATERNION':
+            filtered_data = np.empty(vertex_count * byteStride, dtype=np.uint8)
+            lib.encodeFilterQuat(
+                filtered_data.ctypes.data_as(ctypes.c_void_p),
+                vertex_count,
+                byteStride,
+                QUAT_FILTER_BITS,
+                to_be_converted_data.ctypes.data_as(ctypes.c_void_p)
+            )
 
-        # TODO manage filter
+        if filter is not None:
+            written = lib.encodeVertexBuffer(
+                buffer, bound,
+                filtered_data.ctypes.data_as(ctypes.c_void_p),
+                vertex_count, byteStride)
+        else:
+            written = lib.encodeVertexBuffer(
+                buffer, bound,
+                to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
+                vertex_count, vertex_size)
 
-        return bytes(buffer[:written])
+        return bytes(buffer[:written]), filter

@@ -101,7 +101,8 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float)
     if export_settings['gltf_meshopt_compression']:
-        compressed_time = MeshoptEncoder.encode_attribute('TIME', np.array(times, dtype=np.float32), export_settings)
+        compressed_time, filter = MeshoptEncoder.encode_attribute(
+            'TIME', np.array(times, dtype=np.float32), 4, export_settings)
         binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_time,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
@@ -109,6 +110,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
             'byteStride': 4,
             'count': len(times),
             'mode': 'ATTRIBUTES',
+            'filter': filter
         })
 
     input = gather_accessor(
@@ -119,6 +121,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
         tuple([max(times)]),
         tuple([min(times)]),
         gltf2_io_constants.DataType.Scalar,
+        None,
         export_settings)
 
     values = []
@@ -141,6 +144,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
         None,
         None,
         data_type,
+        None,
         export_settings
     )
 

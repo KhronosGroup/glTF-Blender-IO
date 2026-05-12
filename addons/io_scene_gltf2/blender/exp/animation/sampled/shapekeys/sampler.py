@@ -91,7 +91,8 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float)
     if export_settings['gltf_meshopt_compression']:
-        compressed_time = MeshoptEncoder.encode_attribute('TIME', np.array(times, dtype=np.float32), export_settings)
+        compressed_time, filter = MeshoptEncoder.encode_attribute(
+            'TIME', np.array(times, dtype=np.float32), 4, export_settings)
         binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_time,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
@@ -99,6 +100,7 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
             'count': len(times),
             'byteStride': 4,
             'mode': 'ATTRIBUTES',
+            'filter': filter
         })
 
     input = gather_accessor(
@@ -109,6 +111,7 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         tuple([max(times)]),
         tuple([min(times)]),
         gltf2_io_constants.DataType.Scalar,
+        None,
         export_settings)
 
     values = []
@@ -125,8 +128,8 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         byteStride = 4
 
         num_components = gltf2_io_constants.DataType.num_elements(data_type)
-        compressed_values = MeshoptEncoder.encode_attribute(
-            'SK_ANIM', np.array(values, dtype=np.float32).reshape(-1, num_components), export_settings)
+        compressed_values, filter = MeshoptEncoder.encode_attribute(
+            'SK_ANIM', np.array(values, dtype=np.float32).reshape(-1, num_components), byteStride, export_settings)
 
         binary_values.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_values,  # to be filled in later by the exporter, use data in placeholder for now
@@ -135,6 +138,7 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
             'count': len(values) // gltf2_io_constants.DataType.num_elements(data_type),
             'byteStride': byteStride,
             'mode': 'ATTRIBUTES',
+            'filter': filter
         })
 
     output = gather_accessor(
@@ -145,6 +149,7 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         None,
         None,
         data_type,
+        None,
         export_settings
     )
 

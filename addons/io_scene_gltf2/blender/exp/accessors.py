@@ -29,6 +29,7 @@ def gather_accessor(attribute_name: str,
                     max,
                     min,
                     type: gltf2_io_constants.DataType,
+                    normalized,
                     export_settings) -> gltf2_io.Accessor:
 
     return gltf2_io.Accessor(
@@ -41,7 +42,7 @@ def gather_accessor(attribute_name: str,
         max=list(max) if max is not None else None,
         min=list(min) if min is not None else None,
         name=None,
-        normalized=None,
+        normalized=normalized,
         sparse=None,
         type=type
     )
@@ -62,11 +63,6 @@ def array_to_accessor(
     if sparse_type is None:
 
         if export_settings['gltf_meshopt_compression'] and attribute_name is not None:
-            compressed_data = MeshoptEncoder.encode_attribute(attribute_name, array, export_settings)
-            buffer_view = gltf2_io_binary_data.BinaryData(
-                array.tobytes(),
-                gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
-            )
 
             # TODO: tangents
             if attribute_name in ['POSITION', 'NORMAL']:
@@ -84,13 +80,21 @@ def array_to_accessor(
                 # fallback to uncompressed byte stride, should be correct for non-quantized attributes
                 byteStride = len(array[:1].tobytes())
 
+            compressed_data, filter = MeshoptEncoder.encode_attribute(
+                attribute_name, array, byteStride, export_settings)
+            buffer_view = gltf2_io_binary_data.BinaryData(
+                array.tobytes(),
+                gltf2_io_constants.BufferViewTarget.ARRAY_BUFFER,
+            )
+
             buffer_view.set_extension(export_settings['gltf_meshopt_extension'], {
                 'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
                 'byteOffset': None,  # to be filled in later by the exporter
                 'byteStride': byteStride,
                 'byteLength': len(compressed_data),
                 'count': len(array),
-                'mode': 'ATTRIBUTES'
+                'mode': 'ATTRIBUTES',
+                'filter': filter
             })
 
         else:
@@ -148,7 +152,6 @@ def array_to_accessor(
         amin = np.amin(array, axis=0).tolist()
 
     if export_settings['gltf_meshopt_compression'] and attribute_name is not None and buffer_view is not None:
-        compressed_data = MeshoptEncoder.encode_attribute(attribute_name, array, export_settings)
 
         if attribute_name in ['SK_POSITION', 'SK_NORMAL']:
             byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
@@ -156,13 +159,16 @@ def array_to_accessor(
             # fallback to uncompressed byte stride, should be correct for non-quantized attributes
             byteStride = len(array[:1].tobytes())
 
+        compressed_data, filter = MeshoptEncoder.encode_attribute(attribute_name, array, byteStride, export_settings)
+
         buffer_view.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
             'byteStride': byteStride,
             'byteLength': len(compressed_data),
             'count': len(array),
-            'mode': 'ATTRIBUTES'
+            'mode': 'ATTRIBUTES',
+            'filter': filter
         })
 
     return gltf2_io.Accessor(

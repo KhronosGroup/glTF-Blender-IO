@@ -239,7 +239,11 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
         return None
 
     if export_settings['gltf_meshopt_compression']:
-        compressed_indices = MeshoptEncoder.encode_indices(blender_primitive.get('mode'), indices, export_settings)
+
+        byteStride = 4 if component_type == gltf2_io_constants.ComponentType.UnsignedInt else 2
+
+        compressed_indices, filter = MeshoptEncoder.encode_indices(
+            blender_primitive.get('mode'), indices, export_settings)
 
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData(
@@ -251,9 +255,10 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
             'buffer': compressed_indices,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
             'byteLength': len(compressed_indices),
-            'byteStride': 4 if component_type == gltf2_io_constants.ComponentType.UnsignedInt else 2,
+            'byteStride': byteStride,
             'count': len(indices),
-            'mode': mode
+            'mode': mode,
+            'filter': filter
         })
     return gather_accessor(
         'INDICES',
@@ -263,6 +268,7 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
         None,
         None,
         element_type,
+        None,
         export_settings
     )
 

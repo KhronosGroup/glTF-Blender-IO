@@ -105,7 +105,8 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
     binary_data = gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float)
     if export_settings['gltf_meshopt_compression']:
-        compressed_time = MeshoptEncoder.encode_attribute('TIME', np.array(times, dtype=np.float32), export_settings)
+        compressed_time, filter = MeshoptEncoder.encode_attribute(
+            'TIME', np.array(times, dtype=np.float32), 4, export_settings)
         binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_time,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
@@ -113,6 +114,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
             'count': len(times),
             'byteStride': 4,
             'mode': 'ATTRIBUTES',
+            'filter': filter
         })
 
     input = gather_accessor(
@@ -123,6 +125,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
         tuple([max(times)]),
         tuple([min(times)]),
         gltf2_io_constants.DataType.Scalar,
+        None,
         export_settings)
 
     is_yup = export_settings['gltf_yup']
@@ -151,6 +154,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
     data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
 
     binary_values = gltf2_io_binary_data.BinaryData.from_list(values, component_type)
+    output_normalized = None
 
     if export_settings['gltf_meshopt_compression']:
 
@@ -168,8 +172,14 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
         if compressed_type is not None:
             num_components = gltf2_io_constants.DataType.num_elements(data_type)
-            compressed_values = MeshoptEncoder.encode_attribute(
-                compressed_type, np.array(values, dtype=np.float32).reshape(-1, num_components), export_settings)
+            compressed_values, filter = MeshoptEncoder.encode_attribute(compressed_type, np.array(
+                values, dtype=np.float32).reshape(-1, num_components), byteStride, export_settings)
+
+            if filter == 'QUATERNION':
+                component_type = gltf2_io_constants.ComponentType.Short
+                output_normalized = True
+            else:
+                output_normalized = None
 
             binary_values.set_extension(export_settings['gltf_meshopt_extension'], {
                 'buffer': compressed_values,  # to be filled in later by the exporter, use data in placeholder for now
@@ -178,6 +188,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
                 'count': len(values) // gltf2_io_constants.DataType.num_elements(data_type),
                 'byteStride': byteStride,
                 'mode': 'ATTRIBUTES',
+                'filter': filter
             })
 
         else:
@@ -192,6 +203,7 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
         None,
         None,
         data_type,
+        output_normalized,
         export_settings
     )
 
