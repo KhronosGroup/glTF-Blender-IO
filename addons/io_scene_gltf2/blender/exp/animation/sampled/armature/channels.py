@@ -110,15 +110,19 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
             channels.append(channel)
 
     # Manage extras channels (custom properties animated)
-    for chan in [chan for chan in extras_channels.values() if len(chan['properties']) != 0]:
-        for custom_prop, channel_group in chan['properties'].items():
+    blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
+    for b in export_settings['KHR_animation_pointer']['extras'].get('bones', {}).values():
+        if id(b['blender_armature_object']) != id(blender_armature_object):
+            continue
+
+        for prop in b['paths'].keys():
 
             channel = gather_sampled_data_channel(
                 "extras",
                 "bones",
                 armature_uuid,
-                chan['bone'],
-                custom_prop,
+                b['blender_bone_name'],
+                prop,
                 blender_action_name,
                 slot_identifier,  # TODOSLOT
                 True,  # Extras channels are always animated (otherwise they are not exported)
