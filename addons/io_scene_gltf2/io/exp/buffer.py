@@ -21,8 +21,9 @@ from ...io.exp import binary_data as gltf2_io_binary_data
 class Buffer:
     """Class representing binary data for use in a glTF file as 'buffer' property."""
 
-    def __init__(self, is_glb, buffer_index=0, initial_data=None):
+    def __init__(self, is_glb, meshopt_extension, buffer_index=0, initial_data=None):
         self.is_glb = is_glb
+        self.meshopt_extension = meshopt_extension
         self.__data = bytearray(b"")
         if initial_data is not None:
             self.__data = bytearray(initial_data.tobytes())
@@ -104,8 +105,8 @@ class Buffer:
         )
 
         if additional_buffer is not None and hasattr(binary_data, 'extensions'):
-            # EXT_meshopt_compression
-            compressed_binary_data = binary_data.extensions['EXT_meshopt_compression']['buffer']
+            # KHR/EXT_meshopt_compression
+            compressed_binary_data = binary_data.extensions[self.meshopt_extension]['buffer']
             additional_buffer.__data.extend(compressed_binary_data)
             length = len(compressed_binary_data)
             padding = (4 - (length % 4)) % 4
@@ -116,11 +117,11 @@ class Buffer:
             # For glb, make sure the real data (compressed or not) is in the first
             # buffer, and the fallback in the second buffer
             if not self.is_glb:
-                buffer_view.extensions['EXT_meshopt_compression']['buffer'] = additional_buffer.__buffer_index
+                buffer_view.extensions[self.meshopt_extension]['buffer'] = additional_buffer.__buffer_index
             else:
-                buffer_view.extensions['EXT_meshopt_compression']['buffer'] = 0
+                buffer_view.extensions[self.meshopt_extension]['buffer'] = 0
 
-            buffer_view.extensions['EXT_meshopt_compression']['byteOffset'] = offset
+            buffer_view.extensions[self.meshopt_extension]['byteOffset'] = offset
 
         return buffer_view
 

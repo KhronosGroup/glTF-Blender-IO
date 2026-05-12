@@ -97,7 +97,7 @@ def __convert_keyframes(
     binary_data = gltf2_io_binary_data.BinaryData.from_list(times, gltf2_io_constants.ComponentType.Float)
     if export_settings['gltf_meshopt_compression']:
         compressed_time = MeshoptEncoder.encode_attribute('TIME', np.array(times, dtype=np.float32), export_settings)
-        binary_data.set_extension('EXT_meshopt_compression', {
+        binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_time,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
             'byteLength': len(compressed_time),
@@ -268,7 +268,7 @@ def __convert_keyframes(
             compressed_values = MeshoptEncoder.encode_attribute(
                 compressed_type, np.array(values, dtype=np.float32).reshape(-1, num_components), export_settings)
 
-            binary_data.set_extension('EXT_meshopt_compression', {
+            binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
                 'buffer': compressed_values,  # to be filled in later by the exporter, use data in placeholder for now
                 'byteOffset': None,  # to be filled in later by the exporter
                 'byteLength': len(compressed_values),

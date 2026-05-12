@@ -79,9 +79,14 @@ class GlTF2Exporter:
 
         self.additional_data = AdditionalData()
 
-        self.__buffer = gltf2_io_buffer.Buffer(export_settings['gltf_format'] == 'GLB')
+        self.__buffer = gltf2_io_buffer.Buffer(
+            export_settings['gltf_format'] == 'GLB',
+            export_settings['gltf_meshopt_extension'] if export_settings['gltf_meshopt_compression'] else None,)
         if export_settings['gltf_meshopt_compression']:
-            self.__additional_buffer = gltf2_io_buffer.Buffer(export_settings['gltf_format'] == 'GLB', buffer_index=1)
+            self.__additional_buffer = gltf2_io_buffer.Buffer(
+                export_settings['gltf_format'] == 'GLB',
+                export_settings['gltf_meshopt_extension'] if export_settings['gltf_meshopt_compression'] else None,
+                buffer_index=1)
         self.__images = {}
 
         # mapping of all glTFChildOfRootProperty types to their corresponding root level arrays
@@ -156,7 +161,7 @@ class GlTF2Exporter:
                 self.__gltf.buffers.append(buffer)
             else:
                 # Add extension on the buffer if meshopt is enabled
-                buffer.extensions = {'EXT_meshopt_compression': {"fallback": True}}
+                buffer.extensions = {self.export_settings['gltf_meshopt_extension']: {"fallback": True}}
                 buffer.uri = None
                 buffer.byte_length = self.__buffer.get_fake_bytelength()
                 if not is_glb:
@@ -196,8 +201,8 @@ class GlTF2Exporter:
 
         :return:
         """
-        self.__gltf.extensions_required.append('EXT_meshopt_compression')
-        self.__gltf.extensions_used.append('EXT_meshopt_compression')
+        self.__gltf.extensions_required.append(self.export_settings['gltf_meshopt_extension'])
+        self.__gltf.extensions_used.append(self.export_settings['gltf_meshopt_extension'])
 
     def finalize_images(self):
         """
@@ -299,7 +304,7 @@ class GlTF2Exporter:
                 compressed_scale = MeshoptEncoder.encode_attribute('GPU_SCALE', np.array(
                     scale, dtype=np.float32).reshape(-1, num_components_scale), self.export_settings)
 
-                binary_data_translation.set_extension('EXT_meshopt_compression', {
+                binary_data_translation.set_extension(self.export_settings['gltf_meshopt_extension'], {
                     'buffer': compressed_translation,  # to be filled in later by the exporter, use data in placeholder for now
                     'byteOffset': None,  # to be filled in later by the exporter
                     'byteLength': len(compressed_translation),
@@ -308,7 +313,7 @@ class GlTF2Exporter:
                     'mode': 'ATTRIBUTES',
                 })
 
-                binary_data_rotation.set_extension('EXT_meshopt_compression', {
+                binary_data_rotation.set_extension(self.export_settings['gltf_meshopt_extension'], {
                     'buffer': compressed_rotation,  # to be filled in later by the exporter, use data in placeholder for now
                     'byteOffset': None,  # to be filled in later by the exporter
                     'byteLength': len(compressed_rotation),
@@ -317,7 +322,7 @@ class GlTF2Exporter:
                     'mode': 'ATTRIBUTES',
                 })
 
-                binary_data_scale.set_extension('EXT_meshopt_compression', {
+                binary_data_scale.set_extension(self.export_settings['gltf_meshopt_extension'], {
                     'buffer': compressed_scale,  # to be filled in later by the exporter, use data in placeholder for now
                     'byteOffset': None,  # to be filled in later by the exporter
                     'byteLength': len(compressed_scale),

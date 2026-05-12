@@ -455,6 +455,20 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_meshopt_extension: EnumProperty(
+        name='Meshopt Extension',
+        items=(
+            ('EXT_meshopt_compression',
+             'EXT_meshopt_compression',
+             'Use EXT_meshopt_compression extension for mesh compression'),
+            ('KHR_meshopt_compression',
+             'KHR_meshopt_compression',
+             'Use KHR_meshopt_compression extension for mesh compression'),
+        ),
+        description='Extension to use for meshopt compression',
+        default='EXT_meshopt_compression',
+    )
+
     export_draco_mesh_compression_enable: BoolProperty(
         name='Draco Mesh Compression',
         description='Compress mesh using Draco',
@@ -1178,8 +1192,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         if is_meshopt_available():
             export_settings['gltf_meshopt_compression'] = self.export_meshopt_compression_enable
+            export_settings['gltf_meshopt_extension'] = self.export_meshopt_extension
         else:
             export_settings['gltf_meshopt_compression'] = False
+            export_settings['gltf_meshopt_extension'] = self.export_meshopt_extension
 
         export_settings['gltf_gn_mesh'] = self.export_gn_mesh
 
@@ -1684,7 +1700,7 @@ def export_panel_data_meshopt_compression(layout, operator):
     header.label(text="Meshopt Compression")
     if body:
         body.active = operator.export_meshopt_compression_enable
-        body.label(text="Meshopt compression")
+        body.prop(operator, 'export_meshopt_extension')
 
 
 def export_panel_animation(layout, operator):

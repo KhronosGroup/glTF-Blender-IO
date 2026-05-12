@@ -84,7 +84,7 @@ def array_to_accessor(
                 # fallback to uncompressed byte stride, should be correct for non-quantized attributes
                 byteStride = len(array[:1].tobytes())
 
-            buffer_view.set_extension('EXT_meshopt_compression', {
+            buffer_view.set_extension(export_settings['gltf_meshopt_extension'], {
                 'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
                 'byteOffset': None,  # to be filled in later by the exporter
                 'byteStride': byteStride,
@@ -156,7 +156,7 @@ def array_to_accessor(
             # fallback to uncompressed byte stride, should be correct for non-quantized attributes
             byteStride = len(array[:1].tobytes())
 
-        buffer_view.set_extension('EXT_meshopt_compression', {
+        buffer_view.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
             'byteStride': byteStride,

@@ -52,7 +52,12 @@ class MeshoptEncoder:
 
         lib.meshopt_encodeVertexVersion.argtypes = [ctypes.c_int]
         lib.meshopt_encodeVertexVersion.restype = None
-        lib.meshopt_encodeVertexVersion(0)   # TODO: 0 for EXT, 1 for KHR
+        if export_settings['gltf_meshopt_extension'] == 'EXT_meshopt_compression':
+            lib.meshopt_encodeVertexVersion(0)
+        elif export_settings['gltf_meshopt_extension'] == 'KHR_meshopt_compression':
+            lib.meshopt_encodeVertexVersion(1)
+        else:
+            raise RuntimeError("Unsupported meshopt extension: {}".format(export_settings['gltf_meshopt_extension']))
 
         lib.meshopt_encodeIndexBufferBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
         lib.meshopt_encodeIndexBufferBound.restype = ctypes.c_size_t

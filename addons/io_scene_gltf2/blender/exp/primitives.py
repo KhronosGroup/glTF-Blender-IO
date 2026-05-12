@@ -247,7 +247,7 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
 
     if export_settings['gltf_meshopt_compression']:
         mode = 'TRIANGLES' if blender_primitive.get('mode') in [4, None] else 'INDICES'
-        binary_data.set_extension('EXT_meshopt_compression', {
+        binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_indices,  # to be filled in later by the exporter, use data in placeholder for now
             'byteOffset': None,  # to be filled in later by the exporter
             'byteLength': len(compressed_indices),
