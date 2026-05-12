@@ -181,7 +181,7 @@ def is_meshopt_available():
     if not hasattr(is_meshopt_available, "meshopt_exists"):
         from .io.com import library as gltf2_compression_extension
         is_meshopt_available.meshopt_exists = gltf2_compression_extension.dll_exists(
-            'extern_meshoptimizer', 'MeshOptimizer')
+            'bf_intern_meshopt_bridge', 'MeshOptimizer')
 
     return is_meshopt_available.meshopt_exists
 

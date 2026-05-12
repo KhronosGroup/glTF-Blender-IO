@@ -27,7 +27,7 @@ class MeshoptDecoder:
     @staticmethod
     def find_library():
         """Find the Meshopt decoder library."""
-        path = dll_path('extern_meshoptimizer', 'MeshOptimizer')
+        path = dll_path('bf_intern_meshopt_bridge', 'MeshOptimizer')
         if path is not None and path.exists() and path.is_file():
             return path
         else:
