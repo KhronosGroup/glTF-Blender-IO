@@ -204,7 +204,7 @@ class MeshoptEncoder:
         elif attribute_name in ["ROTATION", "SK_ROTATION", "GPU_ROTATION"]:
             filter = 'QUATERNION'
         else:
-            export_settings['log'].warning(f"Meshopt encoder: no filter choosen for attribute {attribute_name}")
+            pass
 
         MeshoptEncoder.load_library(export_settings)
         lib = export_settings['meshopt_encoder']
