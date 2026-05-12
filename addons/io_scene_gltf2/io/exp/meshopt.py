@@ -46,32 +46,32 @@ class MeshoptEncoder:
         export_settings['meshopt_encoder'] = lib
 
         # Define type signatures for the encoder functions
-        lib.meshopt_encodeIndexVersion.argtypes = [ctypes.c_int]
-        lib.meshopt_encodeIndexVersion.restype = None
-        lib.meshopt_encodeIndexVersion(1)
+        lib.encodeIndexVersion.argtypes = [ctypes.c_int]
+        lib.encodeIndexVersion.restype = None
+        lib.encodeIndexVersion(1)
 
-        lib.meshopt_encodeVertexVersion.argtypes = [ctypes.c_int]
-        lib.meshopt_encodeVertexVersion.restype = None
+        lib.encodeVertexVersion.argtypes = [ctypes.c_int]
+        lib.encodeVertexVersion.restype = None
         if export_settings['gltf_meshopt_extension'] == 'EXT_meshopt_compression':
-            lib.meshopt_encodeVertexVersion(0)
+            lib.encodeVertexVersion(0)
         elif export_settings['gltf_meshopt_extension'] == 'KHR_meshopt_compression':
-            lib.meshopt_encodeVertexVersion(1)
+            lib.encodeVertexVersion(1)
         else:
             raise RuntimeError("Unsupported meshopt extension: {}".format(export_settings['gltf_meshopt_extension']))
 
-        lib.meshopt_encodeIndexBufferBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
-        lib.meshopt_encodeIndexBufferBound.restype = ctypes.c_size_t
+        lib.encodeIndexBufferBound.argtypes = [ctypes.c_size_t, ctypes.c_size_t]
+        lib.encodeIndexBufferBound.restype = ctypes.c_size_t
 
-        lib.meshopt_encodeIndexBuffer.argtypes = [
+        lib.encodeIndexBuffer.argtypes = [
             ctypes.POINTER(ctypes.c_ubyte),   # buffer
             ctypes.c_size_t,                  # buffer_size
             ctypes.POINTER(ctypes.c_uint),    # indices
             ctypes.c_size_t,                  # index_count
         ]
-        lib.meshopt_encodeIndexBuffer.restype = ctypes.c_size_t
+        lib.encodeIndexBuffer.restype = ctypes.c_size_t
 
-        lib.meshopt_encodeVertexBuffer.restype = ctypes.c_int
-        lib.meshopt_encodeVertexBuffer.argtypes = [
+        lib.encodeVertexBuffer.restype = ctypes.c_int
+        lib.encodeVertexBuffer.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const void* vertices
@@ -79,16 +79,16 @@ class MeshoptEncoder:
             ctypes.c_size_t,  # size_t vertex_size
         ]
 
-        lib.meshopt_encodeIndexBuffer.restype = ctypes.c_int
-        lib.meshopt_encodeIndexBuffer.argtypes = [
+        lib.encodeIndexBuffer.restype = ctypes.c_int
+        lib.encodeIndexBuffer.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const unsigned int* indices
             ctypes.c_size_t,  # size_t index_size
         ]
 
-        lib.meshopt_encodeIndexSequence.restype = ctypes.c_int
-        lib.meshopt_encodeIndexSequence.argtypes = [
+        lib.encodeIndexSequence.restype = ctypes.c_int
+        lib.encodeIndexSequence.argtypes = [
             ctypes.c_void_p,  # unsigned char* out
             ctypes.c_size_t,  # size_t n
             ctypes.c_void_p,  # const unsigned int* indices
@@ -112,12 +112,12 @@ class MeshoptEncoder:
         index_count = len(data)
         vertex_count = int(data.max()) + 1
 
-        bound = lib.meshopt_encodeIndexBufferBound(index_count, vertex_count)
+        bound = lib.encodeIndexBufferBound(index_count, vertex_count)
         buffer = (ctypes.c_ubyte * bound)()
 
         to_be_converted_data = np.ascontiguousarray(data, dtype=np.uint32)
 
-        written = lib.meshopt_encodeIndexBuffer(
+        written = lib.encodeIndexBuffer(
             buffer,
             bound,
             to_be_converted_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint)),
@@ -136,12 +136,12 @@ class MeshoptEncoder:
         vertex_count = int(data.max()) + 1
 
         # vertex count is not needed for sequence encoding
-        bound = lib.meshopt_encodeIndexSequenceBound(index_count, vertex_count)
+        bound = lib.encodeIndexSequenceBound(index_count, vertex_count)
         buffer = (ctypes.c_ubyte * bound)()
 
         to_be_converted_data = np.ascontiguousarray(data, dtype=np.uint32)
 
-        written = lib.meshopt_encodeIndexSequence(
+        written = lib.encodeIndexSequence(
             buffer,
             bound,
             to_be_converted_data.ctypes.data_as(ctypes.POINTER(ctypes.c_uint)),
@@ -159,12 +159,12 @@ class MeshoptEncoder:
         vertex_count = len(data)
         vertex_size = data.strides[0]
 
-        bound = lib.meshopt_encodeVertexBufferBound(vertex_count, vertex_size)
+        bound = lib.encodeVertexBufferBound(vertex_count, vertex_size)
         buffer = (ctypes.c_ubyte * bound)()
 
         to_be_converted_data = np.ascontiguousarray(data)
 
-        written = lib.meshopt_encodeVertexBuffer(
+        written = lib.encodeVertexBuffer(
             buffer,
             bound,
             to_be_converted_data.ctypes.data_as(ctypes.c_void_p),
