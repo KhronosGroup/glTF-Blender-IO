@@ -64,11 +64,12 @@ def array_to_accessor(
 
         if export_settings['gltf_meshopt_compression'] and attribute_name is not None:
 
-            # TODO: tangents
             if attribute_name in ['POSITION', 'NORMAL']:
-                byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
+                byteStride = 12  # 3 components * 4 bytes per component for float32
+            elif attribute_name == 'TANGENT':
+                byteStride = 16  # 4 components * 4 bytes per component for float32
             elif attribute_name.startswith('TEXCOORD_'):
-                byteStride = 8  # 2 components * 4 bytes per component for float32, because no mesh_quantization
+                byteStride = 8  # 2 components * 4 bytes per component for float32
             elif attribute_name == "JOINTS":
                 byteStride = 8 if component_type == gltf2_io_constants.ComponentType.UnsignedShort else 4
             elif attribute_name == 'WEIGHTS':
@@ -153,13 +154,14 @@ def array_to_accessor(
 
     if export_settings['gltf_meshopt_compression'] and attribute_name is not None and buffer_view is not None:
 
-        if attribute_name in ['SK_POSITION', 'SK_NORMAL']:
-            byteStride = 12  # 3 components * 4 bytes per component for float32, because no mesh_quantization
+        if attribute_name in ['SK_POSITION', 'SK_NORMAL', 'SK_TANGENT']:
+            byteStride = 12  # 3 components * 4 bytes per component for float32
         else:
             # fallback to uncompressed byte stride, should be correct for non-quantized attributes
             byteStride = len(array[:1].tobytes())
 
-        compressed_data, filter = MeshoptEncoder.encode_attribute(attribute_name, array, byteStride, export_settings)
+        compressed_data, filter = MeshoptEncoder.encode_attribute(
+            attribute_name, array, byteStride, export_settings)
 
         buffer_view.set_extension(export_settings['gltf_meshopt_extension'], {
             'buffer': compressed_data,  # to be filled in later by the exporter, use data in placeholder for now
@@ -181,7 +183,7 @@ def array_to_accessor(
         max=amax,
         min=amin,
         name=None,
-        normalized=None,
+        normalized=normalized,
         sparse=sparse,
         type=data_type,
     )

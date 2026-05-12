@@ -197,9 +197,8 @@ class MeshoptEncoder:
     def encode_attribute(attribute_name, data, byteStride, export_settings):
 
         filter = None
-        if attribute_name in ["NORMAL", "SK_NORMAL", "TANGENT", "SK_TANGENT"]:
-            filter = 'OCTAHEDRAL'
-        elif attribute_name in ["POSITION", "SK_POSITION", "SCALE", "TIME", "GPU_TRANSLATION", "GPU_SCALE", "SK_ANIM"]:
+        if attribute_name in ["POSITION", "SK_POSITION", "NORMAL", "SK_NORMAL", "TANGENT", "SK_TANGENT",
+                               "SCALE", "TIME", "GPU_TRANSLATION", "GPU_SCALE", "SK_ANIM"]:
             filter = 'EXPONENTIAL'
         elif attribute_name in ["ROTATION", "SK_ROTATION", "GPU_ROTATION"]:
             filter = 'QUATERNION'
@@ -217,16 +216,7 @@ class MeshoptEncoder:
 
         to_be_converted_data = np.ascontiguousarray(data)
 
-        if filter == 'OCTAHEDRAL':
-            filtered_data = np.empty(vertex_count * byteStride, dtype=np.uint8)
-            lib.encodeFilterOct(
-                filtered_data.ctypes.data_as(ctypes.c_void_p),
-                vertex_count,
-                byteStride,
-                OCT_FILTER_BITS,
-                to_be_converted_data.ctypes.data_as(ctypes.c_void_p)
-            )
-        elif filter == 'EXPONENTIAL':
+        if filter == 'EXPONENTIAL':
             filtered_data = np.empty(vertex_count * byteStride, dtype=np.uint8)
             lib.encodeFilterExp(
                 filtered_data.ctypes.data_as(ctypes.c_void_p),
