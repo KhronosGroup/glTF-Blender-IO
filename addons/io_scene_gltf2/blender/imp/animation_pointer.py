@@ -772,9 +772,15 @@ class BlenderPointerAnim():
 
         # Extras Node
         if len(pointer_tab) == 5 and pointer_tab[1] == "nodes" and pointer_tab[3] == "extras":
-            blender_path = '["%s"]' % pointer_tab[4]
-            group_name = 'Extras'
-            num_components = 1  # TODOEXTRAS
+            bone_name = asset.get('blender_bone_name', None)
+            if bone_name is None:
+                blender_path = '["%s"]' % pointer_tab[4]
+                group_name = 'Extras'
+                num_components = 1  # TODOEXTRAS
+            else:
+                blender_path = 'pose.bones["%s"]["%s"]' % (bone_name, pointer_tab[4])
+                group_name = 'Extras'
+                num_components = 1  # TODOEXTRAS
 
         # Extras Mesh
         if len(pointer_tab) == 5 and pointer_tab[1] == "meshes" and pointer_tab[3] == "extras":
@@ -924,6 +930,10 @@ class BlenderPointerAnim():
             gltf.action_cache[anim_idx]['object_slots'] = {}
 
         # We now have an action for the animation, check if we have slots for this object
+        # For bones (extra on bone), we need to use the armature name, not the bone name
+        if real_asset_type == "EXTRAS" and asset_type == "OBJECT" and asset.get('blender_bone_name', None) is not None:
+            name = asset['blender_object_data'].name
+
         slots = gltf.action_cache[anim_idx]['object_slots'].get(name)
         if not slots:
 
