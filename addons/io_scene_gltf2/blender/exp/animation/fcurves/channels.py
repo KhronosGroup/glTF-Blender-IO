@@ -530,7 +530,7 @@ def __gather_animation_fcurve_channel_data(id_type: str,
         extensions=None,
         extras=None,
         sampler=sampler,
-        target=__gather_target_data(id_type, elem_uuid, channel_group[0].data_path, export_settings)
+        target=__gather_target_data(id_type, elem_uuid, bone, channel_group[0].data_path, export_settings)
     )
 
     return animation_channel
@@ -551,7 +551,7 @@ def __gather_animation_fcurve_channel_extras(id_type: str,
         extensions=None,
         extras=None,
         sampler=sampler,
-        target=__gather_target_extras(id_type, elem_uuid, custom_property, export_settings)
+        target=__gather_target_extras(id_type, elem_uuid, bone, custom_property, export_settings)
     )
 
     if id_type == "OBJECT":
@@ -604,18 +604,20 @@ def __gather_animation_fcurve_channel(id_type: str,
 
 def __gather_target_data(id_type,
                          elem_uuid,
+                         bone,
                          prop,
                          export_settings
                          ) -> gltf2_io.AnimationChannelTarget:
-    return gather_fcurve_channel_target_data(id_type, elem_uuid, prop, export_settings)
+    return gather_fcurve_channel_target_data(id_type, elem_uuid, bone, prop, export_settings)
 
 
 def __gather_target_extras(id_type,
                            elem_uuid,
+                           bone,
                            custom_property,
                            export_settings
                            ) -> gltf2_io.AnimationChannelTarget:
-    return gather_fcurve_channel_target_extras(id_type, elem_uuid, custom_property, export_settings)
+    return gather_fcurve_channel_target_extras(id_type, elem_uuid, bone, custom_property, export_settings)
 
 
 def __gather_target(id_type: str,

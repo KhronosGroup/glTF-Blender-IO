@@ -52,6 +52,7 @@ def gather_fcurve_channel_target(
 def gather_fcurve_channel_target_extras(
         id_type: str,
         elem_uuid: str,
+        bone: str,
         custom_property: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
@@ -69,11 +70,17 @@ def gather_fcurve_channel_target_extras(
         export_settings['log'].warning("Unsupported type for animation pointer extras: " + id_type)
         return None
 
+    if custom_property.startswith('pose.bones'):
+        # Extract the custom prop name from the path
+        custom_property = custom_property.split('][')[1][1:-2]
+    else:
+        custom_property = custom_property[2:-2]
+
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
         extras=None,
-        node=__gather_node(id_type, elem_uuid, None, export_settings),
-        path="/" + impacted_data + "/XXX/extras/" + custom_property[2:-2]
+        node=__gather_node(id_type, elem_uuid, bone, export_settings),
+        path="/" + impacted_data + "/XXX/extras/" + custom_property
     )
 
     return animation_channel_target
@@ -83,6 +90,7 @@ def gather_fcurve_channel_target_extras(
 def gather_fcurve_channel_target_data(
         id_type: str,
         elem_uuid: str,
+        bone: str,
         prop: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
@@ -108,7 +116,7 @@ def gather_fcurve_channel_target_data(
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
         extras=None,
-        node=__gather_node(id_type, elem_uuid, None, export_settings),
+        node=__gather_node(id_type, elem_uuid, bone, export_settings),
         path="/" + impacted_data + "/XXX/" + gltf_prop
     )
 
