@@ -901,6 +901,14 @@ class BlenderPointerAnim():
             name = name_ if name_ is not None else asset.name
             stash = asset['blender_object_data']
             target_id_type = target_id_type
+        elif asset_type == "OBJECT":
+            if real_asset_type == "EXTRAS":
+                name = name_ if name_ is not None else asset.name
+                stash = asset['blender_object_data']
+            else:
+                name = asset.name
+                stash = asset.blender_object_data
+            target_id_type = "OBJECT"
 
         objects = gltf.action_cache.get(anim_idx)
         if not objects:

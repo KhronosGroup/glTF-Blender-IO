@@ -236,9 +236,6 @@ class BlenderNode():
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
                 set_extras(editbone, pynode.extras)
-                # pynode.extras['blender_object_data'] = editbone  # Used in case of for
-                # KHR_animation_pointer #TODOEXTRAS
-
         # Set all bone parents
         for id in bone_ids:
             vnode = gltf.vnodes[id]
@@ -267,8 +264,7 @@ class BlenderNode():
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
                 set_extras(pose_bone, pynode.extras)
-                # pynode.extras['blender_object_data'] = pose_bone  # Used in case of for
-                # KHR_animation_pointer #TODOEXTRAS
+                pynode.extras['blender_object_data'] = blender_arma  # Used in case of for KHR_animation_pointer
 
             if gltf.import_settings['bone_heuristic'] == "BLENDER" and gltf.import_settings['disable_bone_shape'] is False:
                 pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
