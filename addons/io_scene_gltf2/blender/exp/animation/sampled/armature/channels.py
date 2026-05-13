@@ -111,7 +111,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
 
     # Manage extras channels (custom properties animated)
     blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
-    for b in export_settings['KHR_animation_pointer']['extras'].get('bones', {}).values():
+    for b_key, b in export_settings['KHR_animation_pointer']['extras'].get('bones', {}).items():
         if id(b['blender_armature_object']) != id(blender_armature_object):
             continue
 
@@ -120,7 +120,7 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
             channel = gather_sampled_data_channel(
                 "extras",
                 "bones",
-                armature_uuid,
+                (armature_uuid, b_key),
                 b['blender_bone_name'],
                 prop,
                 blender_action_name,

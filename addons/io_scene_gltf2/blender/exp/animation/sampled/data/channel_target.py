@@ -64,12 +64,16 @@ def __gather_node(blender_main_type, blender_type_data, blender_id, bone_name, e
                 elif blender_type_data == "objects":
                     used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
                 elif blender_type_data == "bones":
-                    bone_uuid = export_settings['vtree'].nodes[blender_id].bones[bone_name]
+                    bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
                     used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
                 else:
                     used_blender_id = blender_id
             else:
-                used_blender_id = blender_id
+                if blender_type_data == "bones":
+                    bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
+                    used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
+                else:
+                    used_blender_id = blender_id
             return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['glTF_extras']
     else:
         pass  # This should never happen
@@ -84,13 +88,17 @@ def __gather_path(blender_main_type, blender_type_data, blender_id, bone_name, c
             elif blender_type_data == "objects":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
             elif blender_type_data == "bones":
-                bone_uuid = export_settings['vtree'].nodes[blender_id].bones[bone_name]
+                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
                 used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
                 channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
             else:
                 used_blender_id = blender_id
         else:
-            used_blender_id = blender_id
+            if blender_type_data == "bones":
+                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
+                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
+            else:
+                used_blender_id = blender_id
     else:
         used_blender_id = blender_id
 
