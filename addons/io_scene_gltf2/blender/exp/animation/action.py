@@ -134,7 +134,7 @@ class ActionData:
     def sort(self):
         # Implement sorting, to be sure to get:
         # TRS first, and then SK
-        sort_items = {'OBJECT': 1, 'KEY': 2, 'MESH': 3, 'NODETREE': 4, 'MATERIAL': 5}
+        sort_items = {'OBJECT': 1, 'KEY': 2, 'MESH': 3, 'NODETREE': 4, 'MATERIAL': 5, 'CAMERA': 6, 'LIGHT': 7}
         self.slots.sort(key=lambda x: sort_items.get(x.target_id_type))
 
     def has_slots(self):
