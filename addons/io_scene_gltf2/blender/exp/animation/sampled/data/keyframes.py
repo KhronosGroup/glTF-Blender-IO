@@ -61,7 +61,7 @@ def gather_data_sampled_keyframes(
     else:
         used_blender_id = blender_id
 
-    # Use object_uuid always, here (so keep blender_id)
+    # Use object_uuid always, here (so keep range_blender_id, that comes from blender_id not overriden)
     start_frame = export_settings['ranges'][range_blender_id][action_name_for_range]['start']
     end_frame = export_settings['ranges'][range_blender_id][action_name_for_range]['end']
 

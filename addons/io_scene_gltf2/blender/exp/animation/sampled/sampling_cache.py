@@ -80,6 +80,14 @@ def get_cache_data(path: str,
 def get_range(obj_uuid, key, export_settings):
     # For perf, we may be more precise, and get a list of ranges to be exported that include all needed frames
     if export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+        if obj_uuid not in export_settings['ranges'].keys():
+            # For bone extras, we don't have the bone id as key, but the armature.
+            # So lets retrieve the armature uuid from the bone id
+            armature_uuid = export_settings['KHR_animation_pointer']['extras']['bones'][obj_uuid]['blender_armature_uuid']
+            # Because this is the NLA track mode, ranges are calculated tracck by
+            # track, so there is only 1, get this one
+            action_key = list(export_settings['ranges'][armature_uuid].keys())[0]
+            return export_settings['ranges'][armature_uuid][action_key]['start'], export_settings['ranges'][armature_uuid][action_key]['end']
         return export_settings['ranges'][obj_uuid][key]['start'], export_settings['ranges'][obj_uuid][key]['end']
     else:
         min_ = None

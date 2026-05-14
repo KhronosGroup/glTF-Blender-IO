@@ -42,7 +42,7 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
     else:
         used_blender_id = blender_id
 
-    # Extras (for ACTIONS or ACTIVE_ACTIONS, as for scene, slot_identifier is None)
+    # Extras (for ACTIONS or ACTIVE_ACTIONS, NLA Tracks, as for scene, slot_identifier is None)
     # For Scene, data will be managed by "classical" loop (including extras)
     if slot_identifier is not None and not slot_identifier.startswith("NT") and blender_main_type == 'extras' \
             and used_blender_id in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data]:
@@ -70,41 +70,43 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                 channels.append(channel)
 
     # "classical" animation pointer (not extras)
-    if (slot_identifier is not None and blender_main_type is None) or slot_identifier is None:
-        for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'].keys(
-        ):
+    if blender_main_type != "extras":
+        if (slot_identifier is not None and blender_main_type is None) or slot_identifier is None:
+            for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'].keys(
+            ):
 
-            if slot_identifier is not None and slot_identifier.startswith("NT") and path.startswith("[\""):
-                continue
+                if slot_identifier is not None and slot_identifier.startswith("NT") and path.startswith("[\""):
+                    continue
 
-            # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
-            if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][path][
-                    'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
-                continue
+                # Do not manage alpha, as it will be managaed by the baseColorFactor (merging Color and alpha)
+                if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][path][
+                        'path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor" and baseColorFactor_alpha_merged_already_done is True:
+                    continue
 
-            if slot_identifier is not None and not slot_identifier.startswith("NT") and path.startswith("node_tree."):
-                continue
+                if slot_identifier is not None and not slot_identifier.startswith(
+                        "NT") and path.startswith("node_tree."):
+                    continue
 
-            channel = gather_sampled_data_channel(
-                blender_main_type,
-                blender_type_data,
-                blender_id,
-                None,
-                path,
-                blender_action_name,
-                slot_identifier,
-                path in list_of_animated_data_channels.keys(),
-                list_of_animated_data_channels[path] if path in list_of_animated_data_channels.keys() else get_gltf_interpolation(
-                    export_settings['gltf_sampling_interpolation_fallback'],
-                    export_settings),
-                additional_key,
-                export_settings)
-            if channel is not None:
-                channels.append(channel)
+                channel = gather_sampled_data_channel(
+                    blender_main_type,
+                    blender_type_data,
+                    blender_id,
+                    None,
+                    path,
+                    blender_action_name,
+                    slot_identifier,
+                    path in list_of_animated_data_channels.keys(),
+                    list_of_animated_data_channels[path] if path in list_of_animated_data_channels.keys() else get_gltf_interpolation(
+                        export_settings['gltf_sampling_interpolation_fallback'],
+                        export_settings),
+                    additional_key,
+                    export_settings)
+                if channel is not None:
+                    channels.append(channel)
 
-            if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id][
-                    'paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
-                baseColorFactor_alpha_merged_already_done = True
+                if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id][
+                        'paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+                    baseColorFactor_alpha_merged_already_done = True
 
     return channels
 

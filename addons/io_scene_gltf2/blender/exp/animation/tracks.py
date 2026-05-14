@@ -595,6 +595,10 @@ def gather_data_track_animations(
             blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
         elif blender_type_data == "lights":
             blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
+        elif blender_type_data == "bones":
+            blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_armature_object']
+            blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_bone_name']
+            blender_element = blender_arma_object
         else:
             pass  # TODO
 
@@ -797,6 +801,11 @@ def __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, expo
         elif blender_type_data == "cameras":
             blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
             on_type = "CAMERA"
+        elif blender_type_data == "bones":
+            blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_armature_object']
+            blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_bone_name']
+            blender_element = blender_arma_object
+            on_type = "OBJECT"
         else:
             pass  # TODO
 
