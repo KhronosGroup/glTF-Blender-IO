@@ -72,7 +72,7 @@ class Keyframe:
         }.get(self.target, None)
 
         if length is None:
-            if self.id_type in ["MATERIAL", "NODETREE"]:
+            if self.id_type in ["MATERIAL", "NODETREE", "LIGHT"]:
                 return None
             else:
                 length = 1

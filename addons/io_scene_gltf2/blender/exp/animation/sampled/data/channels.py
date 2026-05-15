@@ -70,7 +70,10 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                 channels.append(channel)
 
     # "classical" animation pointer (not extras)
-    if blender_main_type != "extras":
+    if blender_main_type != "extras" or (
+        slot_identifier is None and export_settings['gltf_animation_mode'] in [
+            "SCENE",
+            "NLA_TRACKS"]):
         if (slot_identifier is not None and blender_main_type is None) or slot_identifier is None:
             for path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'].keys(
             ):
@@ -85,6 +88,10 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
 
                 if slot_identifier is not None and not slot_identifier.startswith(
                         "NT") and path.startswith("node_tree."):
+                    continue
+
+                if blender_main_type == "extras" and blender_type_data == "bones" and export_settings[
+                        'gltf_animation_mode'] == "NLA_TRACKS":
                     continue
 
                 channel = gather_sampled_data_channel(

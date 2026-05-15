@@ -1234,7 +1234,8 @@ def __get_data_blender_actions(blender_main_type,
                 actions.add_action(new_action)
 
         # Collection associated strips from NLA tracks
-        # TODO
+        if export_settings['gltf_animation_mode'] == "ACTIONS":
+            __track_extract(blender_element.animation_data.nla_tracks, actions, blender_element, export_settings)
 
     return actions
 
