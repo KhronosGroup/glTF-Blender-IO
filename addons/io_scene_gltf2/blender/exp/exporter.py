@@ -284,16 +284,16 @@ class GlTF2Exporter:
 
             # Create Accessors for the extension
 
+            binary_data_translation = gltf2_io_binary_data.BinaryData.from_list(translation, ComponentType.Float)
+            binary_data_rotation = gltf2_io_binary_data.BinaryData.from_list(rotation, ComponentType.Float)
+            binary_data_scale = gltf2_io_binary_data.BinaryData.from_list(scale, ComponentType.Float)
             normalized_rotation = None
+            filter_rotation = None
             if self.export_settings['gltf_meshopt_compression']:
 
                 byteStride_translation = 12
                 byteStride_rotation = 8
                 byteStride_scale = 12
-
-                binary_data_translation = gltf2_io_binary_data.BinaryData.from_list(translation, ComponentType.Float)
-                binary_data_rotation = gltf2_io_binary_data.BinaryData.from_list(rotation, ComponentType.Float)
-                binary_data_scale = gltf2_io_binary_data.BinaryData.from_list(scale, ComponentType.Float)
 
                 num_components_translation = DataType.num_elements(DataType.Vec3)
                 num_components_rotation = DataType.num_elements(DataType.Vec4)
