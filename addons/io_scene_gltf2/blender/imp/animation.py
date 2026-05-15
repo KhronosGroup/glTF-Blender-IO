@@ -186,7 +186,7 @@ class BlenderAnimation():
             # Extras Light
             if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions:
                 for light_idx, light in enumerate(gltf.data.extensions["KHR_lights_punctual"]["lights"]):
-                    if light['extras'] is not None and "gltf_tmp_data_animations" in light['extras']:
+                    if light.get('extras') is not None and "gltf_tmp_data_animations" in light['extras']:
                         BlenderPointerAnim.anim(
                             gltf,
                             anim_idx,

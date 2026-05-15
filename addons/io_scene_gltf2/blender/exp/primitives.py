@@ -86,6 +86,7 @@ def gather_primitives(
                 export_settings)
         else:
             # UDIM case
+            blender_mat = None
             base_material, material_info, unique_material_id, tile = udim_material
             material = get_final_material(
                 blender_data,

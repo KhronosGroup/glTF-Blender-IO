@@ -110,30 +110,31 @@ def gather_armature_sampled_channels(armature_uuid, blender_action_name, slot_id
             channels.append(channel)
 
     # Manage extras channels (custom properties animated)
-    blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
-    for b_key, b in export_settings['KHR_animation_pointer']['extras'].get('bones', {}).items():
-        if id(b['blender_armature_object']) != id(blender_armature_object):
-            continue
+    if export_settings['gltf_export_anim_pointer'] and export_settings['gltf_extras']:
+        blender_armature_object = export_settings['vtree'].nodes[armature_uuid].blender_object
+        for b_key, b in export_settings['KHR_animation_pointer']['extras'].get('bones', {}).items():
+            if id(b['blender_armature_object']) != id(blender_armature_object):
+                continue
 
-        for prop in b['paths'].keys():
+            for prop in b['paths'].keys():
 
-            channel = gather_sampled_data_channel(
-                "extras",
-                "bones",
-                (armature_uuid, b_key),
-                b['blender_bone_name'],
-                prop,
-                blender_action_name,
-                slot_identifier,  # TODOSLOT
-                True,  # Extras channels are always animated (otherwise they are not exported)
-                get_gltf_interpolation(
-                    # Keep user choice for interpolation of extras channels
-                    export_settings['gltf_sampling_interpolation_fallback'], export_settings),
-                None,  # No additional key for object extras channels
-                export_settings
-            )
-            if channel is not None:
-                channels.append(channel)
+                channel = gather_sampled_data_channel(
+                    "extras",
+                    "bones",
+                    (armature_uuid, b_key),
+                    b['blender_bone_name'],
+                    prop,
+                    blender_action_name,
+                    slot_identifier,  # TODOSLOT
+                    True,  # Extras channels are always animated (otherwise they are not exported)
+                    get_gltf_interpolation(
+                        # Keep user choice for interpolation of extras channels
+                        export_settings['gltf_sampling_interpolation_fallback'], export_settings),
+                    None,  # No additional key for object extras channels
+                    export_settings
+                )
+                if channel is not None:
+                    channels.append(channel)
 
     return channels, additional_channels
 
