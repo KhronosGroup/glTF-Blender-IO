@@ -198,7 +198,7 @@ class MeshoptEncoder:
 
         filter = None
         if attribute_name in ["POSITION", "SK_POSITION", "NORMAL", "SK_NORMAL", "TANGENT", "SK_TANGENT",
-                               "SCALE", "TIME", "GPU_TRANSLATION", "GPU_SCALE", "SK_ANIM"]:
+                              "SCALE", "TIME", "GPU_TRANSLATION", "GPU_SCALE", "SK_ANIM"]:
             filter = 'EXPONENTIAL'
         elif attribute_name in ["ROTATION", "SK_ROTATION", "GPU_ROTATION"]:
             filter = 'QUATERNION'
