@@ -340,7 +340,6 @@ class GlTF2Exporter:
             ext = {}
             ext['attributes'] = {}
             ext['attributes']['TRANSLATION'] = gather_accessor(
-                'GPU_TRANSLATION',
                 binary_data_translation,
                 ComponentType.Float,
                 len(translation) // 3,
@@ -351,7 +350,6 @@ class GlTF2Exporter:
                 self.export_settings
             )
             rotation_accessor = gather_accessor(
-                'GPU_ROTATION',
                 binary_data_rotation,
                 ComponentType.Short if filter_rotation == 'QUATERNION' else ComponentType.Float,
                 len(rotation) // 4,
@@ -365,7 +363,6 @@ class GlTF2Exporter:
                 rotation_accessor.normalized = True
             ext['attributes']['ROTATION'] = rotation_accessor
             ext['attributes']['SCALE'] = gather_accessor(
-                'GPU_SCALE',
                 binary_data_scale,
                 ComponentType.Float,
                 len(scale) // 3,

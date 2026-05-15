@@ -109,7 +109,6 @@ def __convert_keyframes(
         })
 
     input = gather_accessor(
-        'TIME',
         binary_data,
         gltf2_io_constants.ComponentType.Float,
         len(times),

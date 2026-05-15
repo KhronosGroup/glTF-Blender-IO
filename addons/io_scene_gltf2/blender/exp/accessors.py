@@ -22,8 +22,7 @@ from .cache import cached
 
 
 @cached
-def gather_accessor(attribute_name: str,
-                    buffer_view: gltf2_io_binary_data.BinaryData,
+def gather_accessor(buffer_view: gltf2_io_binary_data.BinaryData,
                     component_type: gltf2_io_constants.ComponentType,
                     count,
                     max,

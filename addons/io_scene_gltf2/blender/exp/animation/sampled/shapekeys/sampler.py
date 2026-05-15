@@ -104,7 +104,6 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         })
 
     input = gather_accessor(
-        'TIME',
         binary_data,
         gltf2_io_constants.ComponentType.Float,
         len(times),
@@ -142,7 +141,6 @@ def __convert_keyframes(obj_uuid, keyframes, action_name: str, export_settings):
         })
 
     output = gather_accessor(
-        'SK_ANIM',
         binary_values,
         component_type,
         len(values) // gltf2_io_constants.DataType.num_elements(data_type),
