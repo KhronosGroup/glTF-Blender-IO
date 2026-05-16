@@ -136,6 +136,7 @@ class MeshoptDecoder:
                 'OCTAHEDRAL': lib.decodeFilterOct,
                 'QUATERNION': lib.decodeFilterQuat,
                 'EXPONENTIAL': lib.decodeFilterExp,
+                'COLOR': lib.decodeFilterExp,
             }.get(filter)
             filter_func(dst_ptr, count, byte_stride)
 
