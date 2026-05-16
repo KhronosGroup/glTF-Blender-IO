@@ -667,6 +667,8 @@ are supported directly by this add-on:
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
 - ``EXT_mesh_gpu_instancing``
+- ``EXT_meshopt_compression``
+- ``KHR_meshopt_compression``
 
 .. rubric:: Export
 
@@ -685,7 +687,8 @@ are supported directly by this add-on:
 - ``KHR_materials_variants``
 - ``KHR_texture_transform``
 - ``EXT_mesh_gpu_instancing``
-
+- ``EXT_meshopt_compression``
+- ``KHR_meshopt_compression``
 
 Third-party glTF Extensions
 ---------------------------
@@ -1152,8 +1155,8 @@ Lighting Mode
    Raw (Deprecated): Blender lighting strengths with no conversion
 
 
-Data - Compression
-^^^^^^^^^^^^^^^^^^
+Data - Draco Compression
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Compress meshes using Google Draco.
 
@@ -1169,6 +1172,15 @@ Color
    Higher values result in better compression rates.
 Generic
    Higher values result in better compression rates.
+
+
+Data - Meshopt Compression
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Compress using Meshoptimizer.
+
+Meshopt Extension
+   Choose between ``EXT_meshopt_compression`` and ``KHR_meshopt_compression`` extensions.
 
 
 Animation
