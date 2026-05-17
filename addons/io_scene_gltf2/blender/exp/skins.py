@@ -130,6 +130,7 @@ def __gather_inverse_bind_matrices(armature_uuid, export_settings):
         None,
         None,
         gltf2_io_constants.DataType.Mat4,
+        None,
         export_settings
     )
 
