@@ -579,6 +579,104 @@ class VExportTree:
                         original_object=blender_object,
                         is_children_in_collection=True)
 
+        # Experiment Geometry Set export
+        if self.export_settings['gltf_geometryset'] is True and node.blender_type == VExportNode.OBJECT \
+                and blender_object.type != "EMPTY":
+            depsgraph = bpy.context.view_layer.depsgraph
+            ob_eval = depsgraph.id_eval_get(blender_object)
+            geometry_set = ob_eval.evaluated_geometry()
+            self.geometryset_manage(
+                geometry_set,
+                node,
+                parent_coll_matrix_world,
+                new_delta or delta,
+                blender_object,
+                blender_children)
+
+    def geometryset_manage(
+            self,
+            geometry_set,
+            node,
+            parent_coll_matrix_world,
+            delta,
+            original_object,
+            blender_children):
+        # Use Geometry Set to get instances
+        instances_pointcloud_nb = len(geometry_set.instances_pointcloud(
+        ).attributes['.reference_index'].data) if geometry_set.instances_pointcloud() is not None else 0
+        if instances_pointcloud_nb > 0:
+            # We have some instances, so we export them as children of the object
+
+            instance_index = np.empty(instances_pointcloud_nb, dtype=int)
+            geometry_set.instances_pointcloud().attributes['.reference_index'].data.foreach_get(
+                'value', instance_index)
+
+            # Matrices
+            matrices = np.empty(instances_pointcloud_nb * 16, dtype=float)
+            geometry_set.instances_pointcloud().attributes['instance_transform'].data.foreach_get('value', matrices)
+            matrices = matrices.reshape(-1, 4, 4)
+
+            # TODO store instance identifier / level, in order to manage GPU instancing glTF extension?
+            for i in range(instances_pointcloud_nb):
+                ref = geometry_set.instance_references()[instance_index[i]]
+                self.recursive_geometryset(
+                    node.uuid,
+                    parent_coll_matrix_world,
+                    delta,
+                    ref,
+                    matrices[i].transpose(),
+                    blender_children
+                )
+
+        if original_object is not None and instances_pointcloud_nb == 0:
+            # This is a simple object, so we export it as regular, without using geometry set data
+            # We are not using Geometry Set to export mesh at Object level
+            return
+
+        if len(geometry_set.mesh.vertices) >= 0:
+            # There are some geometry at this level, so export it
+            # TODO cache the mesh, to avoid copying it for each instance
+            node.data = geometry_set.mesh.copy()
+            node.original_object = original_object if original_object else geometry_set.mesh_base.copy()
+
+    def recursive_geometryset(self, parent_uuid, parent_coll_matrix_world, delta, ref, matrix, blender_children):
+        node = VExportNode()
+        node.uuid = str(uuid.uuid4())
+        node.parent_uuid = parent_uuid
+        node.data = ref
+        node.matrix_world = parent_coll_matrix_world @ self.nodes[parent_uuid].matrix_world @ Matrix(matrix)
+        node.blender_type = VExportNode.INSTANCE
+        self.add_node(node)
+        self.add_children(parent_uuid, node.uuid)
+        node.blender_object = None
+        node.blender_bone = None
+
+        # Check type of reference
+        if type(ref).__name__ == "GeometrySet":
+            # We can have here both geometry and instances
+            self.geometryset_manage(ref, node, parent_coll_matrix_world, delta, None, blender_children)
+        elif type(ref).__name__ == "Object":
+            node.data = ref.data
+            # No recursion here?
+        elif type(ref).__name__ == "Collection":
+            # Manage children objects
+            collection_objects = set(ref.objects)
+            for child in _sort_by_name(collection_objects):
+                # On Collection, .objects returns all objects & instance collection
+                # Not only the direct children
+
+                # Keep only object if it has no parent, or parent is not in the collection
+                if child.parent is not None and len(child.parent.users_collection) > 0 \
+                        and len(child.users_collection) > 0 \
+                        and child.users_collection[0].name == child.parent.users_collection[0].name:
+                    continue
+
+                self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
+                                             delta, blender_children)
+        else:
+            self.export_settings['log'].error(
+                "Unknown reference type for Geometry Set instance: " + str(type(ref).__name__))
+
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
 

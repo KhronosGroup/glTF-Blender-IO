@@ -439,6 +439,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default=False
     )
 
+    export_geometryset: BoolProperty(
+        name='Geometry Set (Experimental)',
+        description='Export Geometry Set',
+        default=False
+    )
+
     export_draco_mesh_compression_enable: BoolProperty(
         name='Draco Mesh Compression',
         description='Compress mesh using Draco',
@@ -1161,6 +1167,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_draco_mesh_compression'] = False
 
         export_settings['gltf_gn_mesh'] = self.export_gn_mesh
+        export_settings['gltf_geometryset'] = self.export_geometryset
 
         export_settings['gltf_materials'] = self.export_materials
         export_settings['gltf_attributes'] = self.export_attributes
@@ -1490,6 +1497,7 @@ def export_panel_data_scene_graph(layout, operator):
     header.label(text="Scene Graph")
     if body:
         body.prop(operator, 'export_gn_mesh')
+        body.prop(operator, 'export_geometryset')
         body.prop(operator, 'export_gpu_instances')
         body.prop(operator, 'export_hierarchy_flatten_objs')
         body.prop(operator, 'export_hierarchy_full_collections')

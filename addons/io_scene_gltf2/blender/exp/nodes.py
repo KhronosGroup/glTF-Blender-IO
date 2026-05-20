@@ -271,15 +271,19 @@ def __gather_mesh(vnode, blender_object, export_settings):
         return __gather_mesh_from_blender_nonmesh(blender_object, export_settings)
     if blender_object is None and type(vnode.data).__name__ not in ["Mesh", "PointCloud"]:
         return None  # TODO
-    if blender_object is None:
-        # GN instance
+    if blender_object is None or blender_object is not None and vnode.data is not None:
+        # GN instance or GeometrySet with mesh data
         blender_data = vnode.data
         # Keep materials from the tmp data, but if no material, keep from object
         materials = tuple(mat for mat in blender_data.materials)
         __keep_material_info(materials, False, export_settings)
         if len(materials) == 1 and materials[0] is None:
-            materials = tuple(ms.material for ms in vnode.original_object.material_slots)
-            __keep_material_info(materials, True, export_settings)
+            if type(vnode.original_object).__name__ == "Mesh":
+                materials = tuple(mat for mat in vnode.original_object.materials)
+                __keep_material_info(materials, False, export_settings)
+            else:
+                materials = tuple(ms.material for ms in vnode.original_object.material_slots)
+                __keep_material_info(materials, True, export_settings)
 
         uuid_for_skined_data = None
         modifiers = None
