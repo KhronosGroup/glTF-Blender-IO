@@ -67,7 +67,7 @@ def generate_extras(blender_element, blender_data_type, export_settings):
 
                 # Store the path of the custom property for KHR_animation_pointer
                 path_ = {}
-                path_['length'] = 1  # TODOEXTRAS: support array custom properties
+                path_['length'] = 1
                 path_['path'] = "/" + gltf_data_type + "/XXX/extras/" + custom_property
 
                 export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(
