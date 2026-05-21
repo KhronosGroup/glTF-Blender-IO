@@ -237,7 +237,6 @@ def gather_scene_animations(export_settings):
                     continue
 
                 # TODO : factorize with extras_caching code
-                # TODO: when apply modifiers, etc... ?
                 if extra_type == 'objects':
                     blender_element = [obj for obj in bpy.data.objects if id(obj) == extra][0]
                 elif extra_type == 'bones':
