@@ -45,9 +45,10 @@ def generate_extras(blender_element, blender_data_type, export_settings):
         blender_data_type)
 
     extras = {}
-    # TODOEXTRAS: check if user want to export animation pointer
-    export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)] = {}
-    export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)]['paths'] = {}
+
+    if export_settings['gltf_export_anim_pointer'] is True:
+        export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)] = {}
+        export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(blender_element)]['paths'] = {}
 
     # Custom properties
     for custom_property in blender_element.keys():
@@ -59,14 +60,14 @@ def generate_extras(blender_element, blender_data_type, export_settings):
         if value is not None:
             extras[custom_property] = value
 
-            # Store the path of the custom property for KHR_animation_pointer
-            # TODOEXTRAS: check if user want to export animation pointer
-            path_ = {}
-            path_['length'] = 1  # TODOEXTRAS: support array custom properties
-            path_['path'] = "/" + gltf_data_type + "/XXX/extras/" + custom_property
+            if export_settings['gltf_export_anim_pointer'] is True:
+                # Store the path of the custom property for KHR_animation_pointer
+                path_ = {}
+                path_['length'] = 1  # TODOEXTRAS: support array custom properties
+                path_['path'] = "/" + gltf_data_type + "/XXX/extras/" + custom_property
 
-            export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(
-                blender_element)]['paths']["[\"" + custom_property + "\"]"] = path_
+                export_settings['KHR_animation_pointer']['extras'][blender_data_type][id(
+                    blender_element)]['paths']["[\"" + custom_property + "\"]"] = path_
 
     # System Custom Properties (ID properties)
     properties = blender_element.bl_system_properties_get() or {}
