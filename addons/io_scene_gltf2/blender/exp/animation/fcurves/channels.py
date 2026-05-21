@@ -343,9 +343,13 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                         elif slot.target_id_type == 'OBJECT':
                             extras_target = export_settings['vtree'].nodes[obj_uuid].node.extras
                         else:
-                            extras_target = None  # Should not happen if all is implemeted
+                            extras_target = None  # Should not happen if all is implemeted # TODOEXTRAS ????
 
                         if extras_target is not None and extras_target.get(test_custom_prop) is not None:
+                            # We manage only 1 item extras for now
+                            if not isinstance(extras_target.get(test_custom_prop), (int, float, bool)):
+                                continue
+
                             # This is a custom property, we can export it as extra
                             target_data = targets_extras.get(target, {})
                             target_data['type'] = type_
@@ -370,6 +374,9 @@ def get_channel_groups(obj_uuid: str, blender_action: bpy.types.Action,
                     extra_target = armature_object.pose.bones[bone_name].get(custom_prop)
 
                     if extra_target:
+                        # We manage only 1 item extras for now
+                        if not isinstance(extra_target, (int, float, bool)):
+                            continue
                         target_data = targets_extras.get(target, {})
                         target_data['type'] = type_
                         target_data['obj_uuid'] = obj_uuid

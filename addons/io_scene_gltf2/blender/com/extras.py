@@ -61,6 +61,10 @@ def generate_extras(blender_element, blender_data_type, export_settings):
             extras[custom_property] = value
 
             if export_settings['gltf_export_anim_pointer'] is True:
+                # We are supporting only 1 item custom properties for now
+                if not isinstance(value, (int, float, bool)):
+                    continue
+
                 # Store the path of the custom property for KHR_animation_pointer
                 path_ = {}
                 path_['length'] = 1  # TODOEXTRAS: support array custom properties
