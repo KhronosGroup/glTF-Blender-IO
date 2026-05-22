@@ -155,3 +155,5 @@ def get_impacted_data(id_type):
         'NODETREE': 'materials',
         'LIGHT': 'extensions/KHR_lights_punctual/lights',
         'CAMERA': 'cameras'}.get(id_type)
+    # Warning for devs: there is another dict in generate_extras
+    # Please keep them in sync for new entries

@@ -35,6 +35,8 @@ def generate_extras(blender_element, blender_data_type, export_settings):
     if not blender_element:
         return None
 
+    # Warning for devs: there is another dict in anim_extra_utils.py
+    # Please keep them in sync for new entries
     gltf_data_type = {
         'objects': 'nodes',
         'bones': 'nodes',
