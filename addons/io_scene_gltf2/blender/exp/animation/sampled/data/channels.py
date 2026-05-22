@@ -17,6 +17,7 @@ from ......io.com import gltf2_io
 from ......blender.com.conversion import get_gltf_interpolation
 from .channel_target import gather_data_sampled_channel_target
 from .sampler import gather_data_sampled_animation_sampler
+from ...anim_extra_utils import gather_animated_blender_id
 
 
 def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_id, blender_action_name, slot_identifier,
@@ -27,20 +28,12 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
 
     baseColorFactor_alpha_merged_already_done = False
 
-    # If blender_main_type is extras, it means we need to retrieve the real blender_id used for animation pointer
-    if blender_main_type == 'extras':
-        if blender_type_data == 'meshes':
-            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
-                used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
-            else:
-                used_blender_id = blender_id
-        elif blender_type_data == 'materials':
-            used_blender_id = blender_id  # TODOEXTRAS
-        else:
-            # TODOEXTRAS
-            used_blender_id = blender_id  # Avoid crash
-    else:
-        used_blender_id = blender_id
+    used_blender_id = gather_animated_blender_id(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        None,
+        export_settings)
 
     # Extras (for ACTIONS or ACTIVE_ACTIONS, NLA Tracks, as for scene, slot_identifier is None)
     # For Scene, data will be managed by "classical" loop (including extras)

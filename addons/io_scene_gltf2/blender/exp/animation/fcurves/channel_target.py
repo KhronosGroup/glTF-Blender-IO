@@ -18,7 +18,7 @@ from .....io.com import gltf2_io
 from .....io.exp.user_extensions import export_user_extensions
 from ....com.conversion import get_target
 from ...cache import cached
-from ..anim_extra_utils import gather_animated_node
+from ..anim_extra_utils import gather_animated_node, get_impacted_data
 
 
 @cached
@@ -56,16 +56,8 @@ def gather_fcurve_channel_target_extras(
         custom_property: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
-    # TODOEXTRAS: add other type
-    # factorize
-    impacted_data = {
-        'OBJECT': 'nodes',
-        'BONE': 'nodes',
-        'MESH': 'meshes',
-        'MATERIAL': 'materials',
-        'NODETREE': 'materials',
-        'LIGHT': 'extensions/KHR_lights_punctual/lights',
-        'CAMERA': 'cameras'}.get(id_type)
+    impacted_data = get_impacted_data(id_type)
+
     if impacted_data is None:
         export_settings['log'].warning("Unsupported type for animation pointer extras: " + id_type)
         return None
@@ -94,14 +86,7 @@ def gather_fcurve_channel_target_data(
         prop: str,
         export_settings) -> gltf2_io.AnimationChannelTarget:
 
-    impacted_data = {
-        'OBJECT': 'nodes',
-        'BONE': 'nodes',
-        'MESH': 'meshes',
-        'MATERIAL': 'materials',
-        'NODETREE': 'materials',
-        'LIGHT': 'extensions/KHR_lights_punctual/lights',
-        'CAMERA': 'cameras'}.get(id_type)
+    impacted_data = get_impacted_data(id_type)
 
     # TODO complete the list of properties that need to be renamed for glTF
     # TODO : use the paths stored instead ?

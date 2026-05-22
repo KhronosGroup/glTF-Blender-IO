@@ -128,13 +128,13 @@ def gather_animated_blender_id(blender_main_type, blender_type_data, blender_id,
                 used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
             elif blender_type_data == "objects":
                 used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
-            elif blender_type_data == "bones":
+            elif blender_type_data == "bones" and bone_name is not None:
                 bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
                 used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
             else:
                 used_blender_id = blender_id
         else:
-            if blender_type_data == "bones":
+            if blender_type_data == "bones" and bone_name is not None:
                 bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
                 used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
             else:
@@ -143,3 +143,15 @@ def gather_animated_blender_id(blender_main_type, blender_type_data, blender_id,
         used_blender_id = blender_id
 
     return used_blender_id
+
+
+def get_impacted_data(id_type):
+
+    return {
+        'OBJECT': 'nodes',
+        'BONE': 'nodes',
+        'MESH': 'meshes',
+        'MATERIAL': 'materials',
+        'NODETREE': 'materials',
+        'LIGHT': 'extensions/KHR_lights_punctual/lights',
+        'CAMERA': 'cameras'}.get(id_type)

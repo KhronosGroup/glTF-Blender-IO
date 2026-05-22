@@ -14,7 +14,6 @@
 
 import bpy
 from ....io.com import gltf2_io
-from ...com.extras import generate_extras
 from ..tree import VExportNode
 from .drivers import get_sk_drivers
 from .sampled.armature.channels import gather_armature_sampled_channels
@@ -22,6 +21,7 @@ from .sampled.object.channels import gather_object_sampled_channels
 from .sampled.shapekeys.channels import gather_sk_sampled_channels
 from .sampled.data.channels import gather_data_sampled_channels
 from .anim_utils import link_samplers, add_slide_data
+from .anim_extra_utils import gather_blender_element
 
 
 def gather_scene_animations(export_settings):
@@ -236,25 +236,12 @@ def gather_scene_animations(export_settings):
                 if len(export_settings['KHR_animation_pointer']['extras'][extra_type][extra]['paths']) == 0:
                     continue
 
-                # TODO : factorize with extras_caching code
-                if extra_type == 'objects':
-                    blender_element = [obj for obj in bpy.data.objects if id(obj) == extra][0]
-                elif extra_type == 'bones':
-                    continue
-                    # Already managed in armature
-                elif extra_type == 'materials':
-                    blender_element = export_settings['material_identifiers'][extra]['blender']
-                elif extra_type == 'lights':
-                    blender_element = [light for light in bpy.data.lights if id(light) == extra][0]
-                elif extra_type == 'cameras':
-                    blender_element = [cam for cam in bpy.data.cameras if id(cam) == extra][0]
-                elif extra_type == 'scenes':
-                    blender_element = [scene for scene in bpy.data.scenes if id(scene) == extra][0]
-                elif extra_type == 'animations':
-                    blender_element = [action for action in bpy.data.actions if id(action) == extra][0]
-                elif extra_type == 'meshes':
-                    blender_element = export_settings['mesh_identifiers'][extra]['blender']
-                else:
+                if extra_type == "bones":
+                    continue  # Already managed in armature
+
+                blender_element, _, _ = gather_blender_element('extras', extra_type, extra, export_settings)
+
+                if blender_element is None:
                     continue
 
                 export_settings['ranges'][extra] = {}
