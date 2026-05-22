@@ -157,3 +157,22 @@ def get_impacted_data(id_type):
         'CAMERA': 'cameras'}.get(id_type)
     # Warning for devs: there is another dict in generate_extras
     # Please keep them in sync for new entries
+
+
+def get_gltf_name_from_blender_property(id_type, elem_uuid, blender_property, export_settings):
+    # Retrieve data in paths to get corresponding glTF names from Blender ones
+    id_type = {'LIGHT': 'lights', 'CAMERA': 'cameras', 'MATERIAL': 'materials'}.get(id_type)
+
+    if id_type is None:
+        return blender_property
+
+    for path in export_settings['KHR_animation_pointer'][None][id_type][elem_uuid]['paths'].keys():
+        if path == blender_property:
+            return export_settings['KHR_animation_pointer'][None][id_type][elem_uuid]['paths'][path]['path'].split(
+                "/")[-1]
+
+    # Of course, there are always exceptions :)
+    if id_type == "cameras":
+        return {'lens': 'yfov'}.get(blender_property, blender_property)
+
+    return blender_property

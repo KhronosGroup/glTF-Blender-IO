@@ -18,7 +18,7 @@ from .....io.com import gltf2_io
 from .....io.exp.user_extensions import export_user_extensions
 from ....com.conversion import get_target
 from ...cache import cached
-from ..anim_extra_utils import gather_animated_node, get_impacted_data
+from ..anim_extra_utils import gather_animated_node, get_impacted_data, get_gltf_name_from_blender_property
 
 
 @cached
@@ -88,15 +88,7 @@ def gather_fcurve_channel_target_data(
 
     impacted_data = get_impacted_data(id_type)
 
-    # TODO complete the list of properties that need to be renamed for glTF
-    # TODO : use the paths stored instead ?
-    gltf_prop = {
-        'energy': 'intensity',
-        'lens': 'yfov',
-        'ortho_scale': 'xmag',
-        'clip_start': 'znear',
-        'clip_end': 'zfar',
-    }.get(prop, prop)
+    gltf_prop = get_gltf_name_from_blender_property(id_type, elem_uuid, prop, export_settings)
 
     animation_channel_target = gltf2_io.AnimationChannelTarget(
         extensions=None,
