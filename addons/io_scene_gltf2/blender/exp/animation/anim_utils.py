@@ -24,6 +24,7 @@ from .sampled.object.action_sampled import gather_action_object_sampled
 from .sampled.shapekeys.channels import gather_sampled_sk_channel
 from .sampled.data.channels import gather_data_sampled_channels
 from .drivers import get_sk_drivers
+from .anim_extra_utils import gather_blender_element
 
 
 def link_samplers(animation: gltf2_io.Animation, export_settings):
@@ -304,28 +305,8 @@ def bake_data_animation(
     if (export_settings['gltf_bake_animation'] is True
             or export_settings['gltf_animation_mode'] == "NLA_TRACKS"):
 
-        if blender_main_type is None:
-            if blender_type_data == "materials":
-                blender_element = export_settings['material_identifiers'][blender_id]['blender']
-            elif blender_type_data == "cameras":
-                blender_element = [i for i in bpy.data.cameras if id(i) == blender_id][0]
-            elif blender_type_data == "lights":
-                blender_element = [i for i in bpy.data.lights if id(i) == blender_id][0]
-            else:
-                pass  # Should not happen
-        else:
-            if blender_type_data == "objects":
-                blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
-            elif blender_type_data == "meshes":
-                blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
-            elif blender_type_data == "materials":
-                blender_element = export_settings['material_identifiers'][blender_id]['blender']
-            elif blender_type_data == "cameras":
-                blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-            elif blender_type_data == "lights":
-                blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-            else:
-                pass  # TODO
+        blender_element, _, _ = gather_blender_element(
+            blender_main_type, blender_type_data, blender_id, export_settings)
 
         # Export now KHR_animation_pointer for materials / light / camera / extras
         for i in [a for a in export_settings['KHR_animation_pointer']

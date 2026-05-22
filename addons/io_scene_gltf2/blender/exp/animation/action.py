@@ -501,7 +501,6 @@ def gather_data_action_animations(blender_main_type, blender_type_data, blender_
     animations = []
 
     blender_element = None
-    on_type = None
     if blender_type_data == "lights":
         blender_element = [l for l in bpy.data.lights if id(l) == blender_id][0]
     elif blender_type_data == "cameras":

@@ -21,6 +21,7 @@ from ..tree import VExportNode
 from .anim_utils import merge_tracks_perform, bake_animation, bake_data_animation, add_slide_data, reset_bone_matrix, reset_sk_data
 from .drivers import get_sk_drivers
 from .sampled.sampling_cache import get_cache_data
+from .anim_extra_utils import gather_blender_element
 
 
 class TracksData:
@@ -575,32 +576,7 @@ def gather_data_track_animations(
     # Collect all tracks affecting this object.
     blender_tracks = __get_data_blender_tracks(blender_main_type, blender_type_data, blender_id, export_settings)
 
-    if blender_main_type is None:
-        if blender_type_data == "materials":
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-        elif blender_type_data == "cameras":
-            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-        else:
-            pass  # Should not happen
-    else:
-        if blender_type_data == "materials":
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-        elif blender_type_data == "meshes":
-            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
-        elif blender_type_data == "objects":
-            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
-        elif blender_type_data == "cameras":
-            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-        elif blender_type_data == "bones":
-            blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_armature_object']
-            blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_bone_name']
-            blender_element = blender_arma_object
-        else:
-            pass  # TODO
+    blender_element, _, _ = gather_blender_element(blender_main_type, blender_type_data, blender_id, export_settings)
 
     # Keep current situation
     current_action = None
@@ -654,7 +630,6 @@ def gather_data_track_animations(
                 break
 
     # Mute all channels
-    # TODO what to mute for extras meshes? for objects ?
     if blender_type_data == "materials":
         for track_group in blender_tracks.loop_on_type("MATERIAL"):
             for track in track_group.tracks:
@@ -771,43 +746,8 @@ def __get_data_blender_tracks(blender_main_type, blender_type_data, blender_id, 
 
 
 def __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, export_settings):
-    if blender_main_type is None:
-        if blender_type_data == "materials":
-            # Special cases for materials, where, when apply modifiers, the original material changed
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-            on_type = "MATERIAL"
-        elif blender_type_data == "cameras":
-            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-            on_type = "CAMERA"
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-            on_type = "LIGHT"
-        else:
-            pass  # Should not happen
-    else:
-        if blender_type_data == "materials":
-            # Special cases for materials, where, when apply modifiers, the original material changed
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-            on_type = "MATERIAL"
-        elif blender_type_data == "meshes":
-            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
-            on_type = "MESH"
-        elif blender_type_data == "objects":
-            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
-            on_type = "OBJECT"
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-            on_type = "LIGHT"
-        elif blender_type_data == "cameras":
-            blender_element = [cam for cam in bpy.data.cameras if id(cam) == blender_id][0]
-            on_type = "CAMERA"
-        elif blender_type_data == "bones":
-            blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_armature_object']
-            blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][blender_id]['blender_bone_name']
-            blender_element = blender_arma_object
-            on_type = "OBJECT"
-        else:
-            pass  # TODO
+    blender_element, _, on_type = gather_blender_element(
+        blender_main_type, blender_type_data, blender_id, export_settings)
 
     if not blender_element.animation_data:
         return TracksData()
@@ -869,22 +809,8 @@ def __get_nla_tracks_data(blender_main_type, blender_type_data, blender_id, expo
 
 def __get_nla_tracks_material_node_tree(blender_main_type, blender_type_data, blender_id, export_settings):
     on_type = "NODETREE"
-    if blender_main_type is None:
-        if blender_type_data == "materials":
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-    else:
-        if blender_type_data == "materials":
-            blender_element = export_settings['material_identifiers'][blender_id]['blender']
-        elif blender_type_data == "meshes":
-            blender_element = export_settings['mesh_identifiers'][blender_id]['blender']
-        elif blender_type_data == "objects":
-            blender_element = [obj for obj in bpy.data.objects if id(obj) == blender_id][0]
-        elif blender_type_data == "lights":
-            blender_element = [light for light in bpy.data.lights if id(light) == blender_id][0]
-        else:
-            pass  # TODO
+
+    blender_element, _, _ = gather_blender_element(blender_main_type, blender_type_data, blender_id, export_settings)
 
     if not blender_element.node_tree:
         return TracksData()

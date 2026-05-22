@@ -14,6 +14,7 @@
 
 from ......io.com import gltf2_io
 from ....cache import cached
+from ...anim_extra_utils import gather_animated_node_for_data, gather_animated_blender_id
 import typing
 
 
@@ -47,59 +48,20 @@ def __gather_extras(blender_type_data, blender_id, channel, export_settings):
 
 
 def __gather_node(blender_main_type, blender_type_data, blender_id, bone_name, export_settings):
-    if blender_main_type is None:
-        if blender_type_data == "materials":
-            return export_settings['KHR_animation_pointer'][blender_main_type]['materials'][blender_id]['glTF_material']
-        elif blender_type_data == "lights":
-            return export_settings['KHR_animation_pointer'][blender_main_type]['lights'][blender_id]['glTF_light']
-        elif blender_type_data == "cameras":
-            return export_settings['KHR_animation_pointer'][blender_main_type]['cameras'][blender_id]['glTF_camera']
-        else:
-            pass  # This should never happen
-    elif blender_main_type == "extras":
-        if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
-            if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
-                if blender_type_data == "meshes":
-                    used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
-                elif blender_type_data == "objects":
-                    used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
-                elif blender_type_data == "bones":
-                    bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                    used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-                else:
-                    used_blender_id = blender_id
-            else:
-                if blender_type_data == "bones":
-                    bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                    used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-                else:
-                    used_blender_id = blender_id
-            return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['glTF_extras']
-    else:
-        pass  # This should never happen
+    return gather_animated_node_for_data(blender_main_type, blender_type_data, blender_id, bone_name, export_settings)
 
 
 def __gather_path(blender_main_type, blender_type_data, blender_id, bone_name, channel, export_settings):
-    # TODO, centralize this logic, used multiple times in the codebase (not only in this file)
-    if blender_main_type == "extras":
-        if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
-            if blender_type_data == "meshes":
-                used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
-            elif blender_type_data == "objects":
-                used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
-            elif blender_type_data == "bones":
-                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-                channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
-            else:
-                used_blender_id = blender_id
-        else:
-            if blender_type_data == "bones":
-                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-            else:
-                used_blender_id = blender_id
-    else:
-        used_blender_id = blender_id
+    used_blender_id = gather_animated_blender_id(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        bone_name,
+        export_settings)
+
+    if blender_main_type == "extras" and \
+            blender_type_data == "bones" and \
+            export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+        channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
 
     return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['paths'][channel]['path']

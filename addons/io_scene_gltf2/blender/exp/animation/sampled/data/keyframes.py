@@ -19,6 +19,7 @@ from .....com.conversion import PBR_WATTS_TO_LUMENS
 from ....cache import cached
 from ...keyframes import Keyframe
 from ..sampling_cache import get_cache_data
+from ...anim_extra_utils import gather_animated_blender_id
 
 
 @cached
@@ -34,32 +35,29 @@ def gather_data_sampled_keyframes(
         additional_key,  # Used to differentiate between material / material node_tree
         export_settings):
 
-    # Factorize TODOPointer EXTRAS
     range_blender_id = blender_id
     action_name_for_range = action_name
-    if blender_main_type == "extras":
-        if export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
-            if blender_type_data == "meshes":
-                used_blender_id = export_settings['vtree'].nodes[blender_id].mesh_id
-            elif blender_type_data == "objects":
-                used_blender_id = export_settings['vtree'].nodes[blender_id].blender_object_id
-            elif blender_type_data == "bones":
-                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-                channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
-                range_blender_id = blender_id[0]
-            else:
-                used_blender_id = blender_id
-        else:
-            if blender_type_data == "bones":
-                bone_uuid = export_settings['vtree'].nodes[blender_id[0]].bones[bone_name]
-                used_blender_id = id(export_settings['vtree'].nodes[bone_uuid].blender_bone)
-                range_blender_id = blender_id[0]
-                action_name = used_blender_id
-            else:
-                used_blender_id = blender_id
-    else:
-        used_blender_id = blender_id
+
+    if blender_main_type == "extras" and blender_type_data == "bones":
+        range_blender_id = blender_id[0]
+
+    if blender_main_type == "extras" and \
+            blender_type_data == "bones" and \
+            export_settings['gltf_animation_mode'] in ["ACTIONS", "ACTIVE_ACTIONS"]:
+        channel = channel.replace("pose.bones[\"" + bone_name + "\"]", "")
+
+    used_blender_id = gather_animated_blender_id(
+        blender_main_type,
+        blender_type_data,
+        blender_id,
+        bone_name,
+        export_settings
+    )
+
+    if blender_main_type == "extras" and \
+        blender_type_data == "bones" and \
+            export_settings['gltf_animation_mode'] not in ["ACTIONS", "ACTIVE_ACTIONS"]:
+        action_name = used_blender_id
 
     # Use object_uuid always, here (so keep range_blender_id, that comes from blender_id not overriden)
     start_frame = export_settings['ranges'][range_blender_id][action_name_for_range]['start']

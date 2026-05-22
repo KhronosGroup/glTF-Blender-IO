@@ -18,7 +18,7 @@ from .....io.com import gltf2_io
 from .....io.exp.user_extensions import export_user_extensions
 from ....com.conversion import get_target
 from ...cache import cached
-from ...joints import gather_joint_vnode
+from ..anim_extra_utils import gather_animated_node
 
 
 @cached
@@ -129,35 +129,7 @@ def __gather_node(id_type: str,
                   export_settings
                   ) -> gltf2_io.Node:
 
-    # TODO factorize with same on sample channel target
-
-    if id_type == 'OBJECT':
-
-        if bone is not None:
-            return gather_joint_vnode(export_settings['vtree'].nodes[elem_uuid].bones[bone], export_settings)
-        else:
-            return export_settings['vtree'].nodes[elem_uuid].node
-
-    elif id_type == "MESH":
-        return export_settings['vtree'].nodes[elem_uuid].node.mesh
-
-    elif id_type == "KEY":
-        return export_settings['vtree'].nodes[elem_uuid].node
-
-    elif id_type == "MATERIAL":
-        return export_settings['material_identifiers'][elem_uuid]['gltf']
-
-    elif id_type == "NODETREE":
-        return export_settings['material_identifiers'][elem_uuid]['gltf']
-
-    elif id_type == "LIGHT":
-        return export_settings['KHR_animation_pointer'][None]['lights'][elem_uuid]['glTF_light']
-
-    elif id_type == "CAMERA":
-        return export_settings['KHR_animation_pointer'][None]['cameras'][elem_uuid]['glTF_camera']
-
-    else:
-        pass  # TODO, not implemeted (yet) for custom prop on other type
+    return gather_animated_node(id_type, elem_uuid, bone, export_settings)
 
 
 def __gather_path(id_type: str,

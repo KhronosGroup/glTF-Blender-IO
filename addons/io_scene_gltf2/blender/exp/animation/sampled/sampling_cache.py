@@ -20,6 +20,7 @@ from .....blender.com.conversion import inverted_trs_mapping_node, texture_trans
 from ...cache import datacache
 from ...tree import VExportNode
 from ..drivers import get_sk_drivers
+from ..anim_extra_utils import gather_blender_element
 
 # Warning : If you change some parameter here, need to be changed in cache system
 
@@ -750,25 +751,10 @@ def extras_caching(data, action_name, slot_identifier, frame, export_settings):
             if len(export_settings['KHR_animation_pointer']['extras'][extra_type][extra]['paths']) == 0:
                 continue
 
-            if extra_type == "objects":
-                blender_element = [m for m in bpy.data.objects if id(m) == extra][0]
-            elif extra_type == "bones":
-                blender_arma_object = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_armature_object']
-                blender_bone_name = export_settings['KHR_animation_pointer']['extras']['bones'][extra]['blender_bone_name']
-                blender_element = blender_arma_object
-            elif extra_type == "materials":
-                blender_element = export_settings['material_identifiers'][extra]['blender']
-            elif extra_type == "lights":
-                blender_element = [m for m in bpy.data.lights if id(m) == extra][0]
-            elif extra_type == "cameras":
-                blender_element = [m for m in bpy.data.cameras if id(m) == extra][0]
-            elif extra_type == "scenes":
-                blender_element = [s for s in bpy.data.scenes if id(s) == extra][0]
-            elif extra_type == "meshes":
-                blender_element = export_settings['mesh_identifiers'][extra]['blender']
-            elif extra_type == "animations":
-                blender_element = [a for a in bpy.data.actions if id(a) == extra][0]
-            else:
+            blender_element, blender_bone_name, _ = gather_blender_element(
+                "extras", extra_type, extra, export_settings)
+
+            if blender_element is None:
                 continue
 
             if extra not in data.keys():
