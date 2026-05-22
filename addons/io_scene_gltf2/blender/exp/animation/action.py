@@ -208,7 +208,8 @@ def gather_actions_animations(export_settings):
 
         # Light animation
         if export_settings['gltf_lights']:
-            for light in bpy.data.lights:  # TODO check if light is exported?
+            for light in [light for light in bpy.data.lights if id(
+                    light) in export_settings.get('lamp_identifiers', {}).keys()]:
                 animations_, merged_tracks = gather_data_action_animations(
                     None, 'lights', id(light), merged_tracks, len(animations), export_settings)
                 animations += animations_
@@ -220,7 +221,10 @@ def gather_actions_animations(export_settings):
 
         # Camera
         if export_settings['gltf_cameras']:
-            for cam in bpy.data.cameras:  # TODO check if camera is exported?
+            for cam in [
+                cam for cam in bpy.data.cameras if id(cam) in export_settings.get(
+                    'camera_identifiers',
+                    {}).keys()]:
                 animations_, merged_tracks = gather_data_action_animations(
                     None, 'cameras', id(cam), merged_tracks, len(animations), export_settings)
                 animations += animations_

@@ -111,6 +111,10 @@ def __gather_camera(vnode, export_settings):
 
     export_settings['current_paths'] = {}
 
+    if 'camera_identifiers' not in export_settings.keys():
+        export_settings['camera_identifiers'] = {}
+    export_settings['camera_identifiers'][id(vnode.blender_object.data)] = {}
+
     return cam
 
 
@@ -260,6 +264,10 @@ def __gather_extensions(vnode, export_settings):
                     blender_lamp)]['glTF_light'] = light_extension
 
             export_settings['current_paths'] = {}
+
+        if 'lamp_identifiers' not in export_settings.keys():
+            export_settings['lamp_identifiers'] = {}
+        export_settings['lamp_identifiers'][id(blender_lamp)] = {}
 
     return extensions if extensions else None
 
