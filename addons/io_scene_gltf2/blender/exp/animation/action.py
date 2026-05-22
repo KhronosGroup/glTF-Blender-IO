@@ -510,7 +510,9 @@ def gather_data_action_animations(blender_main_type, blender_type_data, blender_
     elif blender_type_data == "cameras":
         blender_element = [c for c in bpy.data.cameras if id(c) == blender_id][0]
     else:
-        pass  # TODO
+        pass
+        # We should not be here
+        # If we do, it means that some animation pointer is not well implemented
 
     # Collect all 'actions' affecting this element.
     blender_actions = __get_data_blender_actions(blender_main_type, blender_type_data, blender_id, export_settings)
@@ -530,10 +532,10 @@ def gather_data_action_animations(blender_main_type, blender_type_data, blender_
                 if blender_element.animation_data.is_property_readonly('action'):
                     blender_element.animation_data.use_tweak_mode = False
                 try:
-                    # TODOPOinter hook
+                    # Add a hook?
                     blender_element.animation_data.action = blender_action
                     blender_element.animation_data.action_slot = slot.slot
-                    # TODOPointer hook
+                    # Add a hook?
                 except Exception as _e:
                     error = "Action is readonly. Please check NLA editor"
                     export_settings['log'].warning(
@@ -542,7 +544,7 @@ def gather_data_action_animations(blender_main_type, blender_type_data, blender_
                     continue
             else:
                 # No need to switch action, but we call the hook anyway, in case of user extension
-                # TODOPOINTER hook
+                # Add a hook?
                 pass
 
             if export_settings['gltf_force_sampling'] is True:
@@ -640,10 +642,10 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     if blender_material.node_tree.animation_data.is_property_readonly('action'):
                         blender_material.node_tree.animation_data.use_tweak_mode = False
                     try:
-                        # TODOPOinter hook
+                        # Add a hook?
                         blender_material.node_tree.animation_data.action = blender_action
                         blender_material.node_tree.animation_data.action_slot = slot.slot
-                        # TODOPointer hook
+                        # Add a hook?
                     except Exception as _e:
                         error = "Action is readonly. Please check NLA editor"
                         export_settings['log'].warning(
@@ -652,7 +654,7 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                         continue
                 else:
                     # No need to switch action, but we call the hook anyway, in case of user extension
-                    # TODOPOINTER hook
+                    # Add a hook?
                     pass
 
                 if export_settings['gltf_force_sampling'] is True:
@@ -674,10 +676,10 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     if blender_material.animation_data.is_property_readonly('action'):
                         blender_material.animation_data.use_tweak_mode = False
                     try:
-                        # TODOPOinter hook
+                        # Add a hook?
                         blender_material.animation_data.action = blender_action
                         blender_material.animation_data.action_slot = slot.slot
-                        # TODOPointer hook
+                        # Add a hook?
                     except Exception as _e:
                         error = "Action is readonly. Please check NLA editor"
                         export_settings['log'].warning(
@@ -686,7 +688,7 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                         continue
                 else:
                     # No need to switch action, but we call the hook anyway, in case of user extension
-                    # TODOPOINTER hook
+                    # Add a hook?
                     pass
 
                 if export_settings['gltf_force_sampling'] is True:
@@ -700,7 +702,7 @@ def gather_material_action_animations(mat_uuid, tracks, offset, export_settings)
                     if channels:
                         all_channels.extend(channels)
 
-                    # Add extra samplers TODOPOINTER
+                    # TODO: Add extra samplers for materials?
 
                     # We went through all slots of the action, we can now create the animation
         if len(all_channels) != 0:
