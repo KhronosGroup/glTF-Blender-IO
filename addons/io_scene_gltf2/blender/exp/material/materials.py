@@ -19,6 +19,7 @@ from ....io.com import gltf2_io
 from ....io.com.gltf2_io_extensions import Extension
 from ....io.exp.user_extensions import export_user_extensions
 from ..cache import cached, cached_by_key
+from ...com.material_helpers import get_gltf_old_group_node_name
 from . import unlit as gltf2_unlit
 from . import texture_info as gltf2_blender_gather_texture_info
 from . import pbr_metallic_roughness as gltf2_pbr_metallic_roughness
@@ -56,6 +57,9 @@ class BlenderMaterialIndentifier:
         self.__set_used_material()
         self.name = self.material.name
 
+        # Cache system
+        self.nodes = {}  # Cache by type
+
     def __set_used_material(self):
         # Currently, there are a few cases where we can not use inline material,
         # so we need to keep the original one for those cases
@@ -88,6 +92,34 @@ class BlenderMaterialIndentifier:
             return False
 
         return True
+
+    def set_material_nodes(self, node_type):
+        """
+        Store result of __get_material_nodes in the Class instance, avoding to recalculate it several times
+        """
+        nodes = self.__get_material_nodes(
+            self.get_used_material().node_tree,
+            [self.get_used_material().node_tree], node_type)
+
+        self.nodes[node_type] = nodes
+
+    def __get_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
+        """
+        Recursively return all nodes inlcuding node groups for the materials
+        """
+
+        nodes = []
+        for node in [n for n in node_tree.nodes if isinstance(n, type) and not n.mute]:
+            nodes.append((node, group_path.copy()))
+
+        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
+        for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name !=
+                     get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
+            new_group_path = group_path.copy()
+            new_group_path.append(node)
+            nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
+
+        return nodes
 
 
 @cached
