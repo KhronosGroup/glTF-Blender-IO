@@ -105,7 +105,7 @@ class BlenderMaterialIndentifier:
 
     def __get_all_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
         """
-        Recursively return all nodes inlcuding node groups for the materials
+        Recursively return all nodes including node groups for the materials
         """
 
         nodes = []
