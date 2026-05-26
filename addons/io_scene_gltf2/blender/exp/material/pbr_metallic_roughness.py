@@ -77,7 +77,7 @@ def __gather_base_color_factor(bmat, export_settings):
 
     path_alpha = None
     path = None
-    alpha_socket = get_socket(bmat.get_used_material().node_tree, "Alpha")
+    alpha_socket = bmat.get_socket("Alpha")
     if alpha_socket.socket is not None and isinstance(alpha_socket.socket, bpy.types.NodeSocket):
         alpha_info = gather_alpha_info(alpha_socket.to_node_nav())
         vc_info['alpha'] = alpha_info['alphaColorAttrib']
@@ -88,9 +88,9 @@ def __gather_base_color_factor(bmat, export_settings):
     else:
         alpha_info = gather_alpha_info(None)
 
-    base_color_socket = get_socket(bmat.get_used_material().node_tree, "Base Color")
+    base_color_socket = bmat.get_socket("Base Color")
     if base_color_socket.socket is None:
-        base_color_socket = get_socket(bmat.get_used_material().node_tree, "BaseColor")
+        base_color_socket = bmat.get_socket("BaseColor")
     if base_color_socket.socket is None:
         base_color_socket = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "BaseColorFactor")
@@ -136,14 +136,14 @@ def __gather_base_color_factor(bmat, export_settings):
 
 
 def __gather_base_color_texture(bmat, export_settings):
-    base_color_socket = get_socket(bmat.get_used_material().node_tree, "Base Color")
+    base_color_socket = bmat.get_socket("Base Color")
     if base_color_socket.socket is None:
-        base_color_socket = get_socket(bmat.get_used_material().node_tree, "BaseColor")
+        base_color_socket = bmat.get_socket("BaseColor")
     if base_color_socket.socket is None:
         base_color_socket = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "BaseColor")
 
-    alpha_socket = get_socket(bmat.get_used_material().node_tree, "Alpha")
+    alpha_socket = bmat.get_socket("Alpha")
 
     # keep sockets that have some texture : color and/or alpha
     inputs = tuple(
@@ -182,7 +182,7 @@ def __gather_extras(bmat, export_settings):
 
 def __gather_metallic_factor(bmat, export_settings):
 
-    metallic_socket = get_socket(bmat.get_used_material().node_tree, "Metallic")
+    metallic_socket = bmat.get_socket("Metallic")
     if metallic_socket.socket is None:
         metallic_socket = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "MetallicFactor")
@@ -202,8 +202,8 @@ def __gather_metallic_factor(bmat, export_settings):
 
 
 def __gather_metallic_roughness_texture(bmat, orm_texture, export_settings):
-    metallic_socket = get_socket(bmat.get_used_material().node_tree, "Metallic")
-    roughness_socket = get_socket(bmat.get_used_material().node_tree, "Roughness")
+    metallic_socket = bmat.get_socket("Metallic")
+    roughness_socket = bmat.get_socket("Roughness")
 
     hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
@@ -239,7 +239,7 @@ def __gather_metallic_roughness_texture(bmat, orm_texture, export_settings):
 
 def __gather_roughness_factor(bmat, export_settings):
 
-    roughness_socket = get_socket(bmat.get_used_material().node_tree, "Roughness")
+    roughness_socket = bmat.get_socket("Roughness")
     if roughness_socket is None:
         roughness_socket = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "RoughnessFactor")

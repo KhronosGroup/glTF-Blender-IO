@@ -40,8 +40,8 @@ def export_volume(bmat, export_settings):
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
         return None, {}, {}
 
-    density_socket = get_socket(bmat.get_used_material().node_tree, 'Density', volume=True)
-    attenuation_color_socket = get_socket(bmat.get_used_material().node_tree, 'Color', volume=True)
+    density_socket = bmat.get_socket('Density', volume=True)
+    attenuation_color_socket = bmat.get_socket('Color', volume=True)
     # Even if density or attenuation are not set, we export volume extension
 
     if attenuation_color_socket.socket is not None and isinstance(

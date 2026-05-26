@@ -26,11 +26,9 @@ def export_anisotropy(bmat, export_settings):
     uvmap_infos = {}
     udim_infos = {}
 
-    anisotropy_socket = get_socket(bmat.get_used_material().node_tree, 'Anisotropic')
-    anisotropic_rotation_socket = get_socket(
-        bmat.get_used_material().node_tree,
-        'Anisotropic Rotation')
-    anisotropy_tangent_socket = get_socket(bmat.get_used_material().node_tree, 'Tangent')
+    anisotropy_socket = bmat.get_socket('Anisotropic')
+    anisotropic_rotation_socket = bmat.get_socket('Anisotropic Rotation')
+    anisotropy_tangent_socket = bmat.get_socket('Tangent')
 
     if anisotropy_socket.socket is None or anisotropic_rotation_socket.socket is None or anisotropy_tangent_socket.socket is None:
         return None, {}, {}
@@ -160,11 +158,9 @@ def export_anisotropy(bmat, export_settings):
 def export_anisotropy_from_grayscale_textures(bmat, export_settings):
     # There will be a texture, with a complex calculation (no direct channel mapping)
 
-    anisotropy_socket = get_socket(bmat.get_used_material().node_tree, 'Anisotropic')
-    anisotropic_rotation_socket = get_socket(
-        bmat.get_used_material().node_tree,
-        'Anisotropic Rotation')
-    anisotropy_tangent_socket = get_socket(bmat.get_used_material().node_tree, 'Tangent')
+    anisotropy_socket = bmat.get_socket('Anisotropic')
+    anisotropic_rotation_socket = bmat.get_socket('Anisotropic Rotation')
+    anisotropy_tangent_socket = bmat.get_socket('Tangent')
 
     sockets = (anisotropy_socket, anisotropic_rotation_socket, anisotropy_tangent_socket)
 

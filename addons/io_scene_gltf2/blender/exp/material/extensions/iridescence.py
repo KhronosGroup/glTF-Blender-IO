@@ -46,7 +46,7 @@ def export_iridescence(bmat, export_settings):
     # Cases where the extension is not exported:
 
     # No thickness socket found (no Principled Shader)
-    iridescence_thickness_socket = get_socket(bmat.get_used_material().node_tree, "Thin Film Thickness")
+    iridescence_thickness_socket = bmat.get_socket("Thin Film Thickness")
     if iridescence_thickness_socket.socket is None:
         return None, {}, {}
 
@@ -71,7 +71,7 @@ def export_iridescence(bmat, export_settings):
     # If not animated, it will be remove after export, because of the default value
 
     # IOR
-    iridescence_ior_socket = get_socket(bmat.get_used_material().node_tree, "Thin Film IOR")
+    iridescence_ior_socket = bmat.get_socket("Thin Film IOR")
     if abs(iridescence_ior_socket.socket.default_value - GLTF_IRIDESCENCE_IOR) > 0.0001:
         iridescence_extension['iridescenceIor'] = iridescence_ior_socket.socket.default_value
 

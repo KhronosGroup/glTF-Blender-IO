@@ -22,6 +22,7 @@ from .search_node_tree import \
     gather_color_info
 
 
+# TODO: move to a method of bmat
 def detect_shadeless_material(blender_material_node_tree, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
     with KHR_materials_unlit. Returns None if not. Otherwise, returns

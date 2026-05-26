@@ -24,9 +24,9 @@ from ..search_node_tree import \
 def export_sheen(bmat, export_settings):
     sheen_extension = {}
 
-    sheenTint_socket = get_socket(bmat.get_used_material().node_tree, "Sheen Tint")
-    sheenRoughness_socket = get_socket(bmat.get_used_material().node_tree, "Sheen Roughness")
-    sheen_socket = get_socket(bmat.get_used_material().node_tree, "Sheen Weight")
+    sheenTint_socket = bmat.get_socket("Sheen Tint")
+    sheenRoughness_socket = bmat.get_socket("Sheen Roughness")
+    sheen_socket = bmat.get_socket("Sheen Weight")
 
     if sheenTint_socket.socket is None or sheenRoughness_socket.socket is None or sheen_socket.socket is None:
         return None, {}, {}

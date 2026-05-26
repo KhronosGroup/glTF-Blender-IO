@@ -24,7 +24,7 @@ from ..search_node_tree import \
 
 
 def export_emission_factor(bmat, export_settings):
-    emissive_socket = get_socket(bmat.get_used_material().node_tree, "Emissive")
+    emissive_socket = bmat.get_socket("Emissive")
     if emissive_socket.socket is None:
         emissive_socket = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "EmissiveFactor")
@@ -89,7 +89,7 @@ def export_emission_factor(bmat, export_settings):
 
 
 def export_emission_texture(bmat, export_settings):
-    emissive = get_socket(bmat.get_used_material().node_tree, "Emissive")
+    emissive = bmat.get_socket("Emissive")
     if emissive.socket is None:
         emissive = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "Emissive")

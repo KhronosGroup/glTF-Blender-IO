@@ -43,7 +43,8 @@ from .search_node_tree import \
     get_node_socket, \
     get_material_nodes, \
     NodeSocket, \
-    gather_alpha_info
+    gather_alpha_info, \
+    check_if_is_linked_to_active_output
 
 
 class BlenderMaterialIndentifier:
@@ -93,6 +94,49 @@ class BlenderMaterialIndentifier:
 
         return True
 
+    def get_socket(self, name, volume=False):
+        """
+        For a given material input name, retrieve the corresponding node tree socket.
+
+        :param blender_material: a blender material for which to get the socket
+        :param name: the name of the socket
+        :return: a blender NodeSocket
+        """
+        if self.get_used_material().node_tree is not None:
+            # i = [input for input in blender_material.node_tree.inputs]
+            # o = [output for output in blender_material.node_tree.outputs]
+            if name == "Emissive":
+                # Check for a dedicated Emission node first, it must supersede the newer built-in one
+                # because the newer one is always present in all Principled BSDF materials.
+                emissive_socket = self.get_node_socket(bpy.types.ShaderNodeEmission, "Color")
+                if emissive_socket.socket is not None:
+                    return emissive_socket
+                # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission Color socket.
+                name = "Emission Color"
+                type = bpy.types.ShaderNodeBsdfPrincipled
+            elif name == "Background":
+                type = bpy.types.ShaderNodeBackground
+                name = "Color"
+            else:
+                if volume is False:
+                    type = bpy.types.ShaderNodeBsdfPrincipled
+                else:
+                    type = bpy.types.ShaderNodeVolumeAbsorption
+
+            return self.get_node_socket(type, name)
+
+        return NodeSocket(None, None)
+
+    def get_node_socket(self, node_type, socket_name):
+        if node_type not in self.nodes.keys():
+            self.set_material_nodes(node_type)
+
+        inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == socket_name]
+                     for node in self.nodes[node_type]], [])
+        if inputs:
+            return NodeSocket(inputs[0][0], inputs[0][1])
+        return NodeSocket(None, None)
+
     def set_material_nodes(self, node_type):
         """
         Store result of __get_all_material_nodes in the Class instance, avoiding to recalculate it several times
@@ -101,7 +145,14 @@ class BlenderMaterialIndentifier:
             self.get_used_material().node_tree,
             [self.get_used_material().node_tree], node_type)
 
-        self.nodes[node_type] = nodes
+        self.nodes[node_type] = [n for n in nodes if self.__check_if_is_linked_to_active_output_node(n) is True]
+
+    def __check_if_is_linked_to_active_output_node(self, node):
+        for output_socket in node[0].outputs:
+            res = check_if_is_linked_to_active_output(output_socket, node[1])  # TODO perf ?
+            if res is True:
+                return True
+        return False
 
     def __get_all_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
         """
@@ -406,7 +457,7 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
 
 
 def __gather_normal_texture(bmat, export_settings):
-    normal = get_socket(bmat.get_used_material().node_tree, "Normal")
+    normal = bmat.get_socket("Normal")
     normal_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
         normal, (normal,), export_settings)
 
@@ -440,15 +491,15 @@ def __gather_orm_texture(bmat, export_settings):
     # Check for the presence of Occlusion, Roughness, Metallic sharing a single image.
     # If not fully shared, return None, so the images will be cached and processed separately.
 
-    occlusion = get_socket(bmat.get_used_material().node_tree, "Occlusion")
+    occlusion = bmat.get_socket("Occlusion")
     if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
         occlusion = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "Occlusion")
         if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
-    metallic_socket = get_socket(bmat.get_used_material().node_tree, "Metallic")
-    roughness_socket = get_socket(bmat.get_used_material().node_tree, "Roughness")
+    metallic_socket = bmat.get_socket("Metallic")
+    roughness_socket = bmat.get_socket("Roughness")
 
     hasMetal = metallic_socket.socket is not None and has_image_node_from_socket(metallic_socket, export_settings)
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
@@ -505,7 +556,7 @@ def __gather_orm_texture(bmat, export_settings):
 
 
 def __gather_occlusion_texture(bmat, orm_texture, export_settings):
-    occlusion = get_socket(bmat.get_used_material().node_tree, "Occlusion")
+    occlusion = bmat.get_socket("Occlusion")
     if occlusion.socket is None:
         occlusion = get_socket_from_gltf_material_node(
             bmat.get_used_material().node_tree, "Occlusion")

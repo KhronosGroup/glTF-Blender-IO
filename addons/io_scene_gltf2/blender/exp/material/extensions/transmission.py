@@ -27,7 +27,7 @@ def export_transmission(bmat, export_settings):
     transmission_extension = {}
     transmission_slots = ()
 
-    transmission_socket = get_socket(bmat.get_used_material().node_tree, 'Transmission Weight')
+    transmission_socket = bmat.get_socket('Transmission Weight')
 
     if transmission_socket.socket is not None and isinstance(
             transmission_socket.socket,

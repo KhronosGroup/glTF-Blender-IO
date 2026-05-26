@@ -794,6 +794,8 @@ def get_node_socket(blender_material_node_tree, type, name):
         return NodeSocket(inputs[0][0], inputs[0][1])
     return NodeSocket(None, None)
 
+# TODO : when used by importer for animation pointer ...
+
 
 def get_socket(blender_material_nodetree, name: str, volume=False):
     """
