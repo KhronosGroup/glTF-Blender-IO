@@ -95,15 +95,15 @@ class BlenderMaterialIndentifier:
 
     def set_material_nodes(self, node_type):
         """
-        Store result of __get_material_nodes in the Class instance, avoding to recalculate it several times
+        Store result of __get_all_material_nodes in the Class instance, avoiding to recalculate it several times
         """
-        nodes = self.__get_material_nodes(
+        nodes = self.__get_all_material_nodes(
             self.get_used_material().node_tree,
             [self.get_used_material().node_tree], node_type)
 
         self.nodes[node_type] = nodes
 
-    def __get_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
+    def __get_all_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
         """
         Recursively return all nodes inlcuding node groups for the materials
         """
@@ -117,7 +117,7 @@ class BlenderMaterialIndentifier:
                      get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
             new_group_path = group_path.copy()
             new_group_path.append(node)
-            nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
+            nodes.extend(self.__get_all_material_nodes(node.node_tree, new_group_path, type))
 
         return nodes
 
