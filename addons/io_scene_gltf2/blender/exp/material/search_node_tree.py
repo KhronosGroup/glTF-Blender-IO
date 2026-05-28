@@ -17,7 +17,7 @@
 #
 
 import bpy
-from io_scene_gltf2.blender.exp.cache import cached
+from io_scene_gltf2.blender.exp.cache import cached, cached_by_key
 from ...com.material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_old_group_node_name
 from ....blender.com.conversion import texture_transform_blender_to_gltf, inverted_trs_mapping_node
 import typing
@@ -31,6 +31,9 @@ class Filter:
 
     def __call__(self, shader_node):
         return True
+
+    def __name__(self):
+        return self.__class__.__name__
 
 
 class FilterByName(Filter):
@@ -48,6 +51,9 @@ class FilterByName(Filter):
     def __call__(self, shader_node):
         return shader_node.name == self.name
 
+    def __name__(self):
+        return "FilterByName(" + self.name + ")"
+
 
 class FilterByType(Filter):
     """Filter the material node tree by type."""
@@ -59,6 +65,9 @@ class FilterByType(Filter):
     def __call__(self, shader_node):
         return isinstance(shader_node, self.type)
 
+    def __name__(self):
+        return "FilterByType(" + self.type.__name__ + ")"
+
 
 class NodeTreeSearchResult:
     def __init__(self,
@@ -68,6 +77,76 @@ class NodeTreeSearchResult:
         self.shader_node = shader_node
         self.path = path
         self.group_path = group_path
+
+
+class NodeTreeSearcher:
+    """Helper for searching through node trees."""
+
+    @classmethod
+    def from_socket(cls, start_socket, filter, export_settings):
+
+        if start_socket.socket is None:
+            return []
+
+        # Search if direct node of the socket matches the filter
+        if filter(start_socket.socket.node):
+            return [NodeTreeSearchResult(start_socket.socket.node, [], start_socket.group_path.copy())]
+
+        return cls.__search_from_socket(
+            start_socket.socket,
+            start_socket.group_path.copy(),
+            [],
+            filter,
+            export_settings)
+
+    @classmethod
+    @cached_by_key(key=lambda cls, start_socket, group_path, search_path, filter,
+                   export_settings: (start_socket.as_pointer(), tuple(id(g) for g in group_path), filter.__name__))
+    def __search_from_socket(cls, start_socket, group_path, search_path, filter, export_settings):
+        def __get_socket_index(sockets, socket):
+            for i, soc in enumerate(sockets):
+                if soc == socket:
+                    return i
+            assert False
+
+        results = []
+        for link in start_socket.links:  # TODO perf ?
+            # follow the link to a shader node
+            linked_node = link.from_node
+
+            if linked_node.type == "GROUP":
+                group_output_node = [node for node in linked_node.node_tree.nodes if node.type == "GROUP_OUTPUT"][0]
+                i = __get_socket_index(linked_node.outputs, link.from_socket)
+                socket = group_output_node.inputs[i]
+                linked_results = cls.__search_from_socket(
+                    socket, group_path.copy(), search_path + [link], filter, export_settings)
+                if linked_results:
+                    search_path.append(link)
+                    results += linked_results
+                continue
+
+            if linked_node.type == "GROUP_INPUT":
+                i = __get_socket_index(linked_node.outputs, link.from_socket)
+                socket = group_path[-1].inputs[i]
+                linked_results = cls.__search_from_socket(
+                    socket, group_path[:-1].copy(), search_path + [link], filter, export_settings)
+                if linked_results:
+                    search_path.append(link)
+                    results += linked_results
+                continue
+
+            # check if the node matches the filter
+            if filter(linked_node):
+                results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path.copy()))
+            # traverse into inputs of the node
+            for input_socket in linked_node.inputs:
+                linked_results = cls.__search_from_socket(
+                    input_socket, group_path.copy(), search_path + [link], filter, export_settings)
+                if linked_results:
+                    search_path.append(link)
+                    results += linked_results
+
+        return results
 
 
 # TODO: cache these searches
@@ -147,9 +226,11 @@ def from_socket(start_socket: NodeTreeSearchResult,
 
 @cached
 def get_texture_node_from_socket(socket, export_settings):
-    result = from_socket(
+
+    result = NodeTreeSearcher.from_socket(
         socket,
-        FilterByType(bpy.types.ShaderNodeTexImage))
+        FilterByType(bpy.types.ShaderNodeTexImage),
+        export_settings)
     if not result:
         return None
     if result[0].shader_node.image is None:
@@ -945,22 +1026,22 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
         path_['length'] = 2
         path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
         path_['vector_type'] = mapping_node.node.vector_type
-        export_settings['current_texture_transform']["node_tree." + \
-            mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
+        export_settings['current_texture_transform']["node_tree." +
+                                                     mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." + \
-        mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+    export_settings['current_texture_transform']["node_tree." +
+                                                 mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." + \
-        mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
+    export_settings['current_texture_transform']["node_tree." +
+                                                 mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform
 

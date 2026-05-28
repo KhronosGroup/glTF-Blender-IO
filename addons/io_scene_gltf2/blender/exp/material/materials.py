@@ -39,7 +39,6 @@ from .extensions.dispersion import export_dispersion
 from .search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
-    get_socket, \
     get_node_socket, \
     get_material_nodes, \
     NodeSocket, \

@@ -15,7 +15,8 @@
 import bpy
 from ...io.imp.user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..exp.material.search_node_tree import NodeSocket, previous_node, from_socket, get_socket, FilterByType, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket  # TODO move to COM
+from ..exp.material.search_node_tree import NodeSocket, previous_node, get_socket, FilterByType, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket, NodeTreeSearcher  # TODO move to COM
+
 from ..exp.sampler import detect_manual_uv_wrapping  # TODO move to COM
 from ..exp.material.unlit import detect_shadeless_material  # TODO move to COM
 from ..com.conversion import texture_transform_gltf_to_blender
@@ -522,9 +523,10 @@ class BlenderPointerAnim():
                 pointer_tab[4] == "KHR_materials_clearcoat" and \
                 pointer_tab[5] == "clearcoatNormalTexture" and \
                 pointer_tab[6] == "scale":
-            result = from_socket(
+            result = NodeTreeSearcher.from_socket(
                 get_socket(asset['blender_nodetree'], 'Coat Normal'),
-                FilterByType(bpy.types.ShaderNodeNormalMap))
+                FilterByType(bpy.types.ShaderNodeNormalMap),
+                None)  # TODO : no export settings here !
             if result:
                 blender_path = result[0].shader_node.inputs['Strength'].path_from_id() + ".default_value"
                 group_name = 'Material'
