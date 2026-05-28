@@ -502,55 +502,17 @@ class VExportTree:
 
         # Duplis
         if is_collection is False and blender_object.is_instancer is True and blender_object.instance_type != 'COLLECTION':
-            depsgraph = bpy.context.evaluated_depsgraph_get()
-            children_found = False
-            for (
-                dupl,
-                mat) in [
-                (dup.object.original,
-                 dup.matrix_world.copy()) for dup in depsgraph.object_instances if
-                    dup.parent and id(dup.parent.original) == id(blender_object)
-                # Not sure why, but when duplis is on object where there is also a GN that instance some data,
-                # this returns the object itself, so we avoid an infinite loop by checking it
-                # This is only to avoid infinite loop, as the GN will take precedence over dupli
-                and id(dup.object.original) != id(blender_object)
-            ]:
-                children_found = True
-                self.recursive_node_traverse(
-                    dupl,
-                    None,
-                    node.uuid,
-                    parent_coll_matrix_world,
-                    new_delta or delta,
-                    blender_children,
-                    dupli_world_matrix=mat)
-
-            if children_found is False:
-                # Really weird case (see above comment),
-                # So export "classical" object => object children
-                for child_object in blender_children[blender_object]:
-                    if child_object.parent_bone and child_object.parent_type in ("BONE", "BONE_RELATIVE"):
-                        # Object parented to bones
-                        # Will be manage later
-                        continue
-                    else:
-                        # Classic parenting
-
-                        # If we export full collection hierarchy, we need to ignore children that
-                        # are not in the same collection
-                        if self.export_settings['gltf_hierarchy_full_collections'] is True:
-                            if len(child_object.users_collection) > 0 and \
-                                    len(blender_object.users_collection) > 0 and \
-                                    child_object.users_collection[0].name != blender_object.users_collection[0].name:
-                                continue
-
-                        self.recursive_node_traverse(
-                            child_object,
-                            None,
-                            node.uuid,
-                            parent_coll_matrix_world,
-                            new_delta or delta,
-                            blender_children)
+            # Use geometrySet to get dupli instances
+            depsgraph = bpy.context.view_layer.depsgraph
+            ob_eval = depsgraph.id_eval_get(blender_object)
+            geometry_set = ob_eval.evaluated_geometry()
+            self.geometryset_manage(
+                geometry_set,
+                node,
+                parent_coll_matrix_world,
+                new_delta or delta,
+                blender_object,
+                blender_children)
 
         # Geometry Nodes instances
         # Make sure to not check instances for instanced collection, because we
@@ -579,7 +541,7 @@ class VExportTree:
                         original_object=blender_object,
                         is_children_in_collection=True)
 
-        # Experiment Geometry Set export
+        # Geometry Set export
         if self.export_settings['gltf_geometryset'] is True and node.blender_type == VExportNode.OBJECT \
                 and blender_object.type != "EMPTY":
             depsgraph = bpy.context.view_layer.depsgraph

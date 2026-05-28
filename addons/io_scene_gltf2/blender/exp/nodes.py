@@ -273,6 +273,11 @@ def __gather_mesh(vnode, blender_object, export_settings):
         return None  # TODO
     if blender_object is None or blender_object is not None and vnode.data is not None:
         # GN instance or GeometrySet with mesh data
+
+        # For duplis instancer, when show is off -> export as empty
+        if vnode.force_as_empty is True:
+            return None
+
         blender_data = vnode.data
         # Keep materials from the tmp data, but if no material, keep from object
         materials = tuple(mat for mat in blender_data.materials)
@@ -293,9 +298,6 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
     else:
         if blender_object.type not in ["MESH", "POINTCLOUD"]:
-            return None
-        # For duplis instancer, when show is off -> export as empty
-        if vnode.force_as_empty is True:
             return None
         # Be sure that object is valid (no NaN for example)
         if blender_object.type == "MESH":
