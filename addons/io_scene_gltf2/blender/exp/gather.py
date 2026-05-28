@@ -23,7 +23,7 @@ from . import joints as gltf2_blender_gather_joints
 from . import tree as gltf2_blender_gather_tree
 from .animation.sampled.object.keyframes import get_cache_data
 from .animation.animations import gather_animations
-
+from mathutils import Vector
 
 def gather_gltf2(export_settings):
     """
@@ -103,9 +103,18 @@ def __gather_scene(blender_scene, export_settings):
     # We need to calculate the collection center,
     # In order to set the scene center to the collection center
     # Using object center barycenter for now (another option could be to use bounding box center)
-    if export_settings['gltf_collection'] and export_settings['gltf_at_collection_center']:
-        vtree.calculate_collection_center()
-
+    if export_settings['gltf_collection']:
+        match export_settings['gltf_collection_center_mode']:
+            case 'WORLD_ORIGIN':
+                pass
+            case 'CENTER_MASS':
+                vtree.calculate_collection_center_barycenter()
+            case 'OBJECT_POSITION':
+                center_object = export_settings['gltf_collection_center_object']
+                if center_object:
+                    export_settings['gltf_collection_center'] = center_object.matrix_world.translation
+                else:
+                    export_settings['gltf_collection_center'] = Vector((0.0, 0.0, 0.0))
     vtree.variants_reset_to_original()
 
     export_user_extensions('vtree_after_filter_hook', export_settings, vtree)
