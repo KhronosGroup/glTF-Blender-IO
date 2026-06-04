@@ -58,6 +58,7 @@ class BlenderMaterialIndentifier:
         self.name = self.material.name
 
         # Cache system
+        self.all_nodes = None
         self.nodes = {}  # Cache by type
 
     def __set_used_material(self):
@@ -138,9 +139,9 @@ class BlenderMaterialIndentifier:
 
     def set_material_nodes(self, node_type):
         """
-        Store result of __get_all_material_nodes in the Class instance, avoiding to recalculate it several times
+        Store result of __get_all_nodes_of_type in the Class instance, avoiding to recalculate it several times
         """
-        nodes = self.__get_all_material_nodes(
+        nodes = self.__get_all_nodes_of_type(
             self.get_used_material().node_tree,
             [self.get_used_material().node_tree], node_type)
 
@@ -153,22 +154,28 @@ class BlenderMaterialIndentifier:
                 return True
         return False
 
-    def __get_all_material_nodes(self, node_tree: bpy.types.NodeTree, group_path, type):
+    def __get_all_nodes(self, node_tree: bpy.types.NodeTree, group_path):
+        if self.all_nodes is None:
+            self.all_nodes = []
+            for node in [n for n in node_tree.nodes if not n.mute]:
+                self.all_nodes.append((node, [node_tree]))
+
+            # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
+            for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name !=
+                         get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
+                new_group_path = group_path.copy()
+                new_group_path.append(node)
+                self.__get_all_nodes(node.node_tree, new_group_path)
+
+        return self.all_nodes
+
+    def __get_all_nodes_of_type(self, node_tree: bpy.types.NodeTree, group_path, type):
         """
         Recursively return all nodes including node groups for the materials
         """
 
-        nodes = []
-        for node in [n for n in node_tree.nodes if isinstance(n, type) and not n.mute]:
-            nodes.append((node, group_path.copy()))
-
-        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
-        for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name !=
-                     get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
-            new_group_path = group_path.copy()
-            new_group_path.append(node)
-            nodes.extend(self.__get_all_material_nodes(node.node_tree, new_group_path, type))
-
+        nodes = self.__get_all_nodes(node_tree, group_path)
+        nodes = [n for n in nodes if isinstance(n[0], type)]
         return nodes
 
 
