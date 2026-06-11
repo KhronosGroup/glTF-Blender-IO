@@ -19,7 +19,7 @@ from ....io.com import gltf2_io
 from ....io.com.gltf2_io_extensions import Extension
 from ....io.exp.user_extensions import export_user_extensions
 from ..cache import cached, cached_by_key
-from ...com.material_helpers import get_gltf_old_group_node_name
+from ...com.material_helpers import get_gltf_old_group_node_name, get_gltf_node_name, get_gltf_node_old_name
 from . import unlit as gltf2_unlit
 from . import texture_info as gltf2_blender_gather_texture_info
 from . import pbr_metallic_roughness as gltf2_pbr_metallic_roughness
@@ -38,7 +38,6 @@ from .extensions.ior import export_ior
 from .extensions.dispersion import export_dispersion
 from .search_node_tree import \
     has_image_node_from_socket, \
-    get_socket_from_gltf_material_node, \
     get_node_socket, \
     NodeSocket, \
     gather_alpha_info, \
@@ -50,15 +49,18 @@ class BlenderMaterialIndentifier:
         self.id = id(blender_material)
         self.used = None
 
+        # Cache system
+        self.all_nodes = None
+        self.all_nodes_tmp = []
+        self.nodes = {}  # Cache by type
+        self.gltf_material_node = -1
+        self.gltf_material_node_group_path = None
+
         self.material = blender_material
         self.export_settings = export_settings
 
         self.__set_used_material()
         self.name = self.material.name
-
-        # Cache system
-        self.all_nodes = None
-        self.nodes = {}  # Cache by type
 
     def __set_used_material(self):
         # Currently, there are a few cases where we can not use inline material,
@@ -83,13 +85,22 @@ class BlenderMaterialIndentifier:
             return False
 
         # We can not use inline if using the glTF node (for Occlusion, for example)
-        test_occlusion = get_socket_from_gltf_material_node(self.material.node_tree, "Occlusion")
-        if test_occlusion.socket is not None:
+        # We can not use the method here, because you still don't know if we are going to use the inline version or not
+        # Se we need to rely on the original material here, waiting to know later
+        # if we are going to use the inline version or not
+        _ = self.__get_all_nodes(self.material.node_tree, [self.material.node_tree])
+        if self.gltf_material_node is not None and self.gltf_material_node != -1:
             return False
 
         # We can not use inline if we are collecting additional textures
         if self.export_settings['gltf_unused_textures'] is True:
             return False
+
+        # We will use inline material, let's clear the node cache
+        self.all_nodes = None
+        self.nodes = {}
+        self.gltf_material_node = None
+        self.gltf_material_node_group_path = None
 
         return True
 
@@ -152,18 +163,30 @@ class BlenderMaterialIndentifier:
 
     def __get_all_nodes(self, node_tree: bpy.types.NodeTree, group_path):
         if self.all_nodes is None:
-            self.all_nodes = []
-            for node in [n for n in node_tree.nodes if not n.mute]:
-                self.all_nodes.append((node, [node_tree]))
+            self.all_nodes_tmp = []
+            self.__get_all_nodes_recursive(node_tree, group_path)
+            self.all_nodes = self.all_nodes_tmp
+        return self.all_nodes
 
-            # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
-            for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name !=
-                         get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
+    def __get_all_nodes_recursive(self, node_tree: bpy.types.NodeTree, group_path):
+        gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
+
+        for node in [n for n in node_tree.nodes if not n.mute]:
+            self.all_nodes_tmp.append((node, group_path.copy()))
+
+        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
+        for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute]:
+
+            # Do not enter the old glTF node group
+            if node.node_tree.name != get_gltf_old_group_node_name():
                 new_group_path = group_path.copy()
                 new_group_path.append(node)
-                self.__get_all_nodes(node.node_tree, new_group_path)
+                self.__get_all_nodes_recursive(node.node_tree, new_group_path)
 
-        return self.all_nodes
+            # Check if we have the glTF material node
+            if self.gltf_material_node == -1 and node.node_tree.name.lower() in gltf_node_group_names:
+                self.gltf_material_node = node
+                self.gltf_material_node_group_path = group_path.copy()
 
     def get_all_nodes_of_type(self, type):
         """
@@ -173,6 +196,26 @@ class BlenderMaterialIndentifier:
         nodes = self.__get_all_nodes(self.get_used_material().node_tree, [self.get_used_material().node_tree])
         nodes = [n for n in nodes if isinstance(n[0], type)]
         return nodes
+
+    def get_gltf_material_node(self):
+        if self.gltf_material_node != -1:
+            return self.gltf_material_node, self.gltf_material_node_group_path
+
+        self.gltf_material_node = None
+        # Because of call of __get_all_nodes, we now have the glTF material node
+        _ = self.get_all_nodes_of_type(bpy.types.ShaderNodeGroup)
+
+        return self.gltf_material_node, self.gltf_material_node_group_path
+
+    def get_socket_from_gltf_material_node(self, socket_name: str):
+        gltf_material_node, gltf_material_node_group_path = self.get_gltf_material_node()
+        if gltf_material_node is not None:
+            inputs = [(input, gltf_material_node_group_path)
+                      for input in gltf_material_node.inputs if input.name == socket_name]
+            if inputs:
+                return NodeSocket(inputs[0][0], inputs[0][1])
+
+        return NodeSocket(None, None)
 
 
 @cached
@@ -495,8 +538,7 @@ def __gather_orm_texture(bmat, export_settings):
 
     occlusion = bmat.get_socket("Occlusion")
     if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
-        occlusion = get_socket_from_gltf_material_node(
-            bmat.get_used_material().node_tree, "Occlusion")
+        occlusion = bmat.get_socket_from_gltf_material_node("Occlusion")
         if occlusion.socket is None or not has_image_node_from_socket(occlusion, export_settings):
             return None
 
@@ -509,8 +551,7 @@ def __gather_orm_texture(bmat, export_settings):
     # Warning: for default socket, do not use NodeSocket object, because it will break cache
     # Using directlty the Blender socket object
     if not hasMetal and not hasRough:
-        metallic_roughness = get_socket_from_gltf_material_node(
-            bmat.get_used_material().node_tree, "MetallicRoughness")
+        metallic_roughness = bmat.get_socket_from_gltf_material_node("MetallicRoughness")
         if metallic_roughness.socket is None or not has_image_node_from_socket(metallic_roughness, export_settings):
             return None
         result = (occlusion, metallic_roughness)
@@ -560,8 +601,7 @@ def __gather_orm_texture(bmat, export_settings):
 def __gather_occlusion_texture(bmat, orm_texture, export_settings):
     occlusion = bmat.get_socket("Occlusion")
     if occlusion.socket is None:
-        occlusion = get_socket_from_gltf_material_node(
-            bmat.get_used_material().node_tree, "Occlusion")
+        occlusion = bmat.get_socket_from_gltf_material_node("Occlusion")
     if occlusion.socket is None:
         return None, {}, {}
     occlusion_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_occlusion_texture_info_class(

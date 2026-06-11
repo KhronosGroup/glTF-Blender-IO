@@ -18,8 +18,6 @@ from ...material import texture_info as gltf2_blender_gather_texture_info
 from ..search_node_tree import \
     has_image_node_from_socket, \
     get_const_from_default_value_socket, \
-    get_socket_from_gltf_material_node, \
-    get_socket, \
     get_factor_from_socket
 
 
@@ -34,8 +32,7 @@ def export_volume(bmat, export_settings):
     thickness_slots = ()
     uvmap_info = {}
 
-    thickness_socket = get_socket_from_gltf_material_node(
-        bmat.get_used_material().node_tree, 'Thickness')
+    thickness_socket = bmat.get_socket_from_gltf_material_node('Thickness')
     if thickness_socket.socket is None:
         # If no thickness (here because there is no glTF Material Output node), no volume extension export
         return None, {}, {}

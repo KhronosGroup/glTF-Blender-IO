@@ -118,8 +118,10 @@ class NodeTreeSearcher:
                 group_output_node = [node for node in linked_node.node_tree.nodes if node.type == "GROUP_OUTPUT"][0]
                 i = __get_socket_index(linked_node.outputs, link.from_socket)
                 socket = group_output_node.inputs[i]
+                new_group_path = group_path.copy()
+                new_group_path.append(linked_node)
                 linked_results = cls.__search_from_socket(
-                    socket, group_path.copy(), search_path + [link], filter, export_settings)
+                    socket, new_group_path, search_path + [link], filter, export_settings)
                 if linked_results:
                     search_path.append(link)
                     results += linked_results
