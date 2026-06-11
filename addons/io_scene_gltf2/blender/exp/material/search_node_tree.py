@@ -258,8 +258,6 @@ def get_const_from_default_value_socket(socket, kind):
         return socket.socket.default_value, "node_tree." + socket.socket.path_from_id() + ".default_value"
     return None, None
 
-# TODOSNode : @cached? If yes, need to use id of node tree, has this is probably not fully hashable
-# For now, not caching it. If we encounter performance issue, we will see later
 
 # TODO: get_material_nodes only by get_socket_from_gltf_material_node,
 # that is used only by importer now ... needs to be deleted
