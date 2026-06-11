@@ -867,6 +867,7 @@ class ShNode:
         self.group_path = group_path
 
 
+# TODO: get_node_socket is used only by get_socket: To be deleted after get_socket is deleted too
 def get_node_socket(blender_material_node_tree, type, name):
     """
     For a given material input name, retrieve the corresponding node tree socket for a given node type.

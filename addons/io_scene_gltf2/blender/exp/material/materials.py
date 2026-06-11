@@ -396,10 +396,7 @@ def gather_material(bmat, export_settings):
     # If emissive is set, from an emissive node (not PBR)
     # We need to set manually default values for
     # pbr_metallic_roughness.baseColor
-    if material.emissive_factor is not None and get_node_socket(
-            bmat.get_used_material().node_tree,
-            bpy.types.ShaderNodeBsdfPrincipled,
-            "Base Color").socket is None:
+    if material.emissive_factor is not None and bmat.get_socket("Base Color").socket is None:
         material.pbr_metallic_roughness = gltf2_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
 
     export_user_extensions('gather_material_hook', export_settings, material, bmat.get_used_material())
