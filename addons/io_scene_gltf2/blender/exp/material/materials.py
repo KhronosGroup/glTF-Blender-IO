@@ -40,7 +40,6 @@ from .search_node_tree import \
     has_image_node_from_socket, \
     get_socket_from_gltf_material_node, \
     get_node_socket, \
-    get_material_nodes, \
     NodeSocket, \
     gather_alpha_info, \
     check_if_is_linked_to_active_output
@@ -139,12 +138,9 @@ class BlenderMaterialIndentifier:
 
     def set_material_nodes(self, node_type):
         """
-        Store result of __get_all_nodes_of_type in the Class instance, avoiding to recalculate it several times
+        Store result of get_all_nodes_of_type in the Class instance, avoiding to recalculate it several times
         """
-        nodes = self.__get_all_nodes_of_type(
-            self.get_used_material().node_tree,
-            [self.get_used_material().node_tree], node_type)
-
+        nodes = self.get_all_nodes_of_type(node_type)
         self.nodes[node_type] = [n for n in nodes if self.__check_if_is_linked_to_active_output_node(n) is True]
 
     def __check_if_is_linked_to_active_output_node(self, node):
@@ -169,12 +165,12 @@ class BlenderMaterialIndentifier:
 
         return self.all_nodes
 
-    def __get_all_nodes_of_type(self, node_tree: bpy.types.NodeTree, group_path, type):
+    def get_all_nodes_of_type(self, type):
         """
         Recursively return all nodes including node groups for the materials
         """
 
-        nodes = self.__get_all_nodes(node_tree, group_path)
+        nodes = self.__get_all_nodes(self.get_used_material().node_tree, [self.get_used_material().node_tree])
         nodes = [n for n in nodes if isinstance(n[0], type)]
         return nodes
 
@@ -260,9 +256,9 @@ def gather_material(bmat, export_settings):
     # Get all textures nodes that are not used in the material
     if export_settings['gltf_unused_textures'] is True:
         if bmat.get_used_material().node_tree:
-            nodes = get_material_nodes(
-                bmat.get_used_material().node_tree, [
-                    bmat.get_used_material().node_tree], bpy.types.ShaderNodeTexImage)
+
+            nodes = bmat.get_all_nodes_of_type(bpy.types.ShaderNodeTexImage)
+
         else:
             nodes = []
         # Store index of additional texture for this material
