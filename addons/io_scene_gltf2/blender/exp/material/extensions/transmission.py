@@ -17,7 +17,6 @@ from .....io.com.gltf2_io_extensions import Extension
 from ...material import texture_info as gltf2_blender_gather_texture_info
 from ..search_node_tree import \
     has_image_node_from_socket, \
-    get_socket, \
     get_factor_from_socket
 
 

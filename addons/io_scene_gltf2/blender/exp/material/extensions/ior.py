@@ -14,7 +14,6 @@
 
 from .....io.com.gltf2_io_extensions import Extension
 from .....io.com.constants import GLTF_IOR
-from ..search_node_tree import get_socket
 
 
 def export_ior(bmat, extensions, export_settings):

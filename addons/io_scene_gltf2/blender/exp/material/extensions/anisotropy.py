@@ -16,7 +16,7 @@ import numpy as np
 from .....io.com.gltf2_io_extensions import Extension
 from ....com.conversion import get_anisotropy_rotation_blender_to_gltf
 from ...material import texture_info as gltf2_blender_gather_texture_info
-from ..search_node_tree import detect_anisotropy_nodes, get_socket, has_image_node_from_socket, get_factor_from_socket
+from ..search_node_tree import detect_anisotropy_nodes, has_image_node_from_socket, get_factor_from_socket
 from ..encode_image import TmpImageGuard, make_temp_image_copy, StoreImage, StoreData
 
 
