@@ -261,6 +261,9 @@ def get_const_from_default_value_socket(socket, kind):
 # TODOSNode : @cached? If yes, need to use id of node tree, has this is probably not fully hashable
 # For now, not caching it. If we encounter performance issue, we will see later
 
+# TODO: get_material_nodes only by get_socket_from_gltf_material_node,
+# that is used only by importer now ... needs to be deleted
+
 
 def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
     """
@@ -279,6 +282,8 @@ def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
         nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
 
     return nodes
+
+# TODO: get_socket_from_gltf_material_node is used only by importer now ... needs to be deleted
 
 
 def get_socket_from_gltf_material_node(blender_material_nodetree, name: str):
