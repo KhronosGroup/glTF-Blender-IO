@@ -22,7 +22,8 @@ from .search_node_tree import \
     gather_color_info
 
 
-# TODO: move to a method of bmat
+# TODO: is used by importer only, to be deleted after importers are
+# refactored to not use export code.
 def detect_shadeless_material(blender_material_node_tree, export_settings):
     """Detect if this material is "shadeless" ie. should be exported
     with KHR_materials_unlit. Returns None if not. Otherwise, returns
@@ -53,16 +54,16 @@ def detect_shadeless_material(blender_material_node_tree, export_settings):
     socket = NodeSocket(socket, [blender_material_node_tree])
 
     # Be careful not to misidentify a lightpath trick as mix-alpha.
-    result = __detect_lightpath_trick(socket)
+    result = detect_lightpath_trick(socket)
     if result is not None:
         socket = result['next_socket']
     else:
-        result = __detect_mix_alpha(socket)
+        result = detect_mix_alpha(socket)
         if result is not None:
             socket = result['next_socket']
             info['alpha_socket'] = result['alpha_socket']
 
-        result = __detect_lightpath_trick(socket)
+        result = detect_lightpath_trick(socket)
         if result is not None:
             socket = result['next_socket']
 
@@ -78,7 +79,7 @@ def detect_shadeless_material(blender_material_node_tree, export_settings):
     return info
 
 
-def __detect_mix_alpha(socket):
+def detect_mix_alpha(socket):
     # Detects this (used for an alpha hookup)
     #
     #                  [   Mix   ]
@@ -100,7 +101,7 @@ def __detect_mix_alpha(socket):
     }
 
 
-def __detect_lightpath_trick(socket):
+def detect_lightpath_trick(socket):
     # Detects this (used to prevent casting light on other objects) See ex.
     # https://blender.stackexchange.com/a/21535/88681
     #

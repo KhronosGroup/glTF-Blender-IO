@@ -41,7 +41,8 @@ from .search_node_tree import \
     get_node_socket, \
     NodeSocket, \
     gather_alpha_info, \
-    check_if_is_linked_to_active_output
+    check_if_is_linked_to_active_output, \
+    previous_socket
 
 
 class BlenderMaterialIndentifier:
@@ -55,6 +56,7 @@ class BlenderMaterialIndentifier:
         self.nodes = {}  # Cache by type
         self.gltf_material_node = -1
         self.gltf_material_node_group_path = None
+        self.active_output_node = None
 
         self.material = blender_material
         self.export_settings = export_settings
@@ -101,6 +103,7 @@ class BlenderMaterialIndentifier:
         self.nodes = {}
         self.gltf_material_node = None
         self.gltf_material_node_group_path = None
+        self.active_output_node = None
 
         return True
 
@@ -172,6 +175,11 @@ class BlenderMaterialIndentifier:
         gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
 
         for node in [n for n in node_tree.nodes if not n.mute]:
+
+            # Check if we have the active output node
+            if self.active_output_node is None and node.type == 'OUTPUT_MATERIAL' and node.is_active_output:
+                self.active_output_node = node
+
             self.all_nodes_tmp.append((node, group_path.copy()))
 
         # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
@@ -187,6 +195,9 @@ class BlenderMaterialIndentifier:
             if self.gltf_material_node == -1 and node.node_tree.name.lower() in gltf_node_group_names:
                 self.gltf_material_node = node
                 self.gltf_material_node_group_path = group_path.copy()
+
+    def __get_active_output_node(self):
+        return self.active_output_node
 
     def get_all_nodes_of_type(self, type):
         """
@@ -216,6 +227,51 @@ class BlenderMaterialIndentifier:
                 return NodeSocket(inputs[0][0], inputs[0][1])
 
         return NodeSocket(None, None)
+
+    def detect_shadeless_material(self):
+        # Old Background node detection (unlikely to happen)
+        bg_socket = self.get_socket("Background")
+        if bg_socket.socket is not None:
+            return {'rgb_socket': bg_socket}
+
+        # Look for
+        # * any color socket, connected to...
+        # * optionally, the lightpath trick, connected to...
+        # * optionally, a mix-with-transparent (for alpha), connected to...
+        # * the output node
+
+        info = {}
+
+        active_output_node = self.__get_active_output_node()
+        if active_output_node is None:
+            return None
+
+        socket = NodeSocket(active_output_node.inputs[0], [self.get_used_material().node_tree])
+
+        # Be careful not to misidentify a lightpath trick as mix-alpha.
+        result = gltf2_unlit.detect_lightpath_trick(socket)  # TODO: rewrite detect_lightpath_trick with NavNode
+        if result is not None:
+            socket = result['next_socket']
+        else:
+            result = gltf2_unlit.detect_mix_alpha(socket)  # TODO: rewrite detect_mix_alpha with NavNode
+            if result is not None:
+                socket = result['next_socket']
+                info['alpha_socket'] = result['alpha_socket']
+
+            result = gltf2_unlit.detect_lightpath_trick(socket)  # TODO: rewrite detect_lightpath_trick with NavNode
+            if result is not None:
+                socket = result['next_socket']
+
+        # Check if a color socket, or connected to a color socket
+        if socket.socket.type != 'RGBA':
+            from_socket = previous_socket(socket)  # TODO replace this previoous_socket with NavNode
+            if from_socket.socket is None:
+                return None
+            if from_socket.socket.type != 'RGBA':
+                return None
+
+        info['rgb_socket'] = socket
+        return info
 
 
 @cached
@@ -643,9 +699,7 @@ def __gather_pbr_metallic_roughness(bmat, orm_texture, export_settings):
 
 def __export_unlit(bmat, export_settings):
 
-    info = gltf2_unlit.detect_shadeless_material(
-        bmat.get_used_material().node_tree,
-        export_settings)
+    info = bmat.detect_shadeless_material()
     if info is None:
         return None, {}, {"color": None, "alpha": None, "color_type": None, "alpha_type": None, "alpha_mode": "OPAQUE"}, {}
 
