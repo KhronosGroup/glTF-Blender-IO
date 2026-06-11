@@ -108,11 +108,26 @@ def set_extras(blender_element, extras, exclude=[]):
         if custom_property in exclude:
             continue
 
+        secured_custom_property = _set_unique_name(blender_element, custom_property)
+
         try:
-            blender_element[custom_property] = value
+            blender_element[secured_custom_property] = value
         except Exception:
             # Try to convert to string
             try:
-                blender_element[custom_property] = str(value)
+                blender_element[secured_custom_property] = str(value)
             except Exception:
                 print('Error setting property %s to value of type %s' % (custom_property, type(value)))
+
+def _set_unique_name(blender_element, name):
+    if len(name) >= 64:
+
+        # Find the first available name of form truncated_name.XXX,
+
+        suffix = 1
+        name = name[:59] + '.' + str(suffix).zfill(3)
+        while name in blender_element.keys():
+            suffix += 1
+            name = name[:59] + '.' + str(suffix).zfill(3)
+        return name
+    return name
