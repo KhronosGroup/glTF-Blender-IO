@@ -854,48 +854,18 @@ def get_const_from_socket(socket, kind):
 
 
 def previous_socket(socket: NodeSocket):
-    soc = socket.socket
-    group_path = socket.group_path.copy()
-    while True:
-        if not soc.is_linked:
-            return NodeSocket(None, None)
-
-        from_socket = soc.links[0].from_socket
-
-        # If we are entering a node group (from outputs)
-        if from_socket.node.type == "GROUP":
-            socket_name = from_socket.identifier
-            # Some groups can be undefined (because of linked librairies)
-            next_socket = next(iter([n for n in from_socket.node.node_tree.nodes if n.type == "GROUP_OUTPUT"]), None)
-            if next_socket is None:
-                return NodeSocket(None, None)
-            sockets = next_socket.inputs
-            socket = [s for s in sockets if s.identifier == socket_name][0]
-            group_path.append(from_socket.node)
-            soc = socket
-            continue
-
-        # If we are exiting a node group (from inputs)
-        if from_socket.node.type == "GROUP_INPUT":
-            socket_name = from_socket.identifier
-            sockets = group_path[-1].inputs
-            socket = [s for s in sockets if s.identifier == socket_name][0]
-            group_path = group_path[:-1]
-            soc = socket
-            continue
-
-        # Skip over reroute nodes
-        if from_socket.node.type == 'REROUTE':
-            soc = from_socket.node.inputs[0]
-            continue
-
-        return NodeSocket(from_socket, group_path)
+    nav = socket.to_node_nav()
+    nav.move_back()
+    if nav.moved:
+        return NodeSocket(nav.out_socket, [group for group, _ in nav.stack])
+    return NodeSocket(None, None)
 
 
 def previous_node(socket: NodeSocket):
-    prev_socket = previous_socket(socket)
-    if prev_socket.socket is not None:
-        return ShNode(prev_socket.socket.node, prev_socket.group_path)
+    nav = socket.to_node_nav()
+    nav.move_back()
+    if nav.moved:
+        return ShNode(nav.node, [group for group, _ in nav.stack])
     return ShNode(None, None)
 
 
