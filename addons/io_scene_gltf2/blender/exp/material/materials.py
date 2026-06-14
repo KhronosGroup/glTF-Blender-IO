@@ -157,6 +157,10 @@ class BlenderMaterialIndentifier:
         self.nodes[node_type] = [n for n in nodes if self.__check_if_is_linked_to_active_output_node(n) is True]
 
     def __check_if_is_linked_to_active_output_node(self, node):
+        if self.used == "INLINE":
+            # No need to check : Inline keeps only the nodes that are linked to the active output node
+            return True
+
         for output_socket in node[0].outputs:
             res = check_if_is_linked_to_active_output(output_socket, node[1])  # TODO perf ?
             if res is True:
