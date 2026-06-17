@@ -43,12 +43,6 @@ class MaterialHelper:
         alpha_mode = self.pymat.alpha_mode
         return alpha_mode is None or alpha_mode == 'OPAQUE'
 
-    def needs_emissive(self):
-        return (
-            self.pymat.emissive_texture is not None or
-            (self.pymat.emissive_factor or [0, 0, 0]) != [0, 0, 0]
-        )
-
     def get_ext(self, ext_name, default=None):
         if not self.pymat.extensions:
             return default
