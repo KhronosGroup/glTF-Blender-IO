@@ -208,19 +208,10 @@ class BlenderPointerAnim():
                 pointer_tab[3] in ["emissiveFactor", "alphaCutoff"]:
 
             if pointer_tab[3] == "emissiveFactor":
-                emissive_socket = get_socket(asset.blender_nodetree, "Emissive")
-                if emissive_socket.socket.is_linked:
-                    # We need to find the correct node value to animate (An Emissive Factor node)
-                    mix_node = emissive_socket.socket.links[0].from_node
-                    if mix_node.type == "MIX":
-                        blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 3
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    blender_path = emissive_socket.socket.path_from_id() + ".default_value"
-                    num_components = 3
+                emissive_socket = NodeSocket(gltf.socket_infos[asset_idx]['Emission Color'], [asset.blender_nodetree])
+                blender_path = emissive_socket.socket.path_from_id() + ".default_value"
+                group_name = 'Material'
+                num_components = 3
             elif pointer_tab[3] == "alphaCutoff":
                 # Retrieve the alpha cutoff socket from the material node tree
                 alpha_socket = get_socket(asset.blender_nodetree, "Alpha")

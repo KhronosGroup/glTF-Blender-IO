@@ -22,7 +22,7 @@ from .image import BlenderImage
 import numpy as np
 
 
-def pbr_specular_glossiness(mh):
+def pbr_specular_glossiness(gltf, mh):
     """Creates node tree for pbrSpecularGlossiness materials."""
     ext = mh.get_ext('KHR_materials_pbrSpecularGlossiness', {})
 
@@ -43,6 +43,7 @@ def pbr_specular_glossiness(mh):
     )
 
     emission(
+        gltf,
         mh,
         location=locs['emission'],
         color_socket=pbr_node.inputs['Emission Color'],

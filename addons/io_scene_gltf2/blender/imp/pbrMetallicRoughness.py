@@ -23,7 +23,7 @@ from .material_utils import \
     MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
 
 
-def pbr_metallic_roughness(mh: MaterialHelper):
+def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
     pbr_node = mh.nodes.new('ShaderNodeBsdfPrincipled')
     out_node = mh.nodes.new('ShaderNodeOutputMaterial')
@@ -106,6 +106,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     locs = calc_locations(mh)
 
     emission(
+        gltf,
         mh,
         location=locs['emission'],
         color_socket=pbr_node.inputs['Emission Color'],
@@ -554,7 +555,7 @@ def calc_locations(mh):
 
 
 # [Texture] => [Emissive Factor] =>
-def emission(mh: MaterialHelper, location, color_socket, strength_socket):
+def emission(gltf, mh: MaterialHelper, location, color_socket, strength_socket):
     factor = mh.pymat.emissive_factor or [0, 0, 0]
     ext = mh.get_ext('KHR_materials_emissive_strength', {})
     strength = ext.get('emissiveStrength', 1)
@@ -583,7 +584,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
                             pointer_tab[3] == "emissiveFactor":
                         force_mix_node = True
 
-    color_factor_and_texture(
+    emission_socket = color_factor_and_texture(
         mh,
         location,
         label='Emissive',
@@ -592,6 +593,8 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
         tex_info=mh.pymat.emissive_texture,
         force_mix_node=force_mix_node,
     )
+    gltf.socket_infos[mh.material_idx]['Emission Color'] = emission_socket
+
     strength_socket.default_value = strength
 
 

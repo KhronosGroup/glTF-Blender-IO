@@ -23,8 +23,9 @@ from .texture import texture
 class MaterialHelper:
     """Helper class. Stores material stuff to be passed around everywhere."""
 
-    def __init__(self, gltf, pymat, mat, vertex_color):
+    def __init__(self, gltf, material_idx, pymat, mat, vertex_color):
         self.gltf = gltf
+        self.material_idx = material_idx
         self.pymat = pymat
         self.mat = mat
         self.node_tree = mat.node_tree
@@ -124,17 +125,20 @@ def color_factor_and_texture(
     tex_info,              # texture
     force_mix_node=False,  # Needed for KHR_animation_pointer
 ):
+
+    factor_socket = None
+
     if isinstance(tex_info, dict):
         tex_info = TextureInfo.from_dict(tex_info)
 
     x, y = location
 
     if socket is None:
-        return
+        return None
 
     if tex_info is None:
         socket.default_value = [*factor, 1]
-        return
+        return socket
 
     if factor != [1, 1, 1] or force_mix_node:
         node = mh.nodes.new('ShaderNodeMix')
@@ -148,6 +152,7 @@ def color_factor_and_texture(
         node.inputs['Factor'].default_value = 1
         socket = node.inputs[6]
         node.inputs[7].default_value = [*factor, 1]
+        factor_socket = node.inputs[7]
 
         x -= 200
 
@@ -159,6 +164,8 @@ def color_factor_and_texture(
         is_data=False,
         color_socket=socket,
     )
+
+    return factor_socket
 
 
 # [Texture] => [Normal Map] => socket
