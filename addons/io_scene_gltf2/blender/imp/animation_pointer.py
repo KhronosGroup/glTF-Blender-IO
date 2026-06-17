@@ -18,7 +18,6 @@ from ...io.imp.gltf2_io_binary import BinaryData
 from ..exp.material.search_node_tree import NodeSocket, previous_node, get_socket, FilterByType, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket, NodeTreeSearcher  # TODO move to COM
 
 from ..exp.sampler import detect_manual_uv_wrapping  # TODO move to COM
-from ..exp.material.unlit import detect_shadeless_material  # TODO move to COM
 from ..com.conversion import texture_transform_gltf_to_blender
 from .animation_utils import make_fcurve
 from .light import BlenderLight
@@ -295,9 +294,9 @@ class BlenderPointerAnim():
                         num_components = 3  # Do not use alpha here, will be managed later
 
                 else:
-                    unlit_info = detect_shadeless_material(asset.blender_nodetree, {})
+                    unlit_info = gltf.socket_infos[asset_idx]
                     if 'rgb_socket' in unlit_info:
-                        socket = unlit_info['rgb_socket']
+                        socket = NodeSocket(unlit_info['rgb_socket'], [asset.blender_nodetree])
                         blender_path = socket.socket.path_from_id() + ".default_value"
                         group_name = 'Material'
                         num_components = 3
@@ -347,9 +346,9 @@ class BlenderPointerAnim():
                 if is_unlit is False:
                     socket = get_socket(asset['blender_nodetree'], "Base Color")
                 else:
-                    unlit_info = detect_shadeless_material(asset['blender_nodetree'], {})
+                    unlit_info = gltf.socket_infos[asset_idx]
                     if 'rgb_socket' in unlit_info:
-                        socket = unlit_info['rgb_socket']
+                        socket = NodeSocket(unlit_info['rgb_socket'], [asset['blender_nodetree']])
                     else:
                         socket = NodeSocket(None, None)
             elif pointer_tab[-4] == "emissiveTexture":
@@ -786,9 +785,9 @@ class BlenderPointerAnim():
             if is_unlit is False:
                 alpha_socket = get_socket(asset.blender_nodetree, "Alpha")
             else:
-                unlit_info = detect_shadeless_material(asset.blender_nodetree, {})
+                unlit_info = gltf.socket_infos[asset_idx]
                 if 'alpha_socket' in unlit_info:
-                    alpha_socket = unlit_info['alpha_socket']
+                    alpha_socket = NodeSocket(unlit_info['alpha_socket'], [asset.blender_nodetree])
             if alpha_socket.socket.is_linked:
                 # We need to find the correct node value to animate (An Mix Factor node)
                 mix_node = alpha_socket.socket.links[0].from_node

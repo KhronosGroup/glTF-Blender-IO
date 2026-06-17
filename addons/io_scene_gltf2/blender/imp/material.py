@@ -30,6 +30,10 @@ class BlenderMaterial():
     def create(gltf, material_idx, vertex_color):
         """Material creation."""
 
+        if material_idx not in gltf.socket_infos:
+            gltf.socket_infos[material_idx] = {}
+        # Vertex Color?
+
         if material_idx is None:
             # If no material is specified, we create a default one
             mat = bpy.data.materials.new(name="DefaultMaterial")
@@ -68,7 +72,7 @@ class BlenderMaterial():
 
         exts = pymaterial.extensions or {}
         if 'KHR_materials_unlit' in exts:
-            unlit(mh)
+            unlit(gltf, material_idx, vertex_color, mh)
             pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree  # Used in case of for KHR_animation_pointer
             # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
             pymaterial.pbr_metallic_roughness.blender_mat = mat
