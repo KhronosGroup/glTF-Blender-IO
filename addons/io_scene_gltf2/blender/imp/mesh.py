@@ -95,7 +95,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     attribute_component_type = {}
     attribute_data_type = {}
 
-    for prim in pypc.primitives:
+    for prim_idx, prim in enumerate(pypc.primitives):
         if 'POSITION' not in prim.attributes:
             continue
 
@@ -138,7 +138,17 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                     gltf.data.accessors[prim.attributes[attr]].component_type,
                     gltf.data.accessors[prim.attributes[attr]].type
                 )
+
+        if 'glTF_primitive_index' not in attributes:
+            attribute_type['glTF_primitive_index'] = 'SCALAR'
+            attributes['glTF_primitive_index'] = np.zeros(
+                len(point_locs) - len(vs[unique_indices]), dtype=np.uint32
+            )
+            attribute_data_type['glTF_primitive_index'] = 'INT'
+
         for idx, attr in enumerate(attributes.keys()):
+            if attr == "glTF_primitive_index":
+                continue
             if attr in prim.attributes:
                 attr_data = BinaryData.decode_accessor(gltf, prim.attributes[attr], cache=True)
                 attributes[attr] = np.concatenate((attributes[attr], attr_data[unique_indices]))
@@ -149,6 +159,10 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                     dtype=ComponentType.to_numpy_dtype(attribute_component_type[attr])
                 )
                 attributes[attr] = np.concatenate((attributes[attr], attr_data))
+
+        attributes['glTF_primitive_index'] = np.concatenate(
+            (attributes['glTF_primitive_index'], np.full(
+                len(unique_indices), prim_idx, dtype=np.uint32)))
 
     pointcloud.resize(point_locs.shape[0])  # Add points to the point cloud
 
