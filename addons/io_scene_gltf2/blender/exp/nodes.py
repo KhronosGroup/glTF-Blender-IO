@@ -214,6 +214,7 @@ def __gather_extensions(vnode, export_settings):
     extensions = {}
 
     blender_lamp = None
+
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
 
@@ -251,14 +252,18 @@ def __gather_extensions(vnode, export_settings):
             export_settings['current_paths'] = {}
 
     # Check visibility
-    if blender_object is not None and (
-            blender_object.hide_viewport is True or blender_object.hide_get(
-            view_layer=bpy.context.view_layer) is True):
-        extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-            name="KHR_node_visibility",
-            extension={"visible": False},
-            required=True
-        )
+    # Only when not exporting full collection hierarchy
+    # Because for full collection => Blender manage it recursively,
+    # So we will have the correct export (and animation pointer ?)
+    if export_settings['gltf_hierarchy_full_collections'] is False:
+        if blender_object is not None and (
+                blender_object.hide_viewport is True or blender_object.hide_get(
+                view_layer=bpy.context.view_layer) is True):
+            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                name="KHR_node_visibility",
+                extension={"visible": False},
+                required=True
+            )
 
     return extensions if extensions else None
 

@@ -127,11 +127,15 @@ def __gather_extensions(blender_bone, export_settings):
     extensions = {}
 
     # Check visibility
-    if blender_bone.hide is True:
-        extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-            name="KHR_node_visibility",
-            extension={"visible": False},
-            required=True
-        )
+    # Only when not exporting full collection hierarchy
+    # Because for full collection => Blender manage it recursively,
+    # So we will have the correct export (and animation pointer ?)
+    if export_settings['gltf_hierarchy_full_collections'] is False:
+        if blender_bone.hide is True:
+            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                name="KHR_node_visibility",
+                extension={"visible": False},
+                required=True
+            )
 
     return extensions if extensions else None
