@@ -1,4 +1,4 @@
-# Copyright 2018-2021 The glTF-Blender-IO authors.
+# Copyright 2018-2026 The glTF-Blender-IO authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,6 +44,9 @@ class BlenderNode():
             import_user_extensions('gather_import_node_after_hook', gltf, vnode, gltf_node, obj)
             if vnode.is_arma:
                 BlenderNode.create_bones(gltf, vnode_id)
+                # Now that the bones are created, set the visibility of the armature object
+                obj.hide_viewport = not vnode.visibility
+                obj.hide_set(not vnode.visibility)
 
         elif vnode.type == VNode.Bone:
             # These are created with their armature
@@ -150,6 +153,12 @@ class BlenderNode():
                         else:
                             # Assign to the scene collection of the scene
                             gltf.blender_scenes[c].collection.objects.link(obj)
+
+        # Set visibility of the object based on the vnode visibility (except for camera)
+        # For armature, wait until the bones are created to set the visibility of the armature object
+        if vnode.camera_node_idx is None and vnode.is_arma is False:
+            obj.hide_viewport = not vnode.visibility
+            obj.hide_set(not vnode.visibility)
 
         return obj
 
@@ -273,6 +282,9 @@ class BlenderNode():
                 pose_bone.custom_shape_scale_xyz = Vector(
                     [armature_min_dim * 0.05] * 3) * gltf.import_settings['bone_shape_scale_factor']
                 pose_bone.use_custom_shape_bone_size = False
+
+            # Manage visibility of bones based on the visibility of the vnode
+            pose_bone.hide = not vnode.visibility
 
     @staticmethod
     def create_mesh_object(gltf, vnode):

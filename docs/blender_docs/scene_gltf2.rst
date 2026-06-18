@@ -638,6 +638,18 @@ For Point and Spot lights, the intensity can also be determined by the Strength 
 If you are using EEVEE render engine, the node setup will be ignored, and only the strength field on the light object is used.
 
 
+Visibility
+==========
+
+Blender can import node visibility from glTF files that use the ``KHR_node_visibility`` extension.
+Note that this support is limited to not animated visibility, ``KHR_animation_pointer`` is not supported by the importer.
+
+The technical reason is that glTF visibility is recursive for all children, while Blender visibility is per object.
+So, if a parent node is hidden in glTF file, all children are hidden too.
+
+During import, the add-on will set the visibility of all children to match the parent node visibility.
+This workaround prevents the importer to manage visibility animation coming from the glTF file.
+
 Extensions
 ==========
 
@@ -669,6 +681,7 @@ are supported directly by this add-on:
 - ``EXT_mesh_gpu_instancing``
 - ``EXT_meshopt_compression``
 - ``KHR_meshopt_compression``
+- ``KHR_node_visibility``
 
 .. rubric:: Export
 
