@@ -638,6 +638,7 @@ def base_color(
     # Only factor
     if base_color_texture is None and not mh.vertex_color:
         color_socket.default_value = [*color_factor, 1]
+        gltf.socket_infos[mh.material_idx]['Base Color'] = color_socket
 
         if alpha_socket:
             if alpha_mode == 'OPAQUE':
@@ -742,6 +743,7 @@ def base_color(
             node.inputs['Factor'].default_value = 1.0
             color_socket = node.inputs[6]
             node.inputs[7].default_value = [*color_factor, 1]
+            gltf.socket_infos[mh.material_idx]['Base Color'] = node.inputs[7]
 
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -753,6 +755,7 @@ def base_color(
             node.operation = 'MULTIPLY'
             alpha_socket = node.inputs[0]
             node.inputs[1].default_value = alpha_factor
+            gltf.socket_infos[mh.material_idx]['Base Color Alpha'] = node.inputs[1]
 
         x -= 200
 

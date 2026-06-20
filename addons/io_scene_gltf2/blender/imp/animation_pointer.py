@@ -246,19 +246,10 @@ class BlenderPointerAnim():
                 # This can be regular PBR, or unlit
                 if is_unlit is False:
 
-                    base_color_socket = get_socket(asset.blender_nodetree, "Base Color")
-                    if base_color_socket.socket.is_linked:
-                        # We need to find the correct node value to animate (An Mix Factor node)
-                        mix_node = base_color_socket.links[0].from_node
-                        if mix_node.type == "MIX":
-                            blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
-                            group_name = 'Material'
-                            num_components = 3  # Do not use alpha here, will be managed later
-                        else:
-                            print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                    else:
-                        blender_path = base_color_socket.socket.path_from_id() + ".default_value"
-                        num_components = 3  # Do not use alpha here, will be managed later
+                    base_color_socket = NodeSocket(gltf.socket_infos[asset_idx]['Base Color'], [asset.blender_nodetree])
+                    blender_path = base_color_socket.socket.path_from_id() + ".default_value"
+                    group_name = 'Material'
+                    num_components = 3  # Do not use alpha here, will be managed later
 
                 else:
                     unlit_info = gltf.socket_infos[asset_idx]
