@@ -137,6 +137,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
 
     if mh.pymat.occlusion_texture is not None:
         occlusion(
+            gltf,
             mh,
             location=locs['occlusion'],
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
@@ -915,7 +916,7 @@ def normal(gltf, mh: MaterialHelper, location, normal_socket):
 
 
 # [Texture] => [Separate R] => [Mix Strength] =>
-def occlusion(mh: MaterialHelper, location, occlusion_socket):
+def occlusion(gltf, mh: MaterialHelper, location, occlusion_socket):
     x, y = location
 
     if mh.pymat.occlusion_texture is None:
@@ -952,6 +953,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
         mh.node_tree.links.new(occlusion_socket, node.outputs[2])
         # Inputs
         node.inputs['Factor'].default_value = strength
+        gltf.socket_infos[mh.material_idx]['Occlusion'] = node.inputs['Factor']
         node.inputs[6].default_value = [1, 1, 1, 1]
         occlusion_socket = node.inputs[7]
 

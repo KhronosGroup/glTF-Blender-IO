@@ -232,21 +232,10 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "occlusionTexture" and \
                 pointer_tab[4] == "strength":
 
-            occlusion_socket = get_socket(asset.blender_nodetree, "Occlusion")
-            if occlusion_socket.socket is None:
-                occlusion_socket = get_socket_from_gltf_material_node(asset.blender_mat.node_tree, "Occlusion")
-            if occlusion_socket.socket.is_linked:
-                mix_node = occlusion_socket.socket.links[0].from_node
-                if mix_node.type == "MIX":
-                    blender_path = mix_node.inputs[0].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = occlusion_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+            occlusion_socket = NodeSocket(gltf.socket_infos[asset_idx]['Occlusion'], [asset.blender_nodetree])
+            blender_path = occlusion_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "pbrMetallicRoughness" and \

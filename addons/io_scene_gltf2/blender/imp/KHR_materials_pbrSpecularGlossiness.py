@@ -64,6 +64,7 @@ def pbr_specular_glossiness(gltf, mh):
             mh.settings_node.location = 10, 425
             mh.settings_node.width = 240
         occlusion(
+            gltf,
             mh,
             location=locs['occlusion'],
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
