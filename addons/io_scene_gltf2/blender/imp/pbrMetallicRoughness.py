@@ -129,6 +129,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     normal(
+        gltf,
         mh,
         location=locs['normal'],
         normal_socket=pbr_node.inputs['Normal'],
@@ -141,7 +142,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
-    clearcoat(mh, locs, pbr_node)
+    clearcoat(gltf, mh, locs, pbr_node)
 
     transmission(mh, locs, pbr_node)
 
@@ -187,7 +188,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
         mh.pymat.extensions['KHR_materials_ior']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
 
-def clearcoat(mh, locs, pbr_node):
+def clearcoat(gltf, mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_clearcoat', {})
     if len(ext) > 0:
         # Needed for KHR_animation_pointer
@@ -268,6 +269,7 @@ def clearcoat(mh, locs, pbr_node):
             mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
     normal_map(
+        gltf,
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
@@ -896,13 +898,14 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
 
 
 # [Texture] => [Normal Map] =>
-def normal(mh: MaterialHelper, location, normal_socket):
+def normal(gltf, mh: MaterialHelper, location, normal_socket):
     tex_info = mh.pymat.normal_texture
     if tex_info is not None:
         tex_info.blender_nodetree = mh.mat.node_tree  # Used in case of for KHR_animation_pointer
         tex_info.blender_mat = mh.mat  # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
     normal_map(
+        gltf,
         mh,
         location=location,
         label='Normal Map',

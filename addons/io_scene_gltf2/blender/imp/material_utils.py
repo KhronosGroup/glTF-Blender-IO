@@ -164,6 +164,7 @@ def color_factor_and_texture(
 
 # [Texture] => [Normal Map] => socket
 def normal_map(
+    gltf,
     mh: MaterialHelper,
     location,
     label,
@@ -192,6 +193,7 @@ def normal_map(
     scale = tex_info.scale
     scale = scale if scale is not None else 1
     node.inputs['Strength'].default_value = scale
+    gltf.socket_infos[mh.material_idx]['Normal'] = node.inputs['Strength']
     # Outputs
     mh.links.new(socket, node.outputs['Normal'])
 

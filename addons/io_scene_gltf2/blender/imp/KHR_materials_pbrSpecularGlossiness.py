@@ -52,6 +52,7 @@ def pbr_specular_glossiness(gltf, mh):
     )
 
     normal(
+        gltf,
         mh,
         location=locs['normal'],
         normal_socket=pbr_node.inputs['Normal'],
