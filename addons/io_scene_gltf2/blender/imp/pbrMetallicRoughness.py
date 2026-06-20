@@ -114,6 +114,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     base_color(
+        gltf,
         mh,
         location=locs['base_color'],
         color_socket=pbr_node.inputs['Base Color'],
@@ -601,6 +602,7 @@ def emission(gltf, mh: MaterialHelper, location, color_socket, strength_socket):
 #      [Texture] => [Mix Colors] => [Color Factor] =>
 # [Vertex Color] => [Mix Alphas] => [Alpha Factor] => [Alpha Clip] =>
 def base_color(
+    gltf,
     mh: MaterialHelper,
     location,
     color_socket,
@@ -701,6 +703,7 @@ def base_color(
             node.operation = 'LESS_THAN'
             alpha_socket = node.inputs[0]
             node.inputs[1].default_value = alpha_cutoff
+            gltf.socket_infos[mh.material_idx]['AlphaCutoff'] = node.inputs[1]
 
             x -= 200
 

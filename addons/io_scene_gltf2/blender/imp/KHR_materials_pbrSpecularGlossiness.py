@@ -35,6 +35,7 @@ def pbr_specular_glossiness(gltf, mh):
     locs = calc_locations(mh, ext)
 
     base_color(
+        gltf,
         mh,
         is_diffuse=True,
         location=locs['diffuse'],

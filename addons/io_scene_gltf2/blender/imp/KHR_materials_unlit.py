@@ -66,6 +66,7 @@ def unlit(gltf, material_idx, vertex_color, mh):
         gltf.socket_infos[material_idx]['alpha_socket'] = mix2_node.inputs['Fac']
 
     base_color(
+        gltf,
         mh,
         location=(-200, 380),
         color_socket=emission_node.inputs['Color'],
