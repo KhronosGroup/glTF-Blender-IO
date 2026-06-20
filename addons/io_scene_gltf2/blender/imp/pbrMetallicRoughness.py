@@ -599,7 +599,7 @@ def emission(gltf, mh: MaterialHelper, location, color_socket, strength_socket):
         force_mix_node=force_mix_node,
     )
     gltf.socket_infos[mh.material_idx]['Emission Color'] = emission_socket
-
+    gltf.socket_infos[mh.material_idx]['Emission Strength'] = strength_socket
     strength_socket.default_value = strength
 
 

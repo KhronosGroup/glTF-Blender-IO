@@ -385,7 +385,7 @@ class BlenderPointerAnim():
                 pointer_tab[4] == "KHR_materials_emissive_strength" and \
                 pointer_tab[5] == "emissiveStrength":
 
-            socket = get_socket(asset['blender_nodetree'], "Emission Strength")
+            socket = NodeSocket(gltf.socket_infos[asset_idx]['Emission Strength'], [asset['blender_nodetree']])
             blender_path = socket.socket.path_from_id() + ".default_value"
             group_name = 'Material'
             num_components = 1
