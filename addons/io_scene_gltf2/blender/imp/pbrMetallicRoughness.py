@@ -181,6 +181,7 @@ def pbr_metallic_roughness(mh: MaterialHelper):
     ior_ext = mh.get_ext('KHR_materials_ior', {})
     ior = ior_ext.get('ior', GLTF_IOR)
     pbr_node.inputs['IOR'].default_value = ior
+    mh.gltf.socket_infos[mh.material_idx]['IOR'] = pbr_node.inputs['IOR']
 
     if len(ior_ext) > 0:
         mh.pymat.extensions['KHR_materials_ior']['blender_nodetree'] = mh.node_tree  # Needed for KHR_animation_pointer

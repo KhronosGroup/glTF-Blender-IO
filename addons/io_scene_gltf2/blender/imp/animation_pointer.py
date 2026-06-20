@@ -425,7 +425,7 @@ class BlenderPointerAnim():
                 pointer_tab[4] == "KHR_materials_ior" and \
                 pointer_tab[5] == "ior":
 
-            ior_socket = get_socket(asset['blender_nodetree'], 'IOR')
+            ior_socket = NodeSocket(gltf.socket_infos[asset_idx]['IOR'], [asset['blender_nodetree']])
             blender_path = ior_socket.socket.path_from_id() + ".default_value"
             group_name = 'Material'
             num_components = 1
