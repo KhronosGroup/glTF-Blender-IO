@@ -122,6 +122,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     metallic_roughness(
+        gltf,
         mh,
         location=locs['metallic_roughness'],
         metallic_socket=pbr_node.inputs['Metallic'],
@@ -817,7 +818,7 @@ def base_color(
 
 
 # [Texture] => [Separate GB] => [Metal/Rough Factor] =>
-def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_socket):
+def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roughness_socket):
     x, y = location
     pbr = mh.pymat.pbr_metallic_roughness
     metal_factor = pbr.metallic_factor
@@ -830,6 +831,8 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
     if pbr.metallic_roughness_texture is None:
         metallic_socket.default_value = metal_factor
         roughness_socket.default_value = rough_factor
+        gltf.socket_infos[mh.material_idx]['Metallic'] = metallic_socket
+        gltf.socket_infos[mh.material_idx]['Roughness'] = roughness_socket
         return
 
     need_metal_factor = metal_factor != 1.0
@@ -842,7 +845,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
         if len(mh.pymat.pbr_metallic_roughness.animations) > 0:
             for anim_idx in mh.pymat.pbr_metallic_roughness.animations.keys():
                 for channel_idx in mh.pymat.pbr_metallic_roughness.animations[anim_idx]:
-                    channel = mh.gltf.data.pbr_metallic_roughness.animations[anim_idx].channels[channel_idx]
+                    channel = mh.gltf.data.animations[anim_idx].channels[channel_idx]
                     pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
                     if len(pointer_tab) == 5 and pointer_tab[1] == "materials" and \
                             pointer_tab[3] == "pbrMetallicRoughness" and \
@@ -865,6 +868,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
             # Inputs
             metallic_socket = node.inputs[0]
             node.inputs[1].default_value = metal_factor
+            gltf.socket_infos[mh.material_idx]['Metallic'] = node.inputs[1]
 
         # Mix rough factor
         if need_rough_factor:
@@ -877,6 +881,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
             # Inputs
             roughness_socket = node.inputs[0]
             node.inputs[1].default_value = rough_factor
+            gltf.socket_infos[mh.material_idx]['Roughness'] = node.inputs[1]
 
         x -= 200
 

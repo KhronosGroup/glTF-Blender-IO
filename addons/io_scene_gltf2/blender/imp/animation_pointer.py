@@ -262,36 +262,16 @@ class BlenderPointerAnim():
                         socket = NodeSocket(None, None)
 
             if pointer_tab[4] == "roughnessFactor":
-                roughness_socket = get_socket(asset.blender_nodetree, "Roughness")
-                if roughness_socket.socket.is_linked:
-                    # We need to find the correct node value to animate (An Mix Factor node)
-                    mix_node = roughness_socket.links[0].from_node
-                    if mix_node.type == "MATH":
-                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 1
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    blender_path = roughness_socket.socket.path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
+                roughness_socket = NodeSocket(gltf.socket_infos[asset_idx]['Roughness'], [asset.blender_nodetree])
+                blender_path = roughness_socket.socket.path_from_id() + ".default_value"
+                group_name = 'Material'
+                num_components = 1
 
             if pointer_tab[4] == "metallicFactor":
-                metallic_socket = get_socket(asset.blender_nodetree, "Metallic")
-                if metallic_socket.socket.is_linked:
-                    # We need to find the correct node value to animate (An Mix Factor node)
-                    mix_node = metallic_socket.links[0].from_node
-                    if mix_node.type == "MATH":
-                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 1
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    blender_path = metallic_socket.socket.path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
+                metallic_socket = NodeSocket(gltf.socket_infos[asset_idx]['Metallic'], [asset.blender_nodetree])
+                blender_path = metallic_socket.socket.path_from_id() + ".default_value"
+                group_name = 'Material'
+                num_components = 1
 
         if len(pointer_tab) >= 7 and pointer_tab[1] == "materials" and \
                 pointer_tab[-3] == "extensions" and \
