@@ -305,7 +305,7 @@ def transmission(mh, locs, pbr_node):
         # Activate screen refraction (for Eevee)
         mh.mat.use_raytrace_refraction = True
 
-    _ = scalar_factor_and_texture(
+    transmission_factor = scalar_factor_and_texture(
         mh,
         location=locs['transmission'],
         label='Transmission',
@@ -315,6 +315,7 @@ def transmission(mh, locs, pbr_node):
         channel=0,  # Red
         force_mix_node=force_transmission,
     )
+    mh.gltf.socket_infos[mh.material_idx]['Transmission Weight'] = transmission_factor
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('transmissionTexture')) if ext.get(
