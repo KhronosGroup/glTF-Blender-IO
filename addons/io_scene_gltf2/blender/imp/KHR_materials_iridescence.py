@@ -77,7 +77,7 @@ def iridescence(
                                 pointer_tab[5] == "iridescenceFactor":
                             force_iridescence_factor = True
 
-        scalar_factor_and_texture(
+        _ = scalar_factor_and_texture(
             mh,
             location=locs['iridescence'],
             label='Iridescence',

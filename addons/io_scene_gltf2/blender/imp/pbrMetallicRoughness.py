@@ -23,7 +23,7 @@ from .material_utils import \
     MaterialHelper, scalar_factor_and_texture, color_factor_and_texture, normal_map
 
 
-def pbr_metallic_roughness(gltf, mh: MaterialHelper):
+def pbr_metallic_roughness(mh: MaterialHelper):
     """Creates node tree for pbrMetallicRoughness materials."""
     pbr_node = mh.nodes.new('ShaderNodeBsdfPrincipled')
     out_node = mh.nodes.new('ShaderNodeOutputMaterial')
@@ -102,13 +102,12 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
         volume_node = mh.nodes.new('ShaderNodeVolumeAbsorption')
         volume_node.location = 40, -520 if need_settings_node else -370
         mh.links.new(out_node.inputs[1], volume_node.outputs[0])
-        gltf.socket_infos[mh.material_idx]['Volume Color'] = volume_node.inputs[0]
-        gltf.socket_infos[mh.material_idx]['Volume Density'] = volume_node.inputs[1]
+        mh.gltf.socket_infos[mh.material_idx]['Volume Color'] = volume_node.inputs[0]
+        mh.gltf.socket_infos[mh.material_idx]['Volume Density'] = volume_node.inputs[1]
 
     locs = calc_locations(mh)
 
     emission(
-        gltf,
         mh,
         location=locs['emission'],
         color_socket=pbr_node.inputs['Emission Color'],
@@ -116,7 +115,6 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     base_color(
-        gltf,
         mh,
         location=locs['base_color'],
         color_socket=pbr_node.inputs['Base Color'],
@@ -124,7 +122,6 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     metallic_roughness(
-        gltf,
         mh,
         location=locs['metallic_roughness'],
         metallic_socket=pbr_node.inputs['Metallic'],
@@ -132,7 +129,6 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
     )
 
     normal(
-        gltf,
         mh,
         location=locs['normal'],
         normal_socket=pbr_node.inputs['Normal'],
@@ -140,13 +136,12 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
 
     if mh.pymat.occlusion_texture is not None:
         occlusion(
-            gltf,
             mh,
             location=locs['occlusion'],
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
         )
 
-    clearcoat(gltf, mh, locs, pbr_node)
+    clearcoat(mh, locs, pbr_node)
 
     transmission(mh, locs, pbr_node)
 
@@ -192,7 +187,7 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
         mh.pymat.extensions['KHR_materials_ior']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
 
-def clearcoat(gltf, mh, locs, pbr_node):
+def clearcoat(mh, locs, pbr_node):
     ext = mh.get_ext('KHR_materials_clearcoat', {})
     if len(ext) > 0:
         # Needed for KHR_animation_pointer
@@ -273,7 +268,6 @@ def clearcoat(gltf, mh, locs, pbr_node):
             mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
     normal_map(
-        gltf,
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
@@ -563,7 +557,7 @@ def calc_locations(mh):
 
 
 # [Texture] => [Emissive Factor] =>
-def emission(gltf, mh: MaterialHelper, location, color_socket, strength_socket):
+def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     factor = mh.pymat.emissive_factor or [0, 0, 0]
     ext = mh.get_ext('KHR_materials_emissive_strength', {})
     strength = ext.get('emissiveStrength', 1)
@@ -601,15 +595,14 @@ def emission(gltf, mh: MaterialHelper, location, color_socket, strength_socket):
         tex_info=mh.pymat.emissive_texture,
         force_mix_node=force_mix_node,
     )
-    gltf.socket_infos[mh.material_idx]['Emission Color'] = emission_socket
-    gltf.socket_infos[mh.material_idx]['Emission Strength'] = strength_socket
+    mh.gltf.socket_infos[mh.material_idx]['Emission Color'] = emission_socket
+    mh.gltf.socket_infos[mh.material_idx]['Emission Strength'] = strength_socket
     strength_socket.default_value = strength
 
 
 #      [Texture] => [Mix Colors] => [Color Factor] =>
 # [Vertex Color] => [Mix Alphas] => [Alpha Factor] => [Alpha Clip] =>
 def base_color(
-    gltf,
     mh: MaterialHelper,
     location,
     color_socket,
@@ -642,7 +635,7 @@ def base_color(
     # Only factor
     if base_color_texture is None and not mh.vertex_color:
         color_socket.default_value = [*color_factor, 1]
-        gltf.socket_infos[mh.material_idx]['Base Color'] = color_socket
+        mh.gltf.socket_infos[mh.material_idx]['Base Color'] = color_socket
 
         if alpha_socket:
             if alpha_mode == 'OPAQUE':
@@ -711,7 +704,7 @@ def base_color(
             node.operation = 'LESS_THAN'
             alpha_socket = node.inputs[0]
             node.inputs[1].default_value = alpha_cutoff
-            gltf.socket_infos[mh.material_idx]['AlphaCutoff'] = node.inputs[1]
+            mh.gltf.socket_infos[mh.material_idx]['AlphaCutoff'] = node.inputs[1]
 
             x -= 200
 
@@ -747,7 +740,7 @@ def base_color(
             node.inputs['Factor'].default_value = 1.0
             color_socket = node.inputs[6]
             node.inputs[7].default_value = [*color_factor, 1]
-            gltf.socket_infos[mh.material_idx]['Base Color'] = node.inputs[7]
+            mh.gltf.socket_infos[mh.material_idx]['Base Color'] = node.inputs[7]
 
         if needs_alpha_factor:
             node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -759,7 +752,7 @@ def base_color(
             node.operation = 'MULTIPLY'
             alpha_socket = node.inputs[0]
             node.inputs[1].default_value = alpha_factor
-            gltf.socket_infos[mh.material_idx]['Base Color Alpha'] = node.inputs[1]
+            mh.gltf.socket_infos[mh.material_idx]['Base Color Alpha'] = node.inputs[1]
 
         x -= 200
 
@@ -821,7 +814,7 @@ def base_color(
 
 
 # [Texture] => [Separate GB] => [Metal/Rough Factor] =>
-def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roughness_socket):
+def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_socket):
     x, y = location
     pbr = mh.pymat.pbr_metallic_roughness
     metal_factor = pbr.metallic_factor
@@ -834,8 +827,8 @@ def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roug
     if pbr.metallic_roughness_texture is None:
         metallic_socket.default_value = metal_factor
         roughness_socket.default_value = rough_factor
-        gltf.socket_infos[mh.material_idx]['Metallic'] = metallic_socket
-        gltf.socket_infos[mh.material_idx]['Roughness'] = roughness_socket
+        mh.gltf.socket_infos[mh.material_idx]['Metallic'] = metallic_socket
+        mh.gltf.socket_infos[mh.material_idx]['Roughness'] = roughness_socket
         return
 
     need_metal_factor = metal_factor != 1.0
@@ -871,7 +864,7 @@ def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roug
             # Inputs
             metallic_socket = node.inputs[0]
             node.inputs[1].default_value = metal_factor
-            gltf.socket_infos[mh.material_idx]['Metallic'] = node.inputs[1]
+            mh.gltf.socket_infos[mh.material_idx]['Metallic'] = node.inputs[1]
 
         # Mix rough factor
         if need_rough_factor:
@@ -884,7 +877,7 @@ def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roug
             # Inputs
             roughness_socket = node.inputs[0]
             node.inputs[1].default_value = rough_factor
-            gltf.socket_infos[mh.material_idx]['Roughness'] = node.inputs[1]
+            mh.gltf.socket_infos[mh.material_idx]['Roughness'] = node.inputs[1]
 
         x -= 200
 
@@ -910,14 +903,13 @@ def metallic_roughness(gltf, mh: MaterialHelper, location, metallic_socket, roug
 
 
 # [Texture] => [Normal Map] =>
-def normal(gltf, mh: MaterialHelper, location, normal_socket):
+def normal(mh: MaterialHelper, location, normal_socket):
     tex_info = mh.pymat.normal_texture
     if tex_info is not None:
         tex_info.blender_nodetree = mh.mat.node_tree  # Used in case of for KHR_animation_pointer
         tex_info.blender_mat = mh.mat  # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
     normal_map(
-        gltf,
         mh,
         location=location,
         label='Normal Map',
@@ -927,7 +919,7 @@ def normal(gltf, mh: MaterialHelper, location, normal_socket):
 
 
 # [Texture] => [Separate R] => [Mix Strength] =>
-def occlusion(gltf, mh: MaterialHelper, location, occlusion_socket):
+def occlusion(mh: MaterialHelper, location, occlusion_socket):
     x, y = location
 
     if mh.pymat.occlusion_texture is None:
@@ -964,7 +956,7 @@ def occlusion(gltf, mh: MaterialHelper, location, occlusion_socket):
         mh.node_tree.links.new(occlusion_socket, node.outputs[2])
         # Inputs
         node.inputs['Factor'].default_value = strength
-        gltf.socket_infos[mh.material_idx]['Occlusion'] = node.inputs['Factor']
+        mh.gltf.socket_infos[mh.material_idx]['Occlusion'] = node.inputs['Factor']
         node.inputs[6].default_value = [1, 1, 1, 1]
         occlusion_socket = node.inputs[7]
 

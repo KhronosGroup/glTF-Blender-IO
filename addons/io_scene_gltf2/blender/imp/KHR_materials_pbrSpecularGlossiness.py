@@ -22,7 +22,7 @@ from .image import BlenderImage
 import numpy as np
 
 
-def pbr_specular_glossiness(gltf, mh):
+def pbr_specular_glossiness(mh):
     """Creates node tree for pbrSpecularGlossiness materials."""
     ext = mh.get_ext('KHR_materials_pbrSpecularGlossiness', {})
 
@@ -35,7 +35,6 @@ def pbr_specular_glossiness(gltf, mh):
     locs = calc_locations(mh, ext)
 
     base_color(
-        gltf,
         mh,
         is_diffuse=True,
         location=locs['diffuse'],
@@ -44,7 +43,6 @@ def pbr_specular_glossiness(gltf, mh):
     )
 
     emission(
-        gltf,
         mh,
         location=locs['emission'],
         color_socket=pbr_node.inputs['Emission Color'],
@@ -52,7 +50,6 @@ def pbr_specular_glossiness(gltf, mh):
     )
 
     normal(
-        gltf,
         mh,
         location=locs['normal'],
         normal_socket=pbr_node.inputs['Normal'],
@@ -64,7 +61,6 @@ def pbr_specular_glossiness(gltf, mh):
             mh.settings_node.location = 10, 425
             mh.settings_node.width = 240
         occlusion(
-            gltf,
             mh,
             location=locs['occlusion'],
             occlusion_socket=mh.settings_node.inputs['Occlusion'],
