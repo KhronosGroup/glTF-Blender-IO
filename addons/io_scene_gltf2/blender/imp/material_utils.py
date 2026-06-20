@@ -61,17 +61,22 @@ def scalar_factor_and_texture(
     channel,                # texture channel to use (0-4)
     force_mix_node=False,   # Needed for KHR_animation_pointer
 ):
+
+    factor_socket = None
+
     if isinstance(tex_info, dict):
         tex_info = TextureInfo.from_dict(tex_info)
 
     x, y = location
 
     if socket is None:
-        return
+        return factor_socket
 
     if tex_info is None:
         socket.default_value = factor
-        return
+        return socket
+
+    factor_socket = socket
 
     if factor != 1.0 or force_mix_node:
         node = mh.nodes.new('ShaderNodeMath')
@@ -83,6 +88,7 @@ def scalar_factor_and_texture(
         # Inputs
         socket = node.inputs[0]
         node.inputs[1].default_value = factor
+        factor_socket = node.inputs[1]
 
         x -= 200
 
@@ -107,9 +113,12 @@ def scalar_factor_and_texture(
         alpha_socket=socket if channel == 4 else None,
     )
 
+    return factor_socket
 
 # Creates nodes for multiplying a texture color and color factor.
 # [Texture] => [Mix Factor] => socket
+
+
 def color_factor_and_texture(
     mh: MaterialHelper,
     location,

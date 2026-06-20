@@ -102,6 +102,8 @@ def pbr_metallic_roughness(gltf, mh: MaterialHelper):
         volume_node = mh.nodes.new('ShaderNodeVolumeAbsorption')
         volume_node.location = 40, -520 if need_settings_node else -370
         mh.links.new(out_node.inputs[1], volume_node.outputs[0])
+        gltf.socket_infos[mh.material_idx]['Volume Color'] = volume_node.inputs[0]
+        gltf.socket_infos[mh.material_idx]['Volume Density'] = volume_node.inputs[1]
 
     locs = calc_locations(mh)
 
@@ -213,7 +215,7 @@ def clearcoat(gltf, mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatFactor":
                         force_clearcoat_factor = True
 
-    scalar_factor_and_texture(
+    _ = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat'],
         label='Clearcoat',
@@ -250,7 +252,7 @@ def clearcoat(gltf, mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatRoughnessFactor":
                         force_clearcoat_roughness_factor = True
 
-    scalar_factor_and_texture(
+    _ = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat_roughness'],
         label='Clearcoat Roughness',
@@ -308,7 +310,7 @@ def transmission(mh, locs, pbr_node):
         # Activate screen refraction (for Eevee)
         mh.mat.use_raytrace_refraction = True
 
-    scalar_factor_and_texture(
+    _ = scalar_factor_and_texture(
         mh,
         location=locs['transmission'],
         label='Transmission',
@@ -358,7 +360,7 @@ def volume(mh, location, volume_node, thickness_socket):
                             pointer_tab[5] == "thicknessFactor":
                         force_math_node = True
 
-    scalar_factor_and_texture(
+    thickness_socket = scalar_factor_and_texture(
         mh,
         location=location,
         label='Thickness',
@@ -368,6 +370,7 @@ def volume(mh, location, volume_node, thickness_socket):
         channel=1,  # Green
         force_mix_node=force_math_node,
     )
+    mh.gltf.socket_infos[mh.material_idx]['Thickness'] = thickness_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('thicknessTexture')) if ext.get(
@@ -398,7 +401,7 @@ def specular(mh, locs, pbr_node):
         mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     # blender.IORLevel = 0.5 * gltf.specular
-    scalar_factor_and_texture(
+    _ = scalar_factor_and_texture(
         mh,
         location=locs['specularTexture'],
         label='Specular',
@@ -460,7 +463,7 @@ def sheen(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    scalar_factor_and_texture(
+    _ = scalar_factor_and_texture(
         mh,
         location=locs['sheenRoughnessTexture'],
         label='Sheen Roughness',

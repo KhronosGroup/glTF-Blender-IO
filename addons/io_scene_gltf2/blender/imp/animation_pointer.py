@@ -396,22 +396,14 @@ class BlenderPointerAnim():
                 pointer_tab[5] in ["thicknessFactor", "attenuationDistance", "attenuationColor"]:
 
             if pointer_tab[5] == "thicknessFactor":
-                thicknesss_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Thickness')
-                if thicknesss_socket.socket.is_linked:
-                    mix_node = thicknesss_socket.socket.links[0].from_node
-                    if mix_node.type == "MATH":
-                        blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 1
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    blender_path = thicknesss_socket.socket.path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
+
+                thickness_socket = NodeSocket(gltf.socket_infos[asset_idx]['Thickness'], [asset['blender_nodetree']])
+                blender_path = thickness_socket.socket.path_from_id() + ".default_value"
+                group_name = 'Material'
+                num_components = 1
 
             if pointer_tab[5] == "attenuationDistance":
-                density_socket = get_socket(asset['blender_nodetree'], 'Density', volume=True)
+                density_socket = NodeSocket(gltf.socket_infos[asset_idx]['Volume Density'], [asset['blender_nodetree']])
                 blender_path = density_socket.socket.path_from_id() + ".default_value"
                 group_name = 'Material'
                 num_components = 1
@@ -421,7 +413,9 @@ class BlenderPointerAnim():
                     values[idx] = [1.0 / old_values[idx][0]]
 
             if pointer_tab[5] == "attenuationColor":
-                attenuation_color_socket = get_socket(asset['blender_nodetree'], 'Color', volume=True)
+                attenuation_color_socket = NodeSocket(
+                    gltf.socket_infos[asset_idx]['Volume Color'], [
+                        asset['blender_nodetree']])
                 blender_path = attenuation_color_socket.socket.path_from_id() + ".default_value"
                 group_name = 'Material'
                 num_components = 3
