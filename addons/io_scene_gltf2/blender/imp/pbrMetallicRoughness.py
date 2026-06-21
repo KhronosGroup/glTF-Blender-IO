@@ -446,7 +446,7 @@ def sheen(mh, locs, pbr_node):
 
     pbr_node.inputs['Sheen Weight'].default_value = 1
 
-    color_factor_and_texture(
+    sheenColorFactor_socket = color_factor_and_texture(
         mh,
         location=locs['sheenColorTexture'],
         label='Sheen Color',
@@ -454,6 +454,7 @@ def sheen(mh, locs, pbr_node):
         factor=ext.get('sheenColorFactor', [0, 0, 0]),
         tex_info=ext.get('sheenColorTexture'),
     )
+    mh.gltf.socket_infos[mh.material_idx]['Sheen Color'] = sheenColorFactor_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('sheenColorTexture')) if ext.get(
@@ -463,7 +464,7 @@ def sheen(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    _ = scalar_factor_and_texture(
+    sheenRoughnessFactor_socket = scalar_factor_and_texture(
         mh,
         location=locs['sheenRoughnessTexture'],
         label='Sheen Roughness',
@@ -472,6 +473,7 @@ def sheen(mh, locs, pbr_node):
         tex_info=ext.get('sheenRoughnessTexture'),
         channel=4,  # Alpha
     )
+    mh.gltf.socket_infos[mh.material_idx]['Sheen Roughness'] = sheenRoughnessFactor_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('sheenRoughnessTexture')) if ext.get(

@@ -479,37 +479,21 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_sheen" and \
                 pointer_tab[5] == "sheenColorFactor":
-            sheen_color_socket = get_socket(asset['blender_nodetree'], 'Sheen Tint')
-            if sheen_color_socket.socket.is_linked:
-                mix_node = sheen_color_socket.socket.links[0].from_node
-                if mix_node.type == "MIX":
-                    blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 3
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = sheen_color_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 3
+            sheen_color_socket = NodeSocket(gltf.socket_infos[asset_idx]['Sheen Color'], [asset['blender_nodetree']])
+            blender_path = sheen_color_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 3
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_sheen" and \
                 pointer_tab[5] == "sheenRoughnessFactor":
-            sheen_roughness_socket = get_socket(asset['blender_nodetree'], 'Sheen Roughness')
-            if sheen_roughness_socket.socket.is_linked:
-                mix_node = sheen_roughness_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = sheen_roughness_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+            sheen_roughness_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Sheen Roughness'], [
+                    asset['blender_nodetree']])
+            blender_path = sheen_roughness_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
