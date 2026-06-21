@@ -499,19 +499,13 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_specular" and \
                 pointer_tab[5] == "specularFactor":
-            specular_socket = get_socket(asset['blender_nodetree'], 'Specular IOR Level')
-            if specular_socket.socket.is_linked:
-                mix_node = specular_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = specular_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            specular_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Specular IOR Level'], [
+                    asset['blender_nodetree']])
+            blender_path = specular_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
             old_values = values.copy()
             for idx, i in enumerate(old_values):
@@ -521,19 +515,12 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_specular" and \
                 pointer_tab[5] == "specularColorFactor":
-            specular_color_socket = get_socket(asset['blender_nodetree'], 'Specular Tint')
-            if specular_color_socket.socket.is_linked:
-                mix_node = specular_color_socket.socket.links[0].from_node
-                if mix_node.type == "MIX":
-                    blender_path = mix_node.inputs[7].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 3
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = specular_color_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 3
+            specular_color_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Specular Tint'], [
+                    asset['blender_nodetree']])
+            blender_path = specular_color_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 3
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \

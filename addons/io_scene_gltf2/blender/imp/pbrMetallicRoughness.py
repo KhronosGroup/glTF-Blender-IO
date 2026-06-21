@@ -401,7 +401,7 @@ def specular(mh, locs, pbr_node):
         mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     # blender.IORLevel = 0.5 * gltf.specular
-    _ = scalar_factor_and_texture(
+    specular_factor_socket = scalar_factor_and_texture(
         mh,
         location=locs['specularTexture'],
         label='Specular',
@@ -410,6 +410,7 @@ def specular(mh, locs, pbr_node):
         tex_info=ext.get('specularTexture'),
         channel=4,  # Alpha
     )
+    mh.gltf.socket_infos[mh.material_idx]['Specular IOR Level'] = specular_factor_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('specularTexture')) if ext.get('specularTexture') is not None else None
@@ -418,7 +419,7 @@ def specular(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    color_factor_and_texture(
+    specular_color_factor_socket = color_factor_and_texture(
         mh,
         location=locs['specularColorTexture'],
         label='Specular Color',
@@ -426,6 +427,7 @@ def specular(mh, locs, pbr_node):
         factor=ext.get('specularColorFactor', [1, 1, 1]),
         tex_info=ext.get('specularColorTexture'),
     )
+    mh.gltf.socket_infos[mh.material_idx]['Specular Tint'] = specular_color_factor_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('specularColorTexture')) if ext.get(
