@@ -211,7 +211,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatFactor":
                         force_clearcoat_factor = True
 
-    _ = scalar_factor_and_texture(
+    socket_coat_weight = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat'],
         label='Clearcoat',
@@ -221,6 +221,7 @@ def clearcoat(mh, locs, pbr_node):
         channel=0,  # Red
         force_mix_node=force_clearcoat_factor
     )
+    mh.gltf.socket_infos[mh.material_idx]['Coat Weight'] = socket_coat_weight
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('clearcoatTexture')) if ext.get(
@@ -248,7 +249,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatRoughnessFactor":
                         force_clearcoat_roughness_factor = True
 
-    _ = scalar_factor_and_texture(
+    socket_coat_roughness = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat_roughness'],
         label='Clearcoat Roughness',
@@ -259,6 +260,7 @@ def clearcoat(mh, locs, pbr_node):
         channel=1,  # Green
         force_mix_node=force_clearcoat_roughness_factor
     )
+    mh.gltf.socket_infos[mh.material_idx]['Coat Roughness'] = socket_coat_roughness
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('clearcoatRoughnessTexture')) if ext.get(

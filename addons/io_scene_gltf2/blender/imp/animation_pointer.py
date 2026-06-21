@@ -459,37 +459,21 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_clearcoat" and \
                 pointer_tab[5] == "clearcoatFactor":
-            clearcoat_socket = get_socket(asset['blender_nodetree'], 'Coat Weight')
-            if clearcoat_socket.socket.is_linked:
-                mix_node = clearcoat_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = clearcoat_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+            clearcoat_socket = NodeSocket(gltf.socket_infos[asset_idx]['Coat Weight'], [asset['blender_nodetree']])
+            blender_path = clearcoat_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_clearcoat" and \
                 pointer_tab[5] == "clearcoatRoughnessFactor":
-            clearcoat_roughness_socket = get_socket(asset['blender_nodetree'], 'Coat Roughness')
-            if clearcoat_roughness_socket.socket.is_linked:
-                mix_node = clearcoat_roughness_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = clearcoat_roughness_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+            clearcoat_roughness_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Coat Roughness'], [
+                    asset['blender_nodetree']])
+            blender_path = clearcoat_roughness_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
