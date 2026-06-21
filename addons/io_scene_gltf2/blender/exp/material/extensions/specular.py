@@ -106,7 +106,7 @@ def export_specular(bmat, export_settings):
 
          # Storing path for KHR_animation_pointer
         path_ = {}
-        path_['length'] = 1
+        path_['length'] = 3
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
         export_settings['current_paths']["node_tree." + speculartint_socket.socket.path_from_id() +
                                          ".default_value"] = path_
@@ -122,7 +122,7 @@ def export_specular(bmat, export_settings):
 
         if path is not None:
             path_ = {}
-            path_['length'] = 1
+            path_['length'] = 3
             path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
             export_settings['current_paths'][path] = path_
 
