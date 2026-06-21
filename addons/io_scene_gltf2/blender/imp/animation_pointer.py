@@ -447,14 +447,13 @@ class BlenderPointerAnim():
                 pointer_tab[4] == "KHR_materials_clearcoat" and \
                 pointer_tab[5] == "clearcoatNormalTexture" and \
                 pointer_tab[6] == "scale":
-            result = NodeTreeSearcher.from_socket(
-                get_socket(asset['blender_nodetree'], 'Coat Normal'),
-                FilterByType(bpy.types.ShaderNodeNormalMap),
-                None)  # TODO : no export settings here !
-            if result:
-                blender_path = result[0].shader_node.inputs['Strength'].path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            coat_normal_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Coat Normal'], [
+                    asset['blender_nodetree']])
+            blender_path = coat_normal_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \

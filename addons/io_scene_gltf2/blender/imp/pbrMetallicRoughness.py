@@ -268,13 +268,15 @@ def clearcoat(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    normal_map(
+    coat_normal_socket = normal_map(
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
         socket=pbr_node.inputs['Coat Normal'],
         tex_info=ext.get('clearcoatNormalTexture'),
     )
+
+    mh.gltf.socket_infos[mh.material_idx]['Coat Normal'] = coat_normal_socket
 
 
 def transmission(mh, locs, pbr_node):
@@ -911,13 +913,15 @@ def normal(mh: MaterialHelper, location, normal_socket):
         tex_info.blender_nodetree = mh.mat.node_tree  # Used in case of for KHR_animation_pointer
         tex_info.blender_mat = mh.mat  # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
-    normal_map(
+    normal_socket = normal_map(
         mh,
         location=location,
         label='Normal Map',
         socket=normal_socket,
         tex_info=tex_info,
     )
+
+    mh.gltf.socket_infos[mh.material_idx]['Normal'] = normal_socket
 
 
 # [Texture] => [Separate R] => [Mix Strength] =>

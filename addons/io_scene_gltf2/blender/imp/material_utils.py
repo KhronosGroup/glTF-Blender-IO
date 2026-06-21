@@ -179,11 +179,14 @@ def normal_map(
     socket,
     tex_info,
 ):
+
+    normal_socket = None
+
     if isinstance(tex_info, dict):
         tex_info = MaterialNormalTextureInfoClass.from_dict(tex_info)
 
     if not tex_info:
-        return
+        return normal_socket
 
     x, y = location
 
@@ -201,7 +204,7 @@ def normal_map(
     scale = tex_info.scale
     scale = scale if scale is not None else 1
     node.inputs['Strength'].default_value = scale
-    mh.gltf.socket_infos[mh.material_idx]['Normal'] = node.inputs['Strength']
+    normal_socket = node.inputs['Strength']
     # Outputs
     mh.links.new(socket, node.outputs['Normal'])
 
@@ -215,3 +218,5 @@ def normal_map(
         is_data=True,
         color_socket=node.inputs['Color'],
     )
+
+    return normal_socket
