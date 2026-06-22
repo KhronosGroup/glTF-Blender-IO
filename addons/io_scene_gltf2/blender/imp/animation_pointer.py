@@ -48,6 +48,14 @@ class BlenderPointerAnim():
                                           asset_type, name=name, is_unlit=is_unlit)
 
     @staticmethod
+    def __previous_node(socket):
+        nav = socket.to_node_nav()
+        nav.move_back()
+        if nav.moved:
+            return nav.node
+        return None
+
+    @staticmethod
     def do_channel(gltf, anim_idx, channel, asset, asset_idx, asset_type, name=None, is_unlit=False):
         animation = gltf.data.animations[anim_idx]
         pointer_tab = channel.target.extensions["KHR_animation_pointer"]["pointer"].split("/")
@@ -342,23 +350,24 @@ class BlenderPointerAnim():
             if tex_node is not None:
                 result = detect_manual_uv_wrapping(tex_node, socket.group_path)
                 if result:
-                    mapping_node = previous_node(result['next_socket'])
+                    mapping_node = BlenderPointerAnim.__previous_node(result['next_socket'])
                 else:
-                    mapping_node = previous_node(NodeSocket(tex_node.inputs['Vector'], socket.group_path))
+                    mapping_node = BlenderPointerAnim.__previous_node(
+                        NodeSocket(tex_node.inputs['Vector'], socket.group_path))
             else:
                 mapping_node = None
 
             if mapping_node is not None:
                 if pointer_tab[-1] == "offset":
-                    blender_path = mapping_node.node.inputs[1].path_from_id() + ".default_value"
+                    blender_path = mapping_node.inputs[1].path_from_id() + ".default_value"
                     group_name = 'Material'
                     num_components = 2
                 elif pointer_tab[-1] == "rotation":
-                    blender_path = mapping_node.node.inputs[2].path_from_id() + ".default_value"
+                    blender_path = mapping_node.inputs[2].path_from_id() + ".default_value"
                     group_name = 'Material'
                     num_components = 2
                 elif pointer_tab[-1] == "scale":
-                    blender_path = mapping_node.node.inputs[3].path_from_id() + ".default_value"
+                    blender_path = mapping_node.inputs[3].path_from_id() + ".default_value"
                     group_name = 'Material'
                     num_components = 2
 
