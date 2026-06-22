@@ -24,6 +24,7 @@ from ..search_node_tree import \
 
 
 def export_volume(bmat, export_settings):
+    export_settings['current_texture_transform'] = {}
     # Implementation based on https://github.com/KhronosGroup/glTF-Blender-IO/issues/1454#issuecomment-928319444
 
     # If no transmission --> No volume

@@ -21,7 +21,7 @@ from ..encode_image import TmpImageGuard, make_temp_image_copy, StoreImage, Stor
 
 
 def export_anisotropy(bmat, export_settings):
-
+    export_settings['current_texture_transform'] = {}
     anisotropy_extension = {}
     uvmap_infos = {}
     udim_infos = {}

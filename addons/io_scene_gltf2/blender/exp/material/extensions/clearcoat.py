@@ -21,6 +21,7 @@ from ..search_node_tree import has_image_node_from_socket, get_socket, get_facto
 
 
 def export_clearcoat(bmat, export_settings):
+    export_settings['current_texture_transform'] = {}
     has_clearcoat_texture = False
     has_clearcoat_roughness_texture = False
 

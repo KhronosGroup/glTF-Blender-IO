@@ -39,6 +39,7 @@ def export_iridescence(bmat, export_settings):
     # IridescenceTexture Red (Blender, glTF Output Material Node texture on
     # IridescenceFactor) -> Iridescence Texture (glTF)
 
+    export_settings['current_texture_transform'] = {}
     iridescence_extension = {}
     uvmap_infos = {}
     udim_infos = {}

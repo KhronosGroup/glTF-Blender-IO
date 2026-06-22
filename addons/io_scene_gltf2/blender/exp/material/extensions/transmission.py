@@ -22,6 +22,7 @@ from ..search_node_tree import \
 
 
 def export_transmission(bmat, export_settings):
+    export_settings['current_texture_transform'] = {}
     has_transmission_texture = False
 
     transmission_extension = {}

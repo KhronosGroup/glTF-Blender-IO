@@ -22,6 +22,7 @@ from ..search_node_tree import \
 
 
 def export_sheen(bmat, export_settings):
+    export_settings['current_texture_transform'] = {}
     sheen_extension = {}
 
     sheenTint_socket = get_socket(bmat.get_used_material().node_tree, "Sheen Tint")
