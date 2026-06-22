@@ -623,6 +623,10 @@ def base_color(
     x, y = location
     pbr = mh.pymat.pbr_metallic_roughness
 
+    if alpha_socket:
+        # Maybe overwiten later
+        mh.gltf.socket_infos[mh.material_idx]['Base Color Alpha'] = alpha_socket
+
     if not is_diffuse:
         base_color_factor = pbr.base_color_factor or [1, 1, 1, 1]
         base_color_texture = pbr.base_color_texture

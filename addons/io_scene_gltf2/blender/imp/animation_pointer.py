@@ -633,20 +633,15 @@ class BlenderPointerAnim():
                 pointer_tab[4] == "baseColorFactor":
 
             if is_unlit is False:
-                alpha_socket = get_socket(asset.blender_nodetree, "Alpha")
+                alpha_socket = NodeSocket(gltf.socket_infos[asset_idx]['Base Color Alpha'], [asset.blender_nodetree])
+                blender_path = alpha_socket.socket.path_from_id() + ".default_value"
             else:
                 unlit_info = gltf.socket_infos[asset_idx]
                 if 'alpha_socket' in unlit_info:
                     alpha_socket = NodeSocket(unlit_info['alpha_socket'], [asset.blender_nodetree])
-            if alpha_socket.socket.is_linked:
-                # We need to find the correct node value to animate (An Mix Factor node)
-                mix_node = alpha_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
+                    blender_path = alpha_socket.socket.path_from_id() + ".default_value"
                 else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = alpha_socket.socket.path_from_id() + ".default_value"
+                    blender_path = None
 
             coords[1::2] = (vals[3] for vals in values)
             make_fcurve(
