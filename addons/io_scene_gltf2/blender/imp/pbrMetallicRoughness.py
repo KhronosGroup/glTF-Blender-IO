@@ -222,6 +222,7 @@ def clearcoat(mh, locs, pbr_node):
         force_mix_node=force_clearcoat_factor
     )
     mh.gltf.socket_infos[mh.material_idx]['Coat Weight'] = socket_coat_weight
+    mh.gltf.socket_infos[mh.material_idx]['Coat Weight Texture'] = coat_weight_texture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('clearcoatTexture')) if ext.get(
@@ -261,7 +262,7 @@ def clearcoat(mh, locs, pbr_node):
         force_mix_node=force_clearcoat_roughness_factor
     )
     mh.gltf.socket_infos[mh.material_idx]['Coat Roughness'] = socket_coat_roughness
-
+    mh.gltf.socket_infos[mh.material_idx]['Coat Roughness Texture'] = socket_coat_roughness_texture
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('clearcoatRoughnessTexture')) if ext.get(
             'clearcoatRoughnessTexture') is not None else None
@@ -279,6 +280,7 @@ def clearcoat(mh, locs, pbr_node):
     )
 
     mh.gltf.socket_infos[mh.material_idx]['Coat Normal'] = coat_normal_socket
+    mh.gltf.socket_infos[mh.material_idx]['Coat Normal Texture'] = coat_normal_texture_socket
 
 
 def transmission(mh, locs, pbr_node):
@@ -320,6 +322,7 @@ def transmission(mh, locs, pbr_node):
         force_mix_node=force_transmission,
     )
     mh.gltf.socket_infos[mh.material_idx]['Transmission Weight'] = transmission_factor
+    mh.gltf.socket_infos[mh.material_idx]['Transmission Texture'] = transmission_texture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('transmissionTexture')) if ext.get(
@@ -371,6 +374,7 @@ def volume(mh, location, volume_node, thickness_socket):
         force_mix_node=force_math_node,
     )
     mh.gltf.socket_infos[mh.material_idx]['Thickness'] = thickness_socket
+    mh.gltf.socket_infos[mh.material_idx]['Thickness Texture'] = thickness_texture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('thicknessTexture')) if ext.get(
@@ -412,6 +416,7 @@ def specular(mh, locs, pbr_node):
         channel=4,  # Alpha
     )
     mh.gltf.socket_infos[mh.material_idx]['Specular IOR Level'] = specular_factor_socket
+    mh.gltf.socket_infos[mh.material_idx]['Specular IOR Level Texture'] = specular_texture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('specularTexture')) if ext.get('specularTexture') is not None else None
@@ -429,6 +434,7 @@ def specular(mh, locs, pbr_node):
         tex_info=ext.get('specularColorTexture'),
     )
     mh.gltf.socket_infos[mh.material_idx]['Specular Tint'] = specular_color_factor_socket
+    mh.gltf.socket_infos[mh.material_idx]['Specular Tint Texture'] = specular_texture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('specularColorTexture')) if ext.get(
@@ -458,6 +464,7 @@ def sheen(mh, locs, pbr_node):
         tex_info=ext.get('sheenColorTexture'),
     )
     mh.gltf.socket_infos[mh.material_idx]['Sheen Color'] = sheenColorFactor_socket
+    mh.gltf.socket_infos[mh.material_idx]['Sheen Color Texture'] = sheenTexture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('sheenColorTexture')) if ext.get(
@@ -477,6 +484,7 @@ def sheen(mh, locs, pbr_node):
         channel=4,  # Alpha
     )
     mh.gltf.socket_infos[mh.material_idx]['Sheen Roughness'] = sheenRoughnessFactor_socket
+    mh.gltf.socket_infos[mh.material_idx]['Sheen Roughness Texture'] = sheenRoughnessTexture_socket
 
     if len(ext) > 0:
         tex_info = TextureInfo.from_dict(ext.get('sheenRoughnessTexture')) if ext.get(
@@ -608,6 +616,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     )
     mh.gltf.socket_infos[mh.material_idx]['Emission Color'] = emission_socket
     mh.gltf.socket_infos[mh.material_idx]['Emission Strength'] = strength_socket
+    mh.gltf.socket_infos[mh.material_idx]['Emission Texture'] = emission_texture_socket
     strength_socket.default_value = strength
 
 
@@ -935,6 +944,7 @@ def normal(mh: MaterialHelper, location, normal_socket):
     )
 
     mh.gltf.socket_infos[mh.material_idx]['Normal'] = normal_socket
+    mh.gltf.socket_infos[mh.material_idx]['Normal Texture'] = normal_texture_socket
 
 
 # [Texture] => [Separate R] => [Mix Strength] =>
