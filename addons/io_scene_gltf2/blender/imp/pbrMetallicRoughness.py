@@ -390,6 +390,7 @@ def dispersion(mh, dispersion_socket):
         mh.pymat.extensions['KHR_materials_dispersion']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     dispersion_socket.default_value = ext.get('dispersion', 0)
+    mh.gltf.socket_infos[mh.material_idx]['Dispersion'] = dispersion_socket
 
 
 def specular(mh, locs, pbr_node):

@@ -15,7 +15,7 @@
 import bpy
 from ...io.imp.user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..exp.material.search_node_tree import NodeSocket, previous_node, get_socket, FilterByType, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket, NodeTreeSearcher  # TODO move to COM
+from ..exp.material.search_node_tree import NodeSocket, previous_node, get_socket, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket, NodeTreeSearcher  # TODO move to COM
 
 from ..exp.sampler import detect_manual_uv_wrapping  # TODO move to COM
 from ..com.conversion import texture_transform_gltf_to_blender
@@ -551,7 +551,10 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_dispersion" and \
                 pointer_tab[5] == "dispersion":
-            dispersion_socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], 'Dispersion')
+
+            dispersion_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Dispersion'], [
+                    asset['blender_nodetree']])
             if dispersion_socket.socket.is_linked:
                 print("Error, something is wrong, Dispersion should not be linked")
             else:
