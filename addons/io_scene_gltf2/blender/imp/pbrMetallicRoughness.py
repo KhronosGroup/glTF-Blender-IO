@@ -211,7 +211,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatFactor":
                         force_clearcoat_factor = True
 
-    socket_coat_weight = scalar_factor_and_texture(
+    socket_coat_weight, coat_weight_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat'],
         label='Clearcoat',
@@ -249,7 +249,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatRoughnessFactor":
                         force_clearcoat_roughness_factor = True
 
-    socket_coat_roughness = scalar_factor_and_texture(
+    socket_coat_roughness, socket_coat_roughness_texture = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat_roughness'],
         label='Clearcoat Roughness',
@@ -270,7 +270,7 @@ def clearcoat(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    coat_normal_socket = normal_map(
+    coat_normal_socket, coat_normal_texture_socket = normal_map(
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
@@ -309,7 +309,7 @@ def transmission(mh, locs, pbr_node):
         # Activate screen refraction (for Eevee)
         mh.mat.use_raytrace_refraction = True
 
-    transmission_factor = scalar_factor_and_texture(
+    transmission_factor, transmission_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['transmission'],
         label='Transmission',
@@ -360,7 +360,7 @@ def volume(mh, location, volume_node, thickness_socket):
                             pointer_tab[5] == "thicknessFactor":
                         force_math_node = True
 
-    thickness_socket = scalar_factor_and_texture(
+    thickness_socket, thickness_texture_socket = scalar_factor_and_texture(
         mh,
         location=location,
         label='Thickness',
@@ -402,7 +402,7 @@ def specular(mh, locs, pbr_node):
         mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     # blender.IORLevel = 0.5 * gltf.specular
-    specular_factor_socket = scalar_factor_and_texture(
+    specular_factor_socket, specular_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['specularTexture'],
         label='Specular',
@@ -420,7 +420,7 @@ def specular(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    specular_color_factor_socket = color_factor_and_texture(
+    specular_color_factor_socket, specular_texture_socket = color_factor_and_texture(
         mh,
         location=locs['specularColorTexture'],
         label='Specular Color',
@@ -449,7 +449,7 @@ def sheen(mh, locs, pbr_node):
 
     pbr_node.inputs['Sheen Weight'].default_value = 1
 
-    sheenColorFactor_socket = color_factor_and_texture(
+    sheenColorFactor_socket, sheenTexture_socket = color_factor_and_texture(
         mh,
         location=locs['sheenColorTexture'],
         label='Sheen Color',
@@ -467,7 +467,7 @@ def sheen(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
-    sheenRoughnessFactor_socket = scalar_factor_and_texture(
+    sheenRoughnessFactor_socket, sheenRoughnessTexture_socket = scalar_factor_and_texture(
         mh,
         location=locs['sheenRoughnessTexture'],
         label='Sheen Roughness',
@@ -597,7 +597,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
                             pointer_tab[3] == "emissiveFactor":
                         force_mix_node = True
 
-    emission_socket = color_factor_and_texture(
+    emission_socket, emission_texture_socket = color_factor_and_texture(
         mh,
         location,
         label='Emissive',
@@ -818,7 +818,7 @@ def base_color(
 
     # Texture
     if base_color_texture is not None:
-        texture(
+        texture_socket = texture(
             mh,
             tex_info=base_color_texture,
             label='BASE COLOR' if not is_diffuse else 'DIFFUSE',
@@ -826,6 +826,7 @@ def base_color(
             color_socket=texture_color_socket,
             alpha_socket=texture_alpha_socket,
         )
+        mh.gltf.socket_infos[mh.material_idx]['Base Color Texture'] = texture_socket
 
 
 # [Texture] => [Separate GB] => [Metal/Rough Factor] =>
@@ -907,7 +908,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
 
     x -= 200
 
-    texture(
+    texture_socket = texture(
         mh,
         tex_info=pbr.metallic_roughness_texture,
         label='METALLIC ROUGHNESS',
@@ -915,6 +916,7 @@ def metallic_roughness(mh: MaterialHelper, location, metallic_socket, roughness_
         is_data=True,
         color_socket=color_socket,
     )
+    mh.gltf.socket_infos[mh.material_idx]['Metallic Roughness Texture'] = texture_socket
 
 
 # [Texture] => [Normal Map] =>
@@ -924,7 +926,7 @@ def normal(mh: MaterialHelper, location, normal_socket):
         tex_info.blender_nodetree = mh.mat.node_tree  # Used in case of for KHR_animation_pointer
         tex_info.blender_mat = mh.mat  # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
 
-    normal_socket = normal_map(
+    normal_socket, normal_texture_socket = normal_map(
         mh,
         location=location,
         label='Normal Map',
@@ -993,7 +995,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
     # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
     mh.pymat.occlusion_texture.blender_mat = mh.mat
 
-    texture(
+    texture_socket = texture(
         mh,
         tex_info=mh.pymat.occlusion_texture,
         label='OCCLUSION',
@@ -1001,6 +1003,7 @@ def occlusion(mh: MaterialHelper, location, occlusion_socket):
         is_data=True,
         color_socket=color_socket,
     )
+    mh.gltf.socket_infos[mh.material_idx]['Occlusion Texture'] = texture_socket
 
 
 def make_settings_node(mh):

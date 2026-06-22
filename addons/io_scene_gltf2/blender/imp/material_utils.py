@@ -74,7 +74,7 @@ def scalar_factor_and_texture(
 
     if tex_info is None:
         socket.default_value = factor
-        return socket
+        return socket, None
 
     factor_socket = socket
 
@@ -103,7 +103,7 @@ def scalar_factor_and_texture(
 
         x -= 200
 
-    texture(
+    texture_socket = texture(
         mh,
         tex_info=tex_info,
         label=label.upper(),
@@ -112,8 +112,7 @@ def scalar_factor_and_texture(
         color_socket=socket if channel != 4 else None,
         alpha_socket=socket if channel == 4 else None,
     )
-
-    return factor_socket
+    return factor_socket, texture_socket
 
 # Creates nodes for multiplying a texture color and color factor.
 # [Texture] => [Mix Factor] => socket
@@ -137,11 +136,11 @@ def color_factor_and_texture(
     x, y = location
 
     if socket is None:
-        return None
+        return None, None
 
     if tex_info is None:
         socket.default_value = [*factor, 1]
-        return socket
+        return socket, None
 
     if factor != [1, 1, 1] or force_mix_node:
         node = mh.nodes.new('ShaderNodeMix')
@@ -159,7 +158,7 @@ def color_factor_and_texture(
 
         x -= 200
 
-    texture(
+    texture_socket = texture(
         mh,
         tex_info=tex_info,
         label=label.upper(),
@@ -168,7 +167,7 @@ def color_factor_and_texture(
         color_socket=socket,
     )
 
-    return factor_socket
+    return factor_socket, texture_socket
 
 
 # [Texture] => [Normal Map] => socket
@@ -186,7 +185,7 @@ def normal_map(
         tex_info = MaterialNormalTextureInfoClass.from_dict(tex_info)
 
     if not tex_info:
-        return normal_socket
+        return normal_socket, None
 
     x, y = location
 
@@ -210,7 +209,7 @@ def normal_map(
 
     x -= 200
 
-    texture(
+    texture_socket = texture(
         mh,
         tex_info=tex_info,
         label=label.upper(),
@@ -219,4 +218,4 @@ def normal_map(
         color_socket=node.inputs['Color'],
     )
 
-    return normal_socket
+    return normal_socket, texture_socket

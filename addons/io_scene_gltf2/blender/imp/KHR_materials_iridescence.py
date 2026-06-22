@@ -81,7 +81,7 @@ def iridescence(
                                 pointer_tab[5] == "iridescenceFactor":
                             force_iridescence_factor = True
 
-        socket_iridescence_factor = scalar_factor_and_texture(
+        socket_iridescence_factor, socket_iridescence_texture = scalar_factor_and_texture(
             mh,
             location=locs['iridescence'],
             label='Iridescence',
@@ -108,7 +108,7 @@ def iridescence(
         mh.node_tree.links.new(separate_node.outputs[1], mix_node.inputs[0])  # Factor is in the green channel
 
         # Texture node
-        texture(
+        socket = texture(
             mh,
             tex_info=tex_info,
             label='IRIDESCENCE THICKNESS',
@@ -116,6 +116,7 @@ def iridescence(
             is_data=True,
             color_socket=separate_node.inputs[0]
         )
+        mh.gltf.socket_infos[mh.material_idx]['Iridescence Thickness Texture'] = socket
 
         # Value node (minimum thickness)
         value_node = mh.node_tree.nodes.new('ShaderNodeValue')

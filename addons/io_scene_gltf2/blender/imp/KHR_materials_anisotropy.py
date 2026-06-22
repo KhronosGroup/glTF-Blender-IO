@@ -120,7 +120,7 @@ def anisotropy(
     mh.node_tree.links.new(sep_node.inputs[0], multiply_add_node.outputs[0])
 
     # Texture
-    texture(
+    socket = texture(
         mh,
         tex_info=tex_info,
         label='ANISOTROPY',
@@ -128,3 +128,4 @@ def anisotropy(
         is_data=True,
         color_socket=multiply_add_node.inputs[0]
     )
+    mh.gltf.socket_infos[mh.material_idx]['Anisotropy Texture'] = socket
