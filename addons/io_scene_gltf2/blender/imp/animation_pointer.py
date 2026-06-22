@@ -563,79 +563,48 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceFactor":
-            iridescence_factor_socket = get_socket_from_gltf_material_node(
-                asset['blender_nodetree'], 'Iridescence Factor')
-            if iridescence_factor_socket.socket.is_linked:
-                mix_node = iridescence_factor_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = iridescence_factor_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            iridescence_factor_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Iridescence Factor'], [
+                    asset['blender_nodetree']])
+            blender_path = iridescence_factor_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceIor":
-            iridescence_ior_socket = get_socket(asset['blender_nodetree'], 'Thin Film IOR')
-            if iridescence_ior_socket.socket.is_linked:
-                mix_node = iridescence_ior_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = iridescence_ior_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            iridescence_ior_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Iridescence IOR'], [
+                    asset['blender_nodetree']])
+            blender_path = iridescence_ior_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceThicknessMinimum":
-            iridescence_thickness_min_socket = get_socket_from_gltf_material_node(
-                asset['blender_nodetree'], 'Iridescence Thickness Minimum')
-            if iridescence_thickness_min_socket.socket.is_linked:
-                value_node = iridescence_thickness_min_socket.socket.links[0].from_node
-                if value_node.type == "VALUE":
-                    blender_path = value_node.outputs[0].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = iridescence_thickness_min_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            iridescence_thickness_min_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Iridescence Thickness Minimum'], [
+                    asset['blender_nodetree']])
+            blender_path = iridescence_thickness_min_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_iridescence" and \
                 pointer_tab[5] == "iridescenceThicknessMaximum":
-            iridescence_thickness_max_socket = get_socket(asset['blender_nodetree'], 'Thin Film Thickness')
-            if iridescence_thickness_max_socket.socket.is_linked:
-                mix_node = iridescence_thickness_max_socket.socket.links[0].from_node
-                if mix_node.type == "MIX":
-                    value_node = mix_node.inputs[3].links[0].from_node
-                    if value_node.type == "VALUE":
-                        blender_path = value_node.outputs[0].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 1
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = iridescence_thickness_max_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+            iridescence_thickness_max_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Iridescence Thickness Maximum'], [
+                    asset['blender_nodetree']])
+            blender_path = iridescence_thickness_max_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if blender_path is None:
             gltf.log.warning("Unsupported animation target: %s" % pointer_tab)
