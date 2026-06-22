@@ -526,41 +526,26 @@ class BlenderPointerAnim():
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_anisotropy" and \
                 pointer_tab[5] == "anisotropyStrength":
-            anisotropy_socket = get_socket(asset['blender_nodetree'], 'Anisotropic')
-            if anisotropy_socket.socket.is_linked:
-                mix_node = anisotropy_socket.socket.links[0].from_node
-                if mix_node.type == "MATH":
-                    blender_path = mix_node.inputs[1].path_from_id() + ".default_value"
-                    group_name = 'Material'
-                    num_components = 1
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = anisotropy_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            anisotropy_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['AnisotropyStrength'], [
+                    asset['blender_nodetree']])
+
+            blender_path = anisotropy_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \
                 pointer_tab[4] == "KHR_materials_anisotropy" and \
                 pointer_tab[5] == "anisotropyRotation":
-            anisotropy_rotation_socket = get_socket(asset['blender_nodetree'], 'Anisotropic Rotation')
-            if anisotropy_rotation_socket.socket.is_linked:
-                mix_node = anisotropy_rotation_socket.socket.links[0].from_node
-                if mix_node.type == "MATH" and mix_node.inputs[0].is_linked:
-                    mix_rotation = mix_node.inputs[0].links[0].from_node
-                    if mix_rotation.type == "MATH":
-                        blender_path = mix_rotation.inputs[1].path_from_id() + ".default_value"
-                        group_name = 'Material'
-                        num_components = 1
-                    else:
-                        print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-                else:
-                    print("Error, something is wrong, we didn't detect adding a Mix Node because of Pointers")
-            else:
-                blender_path = anisotropy_rotation_socket.socket.path_from_id() + ".default_value"
-                group_name = 'Material'
-                num_components = 1
+
+            anisotropy_rotation_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['AnisotropyRotation'], [
+                    asset['blender_nodetree']])
+            blender_path = anisotropy_rotation_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \

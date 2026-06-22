@@ -49,7 +49,9 @@ def anisotropy(
 
     if tex_info is None:
         anisotropy_socket.default_value = anisotropy_strength
+        mh.gltf.socket_infos[mh.material_idx]['AnisotropyStrength'] = anisotropy_socket
         anisotropy_rotation_socket.default_value = get_anisotropy_rotation_gltf_to_blender(anisotropy_rotation)
+        mh.gltf.socket_infos[mh.material_idx]['AnisotropyRotation'] = anisotropy_rotation_socket
         return
 
     # Tangent node
@@ -76,6 +78,7 @@ def anisotropy(
     multiply_node.location = x - 180, y + 200
     mh.node_tree.links.new(anisotropy_socket, multiply_node.outputs[0])
     multiply_node.inputs[1].default_value = anisotropy_strength
+    mh.gltf.socket_infos[mh.material_idx]['AnisotropyStrength'] = multiply_node.inputs[1]
 
     # Divide node
     divide_node = mh.node_tree.nodes.new('ShaderNodeMath')
@@ -92,6 +95,7 @@ def anisotropy(
     rotation_node.location = x - 180 * 2, y
     mh.node_tree.links.new(divide_node.inputs[0], rotation_node.outputs[0])
     rotation_node.inputs[1].default_value = anisotropy_rotation
+    mh.gltf.socket_infos[mh.material_idx]['AnisotropyRotation'] = rotation_node.inputs[1]
 
     # ArcTan node
     arctan_node = mh.node_tree.nodes.new('ShaderNodeMath')
