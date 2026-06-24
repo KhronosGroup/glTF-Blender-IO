@@ -151,6 +151,7 @@ def export_clearcoat(bmat, export_settings):
         export_settings['current_texture_transform'] = {}
 
     if has_image_node_from_socket(clearcoat_normal_socket, export_settings):
+        export_settings['current_texture_transform'] = {}
         clearcoat_normal_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_material_normal_texture_info_class(
             clearcoat_normal_socket, (clearcoat_normal_socket,), export_settings)
         clearcoat_extension['clearcoatNormalTexture'] = clearcoat_normal_texture
@@ -171,6 +172,22 @@ def export_clearcoat(bmat, export_settings):
                 else:
                     export_settings['current_paths'][k] = path_
 
+        if len(export_settings['current_texture_transform']) != 0:
+            for k in export_settings['current_texture_transform'].keys():
+                path_ = {}
+                path_['length'] = export_settings['current_texture_transform'][k]['length']
+                path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                    "YYY", "extensions/KHR_materials_clearcoat/clearcoatNormalTexture/extensions")
+                path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
+                if k in export_settings['current_paths']:
+                    if 'additional' not in export_settings['current_paths'][k]:
+                        export_settings['current_paths'][k]['additional'] = []
+                    if path_['path'] != export_settings['current_paths'][k]['path']:
+                        export_settings['current_paths'][k]['additional'].append(path_['path'])
+                else:
+                    export_settings['current_paths'][k] = path_
+
+        export_settings['current_texture_transform'] = {}
         export_settings['current_normal_scale'] = {}
 
     return Extension('KHR_materials_clearcoat', clearcoat_extension, False), uvmap_infos, udim_infos
