@@ -360,7 +360,7 @@ class BlenderPointerAnim():
                 if socket is None:
                     socket = get_socket_from_gltf_material_node(asset.blender_nodetree, "Occlusion")
             elif pointer_tab[-4] == "metallicRoughnessTexture":
-                socket = get_socket(asset.blender_nodetree, "Roughness")
+                socket = get_socket(asset['blender_nodetree'], "Roughness")
             elif pointer_tab[-4] == "specularTexture":
                 socket = get_socket(asset['blender_nodetree'], "Specular IOR Level")
             elif pointer_tab[-4] == "specularColorTexture":
@@ -384,7 +384,7 @@ class BlenderPointerAnim():
             elif pointer_tab[-4] == "iridescenceThicknessTexture":
                 socket = get_socket(asset['blender_nodetree'], "Thin Film Thickness")
             elif pointer_tab[-4] == "anisotropyTexture":
-                socket = get_socket(asset['blender_nodetree'], "Anisotropy")
+                socket = get_socket(asset['blender_nodetree'], "Anisotropic")
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 
