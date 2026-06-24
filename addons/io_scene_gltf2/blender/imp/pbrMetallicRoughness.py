@@ -14,7 +14,7 @@
 
 import bpy
 from ...io.com.constants import GLTF_IOR, BLENDER_COAT_ROUGHNESS
-from ...io.com.gltf2_io import TextureInfo
+from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
 from ..com.material_helpers import get_gltf_node_name, create_settings_group
 from .texture import texture
 from .KHR_materials_anisotropy import anisotropy
@@ -265,13 +265,18 @@ def clearcoat(mh, locs, pbr_node):
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
             mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
+    tex_info = MaterialNormalTextureInfoClass.from_dict(ext.get('clearcoatNormalTexture')) if ext.get(
+        'clearcoatNormalTexture') is not None else None
     normal_map(
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
         socket=pbr_node.inputs['Coat Normal'],
-        tex_info=ext.get('clearcoatNormalTexture'),
+        tex_info=tex_info,
     )
+    if tex_info is not None:
+        # Used in case of for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatNormalTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
 
 def transmission(mh, locs, pbr_node):
