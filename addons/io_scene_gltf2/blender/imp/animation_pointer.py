@@ -357,8 +357,8 @@ class BlenderPointerAnim():
                 socket = get_socket(asset['blender_nodetree'], "Normal")
             elif pointer_tab[-4] == "occlusionTexture":
                 socket = get_socket(asset['blender_nodetree'], "Occlusion")
-                if socket is None:
-                    socket = get_socket_from_gltf_material_node(asset.blender_nodetree, "Occlusion")
+                if socket.socket is None:
+                    socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], "Occlusion")
             elif pointer_tab[-4] == "metallicRoughnessTexture":
                 socket = get_socket(asset['blender_nodetree'], "Roughness")
             elif pointer_tab[-4] == "specularTexture":
