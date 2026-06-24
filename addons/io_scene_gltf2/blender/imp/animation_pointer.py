@@ -352,11 +352,11 @@ class BlenderPointerAnim():
                     else:
                         socket = NodeSocket(None, None)
             elif pointer_tab[-4] == "emissiveTexture":
-                socket = get_socket(asset.blender_nodetree, "Emission Color")
+                socket = get_socket(asset['blender_nodetree'], "Emission Color")
             elif pointer_tab[-4] == "normalTexture":
-                socket = get_socket(asset.blender_nodetree, "Normal")
+                socket = get_socket(asset['blender_nodetree'], "Normal")
             elif pointer_tab[-4] == "occlusionTexture":
-                socket = get_socket(asset.blender_nodetree, "Occlusion")
+                socket = get_socket(asset['blender_nodetree'], "Occlusion")
                 if socket is None:
                     socket = get_socket_from_gltf_material_node(asset.blender_nodetree, "Occlusion")
             elif pointer_tab[-4] == "metallicRoughnessTexture":
@@ -379,6 +379,12 @@ class BlenderPointerAnim():
                 socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], "Thickness")
             elif pointer_tab[-4] == "transmissionTexture":
                 socket = get_socket(asset['blender_nodetree'], "Transmission Weight")
+            elif pointer_tab[-4] == "iridescenceTexture":
+                socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], "Iridescence Factor")
+            elif pointer_tab[-4] == "iridescenceThicknessTexture":
+                socket = get_socket(asset['blender_nodetree'], "Thin Film Thickness")
+            elif pointer_tab[-4] == "anisotropyTexture":
+                socket = get_socket(asset['blender_nodetree'], "Anisotropy")
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 
