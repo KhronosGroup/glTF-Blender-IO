@@ -274,7 +274,7 @@ def clearcoat(mh, locs, pbr_node):
         socket=pbr_node.inputs['Coat Normal'],
         tex_info=tex_info,
     )
-    if tex_info is not None:
+    if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
         # Used in case of for KHR_animation_pointer
         mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatNormalTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
