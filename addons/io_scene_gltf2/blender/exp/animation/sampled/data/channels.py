@@ -48,6 +48,26 @@ def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_n
         if channel is not None:
             channels.append(channel)
 
+            # Manage multiple Texture Transform for the same path
+            for additional_path in export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path].get('additional', [
+            ]):
+
+                new_target = gltf2_io.AnimationChannelTarget(
+                    extensions=channel.target.extensions,
+                    extras=channel.target.extras,
+                    node=channel.target.node,
+                    path=additional_path
+                )
+
+                new_channel = gltf2_io.AnimationChannel(
+                    extensions=None,
+                    extras=None,
+                    sampler=channel.sampler,
+                    target=new_target
+                )
+
+                channels.append(new_channel)
+
         if export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
             baseColorFactor_alpha_merged_already_done = True
 
