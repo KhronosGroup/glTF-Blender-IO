@@ -37,6 +37,7 @@ def export_iridescence(bmat, export_settings):
     # IridescenceTexture Red (Blender, glTF Output Material Node texture on
     # IridescenceFactor) -> Iridescence Texture (glTF)
 
+    export_settings['current_texture_transform'] = {}
     iridescence_extension = {}
     uvmap_infos = {}
     udim_infos = {}
@@ -111,7 +112,13 @@ def export_iridescence(bmat, export_settings):
                     path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                         "YYY", "extensions/KHR_materials_iridescence/iridescenceTexture/extensions")
                     path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-                    export_settings['current_paths'][k] = path_
+                    if k in export_settings['current_paths']:
+                        if 'additional' not in export_settings['current_paths'][k]:
+                            export_settings['current_paths'][k]['additional'] = []
+                        if path_['path'] != export_settings['current_paths'][k]['path']:
+                            export_settings['current_paths'][k]['additional'].append(path_['path'])
+                    else:
+                        export_settings['current_paths'][k] = path_
             export_settings['current_texture_transform'] = {}
 
     # Iridescence Thickness Maximum
@@ -180,7 +187,13 @@ def export_iridescence(bmat, export_settings):
                             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                                 "YYY", "extensions/KHR_materials_iridescence/iridescenceThicknessTexture/extensions")
                             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-                            export_settings['current_paths'][k] = path_
+                            if k in export_settings['current_paths']:
+                                if 'additional' not in export_settings['current_paths'][k]:
+                                    export_settings['current_paths'][k]['additional'] = []
+                                if path_['path'] != export_settings['current_paths'][k]['path']:
+                                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+                            else:
+                                export_settings['current_paths'][k] = path_
                     export_settings['current_texture_transform'] = {}
 
             # We have all data for returning the Extension

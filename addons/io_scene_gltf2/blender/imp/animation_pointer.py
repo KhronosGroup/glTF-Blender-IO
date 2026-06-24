@@ -343,6 +343,12 @@ class BlenderPointerAnim():
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Transmission Texture'], [
                         asset.blender_nodetree])
+            elif pointer_tab[-4] == "iridescenceTexture":
+                socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], "Iridescence Factor")
+            elif pointer_tab[-4] == "iridescenceThicknessTexture":
+                socket = get_socket(asset['blender_nodetree'], "Thin Film Thickness")
+            elif pointer_tab[-4] == "anisotropyTexture":
+                socket = get_socket(asset['blender_nodetree'], "Anisotropic")
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 

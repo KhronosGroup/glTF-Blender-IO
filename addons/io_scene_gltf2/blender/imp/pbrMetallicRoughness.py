@@ -14,7 +14,7 @@
 
 import bpy
 from ...io.com.constants import GLTF_IOR, BLENDER_COAT_ROUGHNESS
-from ...io.com.gltf2_io import TextureInfo
+from ...io.com.gltf2_io import TextureInfo, MaterialNormalTextureInfoClass
 from ..com.material_helpers import get_gltf_node_name, create_settings_group
 from .texture import texture
 from .KHR_materials_anisotropy import anisotropy
@@ -211,7 +211,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatFactor":
                         force_clearcoat_factor = True
 
-    socket_coat_weight, coat_weight_texture_socket = scalar_factor_and_texture(
+    new_tex_info, socket_coat_weight, coat_weight_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat'],
         label='Clearcoat',
@@ -230,7 +230,7 @@ def clearcoat(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
     # We will need clearcoatRoughness factor (Mix node) if animated by
     # KHR_animation_pointer (and standard case if clearcoatRoughnessFactor !=
@@ -250,7 +250,7 @@ def clearcoat(mh, locs, pbr_node):
                             pointer_tab[5] == "clearcoatRoughnessFactor":
                         force_clearcoat_roughness_factor = True
 
-    socket_coat_roughness, socket_coat_roughness_texture = scalar_factor_and_texture(
+    new_tex_info, socket_coat_roughness, socket_coat_roughness_texture = scalar_factor_and_texture(
         mh,
         location=locs['clearcoat_roughness'],
         label='Clearcoat Roughness',
@@ -269,15 +269,20 @@ def clearcoat(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatRoughnessTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
+    tex_info = MaterialNormalTextureInfoClass.from_dict(ext.get('clearcoatNormalTexture')) if ext.get(
+        'clearcoatNormalTexture') is not None else None
     coat_normal_socket, coat_normal_texture_socket = normal_map(
         mh,
         location=locs['clearcoat_normal'],
         label='Clearcoat Normal',
         socket=pbr_node.inputs['Coat Normal'],
-        tex_info=ext.get('clearcoatNormalTexture'),
+        tex_info=tex_info,
     )
+    if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+        # Used in case of for KHR_animation_pointer
+        mh.pymat.extensions['KHR_materials_clearcoat']['clearcoatNormalTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
 
     mh.gltf.socket_infos[mh.material_idx]['Coat Normal'] = coat_normal_socket
     mh.gltf.socket_infos[mh.material_idx]['Coat Normal Texture'] = coat_normal_texture_socket
@@ -311,7 +316,7 @@ def transmission(mh, locs, pbr_node):
         # Activate screen refraction (for Eevee)
         mh.mat.use_raytrace_refraction = True
 
-    transmission_factor, transmission_texture_socket = scalar_factor_and_texture(
+    new_tex_info, transmission_factor, transmission_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['transmission'],
         label='Transmission',
@@ -330,7 +335,7 @@ def transmission(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_transmission']['transmissionTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_transmission']['transmissionTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 def volume(mh, location, volume_node, thickness_socket):
@@ -363,7 +368,7 @@ def volume(mh, location, volume_node, thickness_socket):
                             pointer_tab[5] == "thicknessFactor":
                         force_math_node = True
 
-    thickness_socket, thickness_texture_socket = scalar_factor_and_texture(
+    new_tex_info, thickness_factor, thickness_texture_socket = scalar_factor_and_texture(
         mh,
         location=location,
         label='Thickness',
@@ -382,7 +387,7 @@ def volume(mh, location, volume_node, thickness_socket):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_volume']['thicknessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_volume']['thicknessTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 def dispersion(mh, dispersion_socket):
@@ -406,7 +411,7 @@ def specular(mh, locs, pbr_node):
         mh.pymat.extensions['KHR_materials_specular']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
 
     # blender.IORLevel = 0.5 * gltf.specular
-    specular_factor_socket, specular_texture_socket = scalar_factor_and_texture(
+    new_tex_info, specular_factor_socket, specular_texture_socket = scalar_factor_and_texture(
         mh,
         location=locs['specularTexture'],
         label='Specular',
@@ -423,9 +428,9 @@ def specular(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_specular']['specularTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
-    specular_color_factor_socket, specular_texture_socket = color_factor_and_texture(
+    new_tex_info, specular_color_factor_socket, specular_texture_socket = color_factor_and_texture(
         mh,
         location=locs['specularColorTexture'],
         label='Specular Color',
@@ -442,7 +447,7 @@ def specular(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_specular']['specularColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_specular']['specularColorTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 def sheen(mh, locs, pbr_node):
@@ -455,7 +460,7 @@ def sheen(mh, locs, pbr_node):
 
     pbr_node.inputs['Sheen Weight'].default_value = 1
 
-    sheenColorFactor_socket, sheenTexture_socket = color_factor_and_texture(
+    new_tex_info, sheenColorFactor_socket, sheenTexture_socket = color_factor_and_texture(
         mh,
         location=locs['sheenColorTexture'],
         label='Sheen Color',
@@ -472,9 +477,9 @@ def sheen(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_sheen']['sheenColorTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
-    sheenRoughnessFactor_socket, sheenRoughnessTexture_socket = scalar_factor_and_texture(
+    new_tex_info, sheenRoughnessFactor_socket, sheenRoughnessTexture_socket = scalar_factor_and_texture(
         mh,
         location=locs['sheenRoughnessTexture'],
         label='Sheen Roughness',
@@ -492,7 +497,7 @@ def sheen(mh, locs, pbr_node):
         # Because extensions are dict, they are not passed by reference
         # So we need to update the dict of the KHR_texture_transform extension if needed
         if tex_info is not None and tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
-            mh.pymat.extensions['KHR_materials_sheen']['sheenRoughnessTexture']['extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
+            mh.pymat.extensions['KHR_materials_sheen']['sheenRoughnessTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 def calc_locations(mh):
@@ -605,7 +610,7 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
                             pointer_tab[3] == "emissiveFactor":
                         force_mix_node = True
 
-    emission_socket, emission_texture_socket = color_factor_and_texture(
+    new_tex_info, emission_socket, emission_texture_socket = color_factor_and_texture(
         mh,
         location,
         label='Emissive',
@@ -618,6 +623,12 @@ def emission(mh: MaterialHelper, location, color_socket, strength_socket):
     mh.gltf.socket_infos[mh.material_idx]['Emission Strength'] = strength_socket
     mh.gltf.socket_infos[mh.material_idx]['Emission Texture'] = emission_texture_socket
     strength_socket.default_value = strength
+
+    if mh.pymat.emissive_texture is not None:
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if mh.pymat.emissive_texture is not None and mh.pymat.emissive_texture.extensions is not None and "KHR_texture_transform" in mh.pymat.emissive_texture.extensions:
+            mh.pymat.emissive_texture.extensions['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 #      [Texture] => [Mix Colors] => [Color Factor] =>

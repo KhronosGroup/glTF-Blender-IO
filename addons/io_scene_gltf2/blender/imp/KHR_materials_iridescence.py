@@ -81,7 +81,7 @@ def iridescence(
                                 pointer_tab[5] == "iridescenceFactor":
                             force_iridescence_factor = True
 
-        socket_iridescence_factor, socket_iridescence_texture = scalar_factor_and_texture(
+        new_tex_info, socket_iridescence_factor, socket_iridescence_texture = scalar_factor_and_texture(
             mh,
             location=locs['iridescence'],
             label='Iridescence',
@@ -92,6 +92,12 @@ def iridescence(
             force_mix_node=force_iridescence_factor
         )
         mh.gltf.socket_infos[mh.material_idx]['Iridescence Factor'] = socket_iridescence_factor
+
+        if len(ext) > 0:
+            # Because extensions are dict, they are not passed by reference
+            # So we need to update the dict of the KHR_texture_transform extension if needed
+            if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+                mh.pymat.extensions['KHR_materials_iridescence']['iridescenceTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
     if thickness_tex_info is not None:
         # We need to construct a node setup
@@ -110,13 +116,20 @@ def iridescence(
         # Texture node
         socket = texture(
             mh,
-            tex_info=tex_info,
+            tex_info=thickness_tex_info,
             label='IRIDESCENCE THICKNESS',
             location=(x - 180 * 3, y - 600),
             is_data=True,
             color_socket=separate_node.inputs[0]
         )
         mh.gltf.socket_infos[mh.material_idx]['Iridescence Thickness Texture'] = socket
+
+        if len(ext) > 0:
+            # Because extensions are dict, they are not passed by reference
+            # So we need to update the dict of the KHR_texture_transform extension if needed
+            if thickness_tex_info.extensions is not None and "KHR_texture_transform" in thickness_tex_info.extensions:
+                mh.pymat.extensions['KHR_materials_iridescence']['iridescenceThicknessTexture'][
+                    'extensions']['KHR_texture_transform'] = thickness_tex_info.extensions["KHR_texture_transform"]
 
         # Value node (minimum thickness)
         value_node = mh.node_tree.nodes.new('ShaderNodeValue')

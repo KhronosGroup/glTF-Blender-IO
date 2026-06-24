@@ -129,3 +129,10 @@ def anisotropy(
         color_socket=multiply_add_node.inputs[0]
     )
     mh.gltf.socket_infos[mh.material_idx]['Anisotropy Texture'] = socket
+
+    if len(ext) > 0:
+        # Because extensions are dict, they are not passed by reference
+        # So we need to update the dict of the KHR_texture_transform extension if needed
+        if tex_info.extensions is not None and "KHR_texture_transform" in tex_info.extensions:
+            mh.pymat.extensions['KHR_materials_anisotropy']['anisotropyTexture'][
+                'extensions']['KHR_texture_transform'] = tex_info.extensions["KHR_texture_transform"]
