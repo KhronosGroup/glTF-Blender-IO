@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import typing
+from copy import deepcopy
 from ......io.com import gltf2_io
 from ......blender.com.conversion import get_gltf_interpolation
 from .channel_target import gather_data_sampled_channel_target
@@ -59,10 +60,18 @@ def gather_data_sampled_channels(blender_type_data, blender_id, blender_action_n
                     path=additional_path
                 )
 
+                new_sampler = gltf2_io.AnimationSampler(
+                    extensions=None,
+                    extras=None,
+                    input=deepcopy(channel.sampler.input),
+                    interpolation=channel.sampler.interpolation,
+                    output=deepcopy(channel.sampler.output)
+                )
+
                 new_channel = gltf2_io.AnimationChannel(
                     extensions=None,
                     extras=None,
-                    sampler=channel.sampler,
+                    sampler=new_sampler,
                     target=new_target
                 )
 
