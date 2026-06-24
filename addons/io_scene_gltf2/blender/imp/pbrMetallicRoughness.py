@@ -378,7 +378,7 @@ def volume(mh, location, volume_node, thickness_socket):
         channel=1,  # Green
         force_mix_node=force_math_node,
     )
-    mh.gltf.socket_infos[mh.material_idx]['Thickness'] = thickness_socket
+    mh.gltf.socket_infos[mh.material_idx]['Thickness'] = thickness_factor
     mh.gltf.socket_infos[mh.material_idx]['Thickness Texture'] = thickness_texture_socket
 
     if len(ext) > 0:
