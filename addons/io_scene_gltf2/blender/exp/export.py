@@ -538,7 +538,6 @@ def __should_include_json_value(key, value, export_settings):
             "KHR_materials_ior",
             "KHR_materials_iridescence",
             "KHR_materials_sheen",
-            "KHR_materials_specular",
             "KHR_materials_transmission",
             "KHR_materials_volume",
             "KHR_lights_punctual",
