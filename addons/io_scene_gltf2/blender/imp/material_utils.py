@@ -74,7 +74,7 @@ def scalar_factor_and_texture(
 
     if tex_info is None:
         socket.default_value = factor
-        return tex_info, None, socket
+        return tex_info, socket, None
 
     factor_socket = socket
 

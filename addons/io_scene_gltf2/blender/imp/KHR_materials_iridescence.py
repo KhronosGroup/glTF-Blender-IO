@@ -92,6 +92,7 @@ def iridescence(
             force_mix_node=force_iridescence_factor
         )
         mh.gltf.socket_infos[mh.material_idx]['Iridescence Factor'] = socket_iridescence_factor
+        mh.gltf.socket_infos[mh.material_idx]['Iridescence Texture'] = socket_iridescence_texture
 
         if len(ext) > 0:
             # Because extensions are dict, they are not passed by reference

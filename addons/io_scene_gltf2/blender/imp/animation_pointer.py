@@ -298,57 +298,63 @@ class BlenderPointerAnim():
                     else:
                         socket = NodeSocket(None, None)
             elif pointer_tab[-4] == "emissiveTexture":
-                socket = NodeSocket(gltf.socket_infos[asset_idx]['Emission Texture'], [asset.blender_nodetree])
+                socket = NodeSocket(gltf.socket_infos[asset_idx]['Emission Texture'], [asset['blender_nodetree']])
             elif pointer_tab[-4] == "normalTexture":
-                socket = NodeSocket(gltf.socket_infos[asset_idx]['Normal Texture'], [asset.blender_nodetree])
+                socket = NodeSocket(gltf.socket_infos[asset_idx]['Normal Texture'], [asset['blender_nodetree']])
             elif pointer_tab[-4] == "occlusionTexture":
-                socket = NodeSocket(gltf.socket_infos[asset_idx]['Occlusion Texture'], [asset.blender_nodetree])
+                socket = NodeSocket(gltf.socket_infos[asset_idx]['Occlusion Texture'], [asset['blender_nodetree']])
             elif pointer_tab[-4] == "metallicRoughnessTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Metallic Roughness Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "specularTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Specular IOR Level Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "specularColorTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Specular Tint Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "sheenColorTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Sheen Color Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "sheenRoughnessTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Sheen Roughness Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "clearcoatTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Coat Weight Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "clearcoatRoughnessTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Coat Roughness Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "clearcoatNormalTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Coat Normal Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "thicknessTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Thickness Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "transmissionTexture":
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Transmission Texture'], [
-                        asset.blender_nodetree])
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "iridescenceTexture":
-                socket = get_socket_from_gltf_material_node(asset['blender_nodetree'], "Iridescence Factor")
+                socket = NodeSocket(
+                    gltf.socket_infos[asset_idx]['Iridescence Texture'], [
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "iridescenceThicknessTexture":
-                socket = get_socket(asset['blender_nodetree'], "Thin Film Thickness")
+                socket = NodeSocket(
+                    gltf.socket_infos[asset_idx]['Iridescence Thickness Texture'], [
+                        asset['blender_nodetree']])
             elif pointer_tab[-4] == "anisotropyTexture":
-                socket = get_socket(asset['blender_nodetree'], "Anisotropic")
+                socket = NodeSocket(
+                    gltf.socket_infos[asset_idx]['Anisotropy Texture'], [
+                        asset['blender_nodetree']])
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 
