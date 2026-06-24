@@ -70,11 +70,11 @@ def scalar_factor_and_texture(
     x, y = location
 
     if socket is None:
-        return factor_socket
+        return tex_info, None, None
 
     if tex_info is None:
         socket.default_value = factor
-        return socket, None
+        return tex_info, None, socket
 
     factor_socket = socket
 
@@ -136,11 +136,11 @@ def color_factor_and_texture(
     x, y = location
 
     if socket is None:
-        return None, None
+        return None, None, None
 
     if tex_info is None:
         socket.default_value = [*factor, 1]
-        return socket, None
+        return None, socket, None
 
     if factor != [1, 1, 1] or force_mix_node:
         node = mh.nodes.new('ShaderNodeMix')
