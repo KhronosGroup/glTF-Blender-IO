@@ -15,7 +15,7 @@
 import bpy
 from ...io.imp.user_extensions import import_user_extensions
 from ...io.imp.gltf2_io_binary import BinaryData
-from ..exp.material.search_node_tree import NodeSocket, previous_node, get_socket, get_socket_from_gltf_material_node, get_texture_node_from_socket, get_factor_from_socket, NodeTreeSearcher  # TODO move to COM
+from ..exp.material.search_node_tree import NodeSocket  # TODO move to COM
 
 from ..exp.sampler import detect_manual_uv_wrapping  # TODO move to COM
 from ..com.conversion import texture_transform_gltf_to_blender

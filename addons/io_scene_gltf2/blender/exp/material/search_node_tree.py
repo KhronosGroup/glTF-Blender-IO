@@ -184,52 +184,6 @@ def get_const_from_default_value_socket(socket, kind):
     return None, None
 
 
-# TODO: get_material_nodes only by get_socket_from_gltf_material_node,
-# that is used only by importer now ... needs to be deleted
-
-
-def get_material_nodes(node_tree: bpy.types.NodeTree, group_path, type):
-    """
-    For a given tree, recursively return all nodes including node groups.
-    """
-
-    nodes = []
-    for node in [n for n in node_tree.nodes if isinstance(n, type) and not n.mute]:
-        nodes.append((node, group_path.copy()))
-
-    # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
-    for node in [n for n in node_tree.nodes if n.type == "GROUP" and n.node_tree is not None and not n.mute and n.node_tree.name !=
-                 get_gltf_old_group_node_name()]:  # Do not enter the olf glTF node group
-        new_group_path = group_path.copy()
-        new_group_path.append(node)
-        nodes.extend(get_material_nodes(node.node_tree, new_group_path, type))
-
-    return nodes
-
-# TODO: get_socket_from_gltf_material_node is used only by importer now ... needs to be deleted
-
-
-def get_socket_from_gltf_material_node(blender_material_nodetree, name: str):
-    """
-    For a given material input name, retrieve the corresponding node tree socket in the special glTF node group.
-
-    :param blender_material: a blender material for which to get the socket
-    :param name: the name of the socket
-    :return: a blender NodeSocket
-    """
-    gltf_node_group_names = [get_gltf_node_name().lower(), get_gltf_node_old_name().lower()]
-    if blender_material_nodetree:
-        nodes = get_material_nodes(blender_material_nodetree, [blender_material_nodetree], bpy.types.ShaderNodeGroup)
-        # Some weird node groups with missing datablock can have no node_tree, so checking n.node_tree (See #1797)
-        nodes = [n for n in nodes if n[0].node_tree is not None and any(
-            [[n[0].node_tree.name.lower().startswith(g) for g in gltf_node_group_names]])]
-        inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
-        if inputs:
-            return NodeSocket(inputs[0][0], inputs[0][1])
-
-    return NodeSocket(None, None)
-
-
 class NodeNav:
     """Helper for navigating through node trees."""
 
@@ -790,59 +744,6 @@ class ShNode:
         self.group_path = group_path
 
 
-# TODO: get_node_socket is used only by get_socket: To be deleted after get_socket is deleted too
-def get_node_socket(blender_material_node_tree, type, name):
-    """
-    For a given material input name, retrieve the corresponding node tree socket for a given node type.
-
-    :param blender_material: a blender material for which to get the socket
-    :return: a blender NodeSocket for a given type
-    """
-    nodes = get_material_nodes(blender_material_node_tree, [blender_material_node_tree], type)
-    # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-    nodes = [node for node in nodes if check_if_is_linked_to_active_output(node[0].outputs[0], node[1])]
-    inputs = sum([[(input, node[1]) for input in node[0].inputs if input.name == name] for node in nodes], [])
-    if inputs:
-        return NodeSocket(inputs[0][0], inputs[0][1])
-    return NodeSocket(None, None)
-
-# TODO : when used by importer for animation pointer ...
-
-
-def get_socket(blender_material_nodetree, name: str, volume=False):
-    """
-    For a given material input name, retrieve the corresponding node tree socket.
-
-    :param blender_material: a blender material for which to get the socket
-    :param name: the name of the socket
-    :return: a blender NodeSocket
-    """
-    if blender_material_nodetree:
-        # i = [input for input in blender_material.node_tree.inputs]
-        # o = [output for output in blender_material.node_tree.outputs]
-        if name == "Emissive":
-            # Check for a dedicated Emission node first, it must supersede the newer built-in one
-            # because the newer one is always present in all Principled BSDF materials.
-            emissive_socket = get_node_socket(blender_material_nodetree, bpy.types.ShaderNodeEmission, "Color")
-            if emissive_socket.socket is not None:
-                return emissive_socket
-            # If a dedicated Emission node was not found, fall back to the Principled BSDF Emission Color socket.
-            name = "Emission Color"
-            type = bpy.types.ShaderNodeBsdfPrincipled
-        elif name == "Background":
-            type = bpy.types.ShaderNodeBackground
-            name = "Color"
-        else:
-            if volume is False:
-                type = bpy.types.ShaderNodeBsdfPrincipled
-            else:
-                type = bpy.types.ShaderNodeVolumeAbsorption
-
-        return get_node_socket(blender_material_nodetree, type, name)
-
-    return NodeSocket(None, None)
-
-
 # Old, prefer NodeNav.get_factor in new code
 def get_factor_from_socket(socket, kind):
     return socket.to_node_nav().get_factor()
@@ -927,22 +828,22 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
         path_['length'] = 2
         path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
         path_['vector_type'] = mapping_node.node.vector_type
-        export_settings['current_texture_transform']["node_tree." +
-                                                     mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
+        export_settings['current_texture_transform']["node_tree." + \
+            mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." +
-                                                 mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+    export_settings['current_texture_transform']["node_tree." + \
+        mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." +
-                                                 mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
+    export_settings['current_texture_transform']["node_tree." + \
+        mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform
 
