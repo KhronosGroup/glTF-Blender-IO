@@ -209,14 +209,52 @@ def __find_parent_joint(joints, name):
     return None
 
 
+def __find_layer_collection_by_collection(layer_collection, collection):
+    if collection == layer_collection.collection:
+        return layer_collection
+    for child in layer_collection.children:
+        layer_collection = __find_layer_collection_by_collection(child, collection)
+        if layer_collection:
+            return layer_collection
+
+
 def __gather_extensions(vnode, export_settings):
     blender_object = vnode.blender_object
     extensions = {}
 
     blender_lamp = None
 
+    if export_settings['gltf_hierarchy_full_collections']:
+        if vnode.blender_type == VExportNode.COLLECTION:
+            # Check visibility
+            layer_collection = __find_layer_collection_by_collection(
+                bpy.context.view_layer.layer_collection, blender_object)
+            if blender_object.hide_viewport is True or layer_collection.hide_viewport is True:
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
+
+        elif vnode.blender_type == VExportNode.INST_COLLECTION:
+            # Check visibility
+            if blender_object.hide_viewport is True or blender_object.hide_get(
+                    view_layer=bpy.context.view_layer) is True:
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
+            # Also check status of the collection itself
+            if blender_object.instance_collection.hide_viewport is True:
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
+
     if vnode.blender_type == VExportNode.COLLECTION:
-        return None
+        return extensions if extensions else None
 
     if export_settings["gltf_lights"] and vnode.blender_type == VExportNode.INSTANCE and vnode.data is not None:
         if vnode.data.id_type in LIGHTS:
@@ -256,14 +294,25 @@ def __gather_extensions(vnode, export_settings):
     # Because for full collection => Blender manage it recursively,
     # So we will have the correct export (and animation pointer ?)
     if export_settings['gltf_hierarchy_full_collections'] is False:
-        if blender_object is not None and (
-                blender_object.hide_viewport is True or blender_object.hide_get(
-                view_layer=bpy.context.view_layer) is True):
-            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-                name="KHR_node_visibility",
-                extension={"visible": False},
-                required=True
-            )
+
+        if vnode.blender_type == VExportNode.INST_COLLECTION:
+            # Need to check the status of the collection itself
+            if blender_object.instance_collection.hide_viewport is True:
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
+        else:
+
+            if blender_object is not None and (
+                    blender_object.hide_viewport is True or blender_object.hide_get(
+                    view_layer=bpy.context.view_layer) is True):
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
 
     return extensions if extensions else None
 
