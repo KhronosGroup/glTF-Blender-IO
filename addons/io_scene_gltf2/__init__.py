@@ -1914,7 +1914,7 @@ class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
     bl_idname = 'import_scene.gltf'
     bl_label = 'Import glTF 2.0'
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    
+
     filter_glob: StringProperty(default="*.glb;*.gltf", options={'HIDDEN'})
 
     directory: StringProperty(
