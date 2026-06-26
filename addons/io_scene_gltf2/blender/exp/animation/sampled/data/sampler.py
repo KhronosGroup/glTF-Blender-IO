@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import bpy
+import typing
 import numpy as np
 from ......io.com import gltf2_io
 from ......io.exp import binary_data as gltf2_io_binary_data
