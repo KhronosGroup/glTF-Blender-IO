@@ -40,8 +40,7 @@ from .search_node_tree import \
     has_image_node_from_socket, \
     NodeSocket, \
     gather_alpha_info, \
-    check_if_is_linked_to_active_output, \
-    previous_socket
+    previous_socket, next_node
 
 
 class BlenderMaterialIndentifier:
@@ -161,11 +160,26 @@ class BlenderMaterialIndentifier:
             # No need to check : Inline keeps only the nodes that are linked to the active output node
             return True
 
-        for output_socket in node[0].outputs:
-            res = check_if_is_linked_to_active_output(output_socket, node[1])  # TODO perf ?
-            if res is True:
-                return True
-        return False
+        if len(node[0].outputs) == 0:
+            return False
+
+        return self.__recursive_check_if_is_linked_to_active_output_node(NodeSocket(node[0].outputs[0], node[1]))
+
+    def __recursive_check_if_is_linked_to_active_output_node(self, socket):
+        if socket.socket is None:
+            return False
+
+        next_node_forward = next_node(socket)
+        if next_node_forward.node is None:
+            return False
+
+        if next_node_forward.node.type == 'OUTPUT_MATERIAL' and next_node_forward.node.is_active_output:
+            return True
+
+        if len(next_node_forward.node.outputs) == 0:
+            return False
+        return self.__recursive_check_if_is_linked_to_active_output_node(
+            NodeSocket(next_node_forward.node.outputs[0], next_node_forward.group_path))
 
     def __get_all_nodes(self, node_tree: bpy.types.NodeTree, group_path):
         if self.all_nodes is None:

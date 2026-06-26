@@ -18,7 +18,6 @@
 
 import bpy
 from io_scene_gltf2.blender.exp.cache import cached, cached_by_key
-from ...com.material_helpers import get_gltf_node_name, get_gltf_node_old_name, get_gltf_old_group_node_name
 from ....blender.com.conversion import texture_transform_blender_to_gltf, inverted_trs_mapping_node
 import typing
 
@@ -937,53 +936,6 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
                                                  mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform
-
-
-def check_if_is_linked_to_active_output(shader_socket, group_path):
-
-    # Here, group_path must be copied, because if there are multiple links that enter/exit a group node
-    # This will modify it, and we don't want to modify the original group_path (from the parameter) inside the loop
-    for link in shader_socket.links:
-
-        # If we are entering a node group
-        if link.to_node.type == "GROUP":
-            socket_name = link.to_socket.identifier
-            sockets = [n for n in link.to_node.node_tree.nodes if n.type == "GROUP_INPUT"][0].outputs
-            socket = [s for s in sockets if s.identifier == socket_name][0]
-            new_group_path = group_path.copy()
-            new_group_path.append(link.to_node)
-            # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-            # recursive until find an output material node
-            ret = check_if_is_linked_to_active_output(socket, new_group_path)
-            if ret is True:
-                return True
-            continue
-
-        # If we are exiting a node group
-        if link.to_node.type == "GROUP_OUTPUT":
-            socket_name = link.to_socket.identifier
-            sockets = group_path[-1].outputs
-            socket = [s for s in sockets if s.identifier == socket_name][0]
-            new_group_path = group_path[:-1]
-            # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-            # recursive until find an output material node
-            ret = check_if_is_linked_to_active_output(socket, new_group_path)
-            if ret is True:
-                return True
-            continue
-
-        if isinstance(link.to_node, bpy.types.ShaderNodeOutputMaterial) and link.to_node.is_active_output is True:
-            return True
-
-        if len(link.to_node.outputs) > 0:  # ignore non active output, not having output sockets
-            # TODOSNode : Why checking outputs[0] ? What about alpha for texture node, that is outputs[1] ????
-            ret = check_if_is_linked_to_active_output(
-                link.to_node.outputs[0],
-                group_path)  # recursive until find an output material node
-            if ret is True:
-                return True
-
-    return False
 
 
 def get_attribute_name(socket, export_settings):
