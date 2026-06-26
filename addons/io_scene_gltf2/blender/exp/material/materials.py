@@ -389,7 +389,13 @@ def __gather_normal_texture(bmat, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                 "YYY", "normalTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
@@ -398,7 +404,13 @@ def __gather_normal_texture(bmat, export_settings):
             path_ = {}
             path_['length'] = export_settings['current_normal_scale'][k]['length']
             path_['path'] = export_settings['current_normal_scale'][k]['path'].replace("YYY", "normalTexture")
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_normal_scale'] = {}
 
@@ -459,7 +471,13 @@ def __gather_orm_texture(bmat, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                 "YYY", "occlusionTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
         # This case can't happen because we are going to keep only 1 UVMap
         export_settings['log'].warning("This case should not happen, please report a bug")
@@ -469,7 +487,13 @@ def __gather_orm_texture(bmat, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                 "YYY", "pbrMetallicRoughness/metallicRoughnessTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
@@ -492,7 +516,13 @@ def __gather_occlusion_texture(bmat, orm_texture, export_settings):
             path_['length'] = export_settings['current_occlusion_strength'][k]['length']
             path_['path'] = export_settings['current_occlusion_strength'][k]['path']
             path_['reverse'] = export_settings['current_occlusion_strength'][k]['reverse']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_occlusion_strength'] = {}
 
@@ -503,7 +533,13 @@ def __gather_occlusion_texture(bmat, orm_texture, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                 "YYY", "occlusionTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
@@ -542,7 +578,7 @@ def __export_unlit(bmat, export_settings):
         alpha_mode=__gather_alpha_mode(alpha_info, export_settings),
         double_sided=__gather_double_sided(bmat, {}, export_settings),
         extensions={"KHR_materials_unlit": Extension("KHR_materials_unlit", {}, required=False)},
-        extras=gather_extras(bmat, export_settings),
+        extras=gather_extras(bmat.material, export_settings),
         name=gather_name(bmat, export_settings),
         emissive_factor=None,
         emissive_texture=None,

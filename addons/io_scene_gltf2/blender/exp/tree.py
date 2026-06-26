@@ -982,6 +982,7 @@ class VExportTree:
                     None,
                     None,
                     gltf2_io_constants.DataType.Mat4,
+                    None,
                     self.export_settings
                 )
 

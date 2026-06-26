@@ -22,6 +22,7 @@ from ..search_node_tree import \
 
 
 def export_specular(bmat, export_settings):
+    export_settings['current_texture_transform'] = {}
     specular_extension = {}
 
     specular_socket = get_socket(bmat.get_used_material().node_tree, 'Specular IOR Level')
@@ -93,7 +94,13 @@ def export_specular(bmat, export_settings):
                     path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                         "YYY", "extensions/KHR_materials_specular/specularTexture/extensions")
                     path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-                    export_settings['current_paths'][k] = path_
+                    if k in export_settings['current_paths']:
+                        if 'additional' not in export_settings['current_paths'][k]:
+                            export_settings['current_paths'][k]['additional'] = []
+                        if path_['path'] != export_settings['current_paths'][k]['path']:
+                            export_settings['current_paths'][k]['additional'].append(path_['path'])
+                    else:
+                        export_settings['current_paths'][k] = path_
 
             export_settings['current_texture_transform'] = {}
 
@@ -106,7 +113,7 @@ def export_specular(bmat, export_settings):
 
          # Storing path for KHR_animation_pointer
         path_ = {}
-        path_['length'] = 1
+        path_['length'] = 3
         path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
         export_settings['current_paths']["node_tree." + speculartint_socket.socket.path_from_id() +
                                          ".default_value"] = path_
@@ -122,7 +129,7 @@ def export_specular(bmat, export_settings):
 
         if path is not None:
             path_ = {}
-            path_['length'] = 1
+            path_['length'] = 3
             path_['path'] = "/materials/XXX/extensions/KHR_materials_specular/specularColorFactor"
             export_settings['current_paths'][path] = path_
 
@@ -143,7 +150,13 @@ def export_specular(bmat, export_settings):
             path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
                 "YYY", "extensions/KHR_materials_specular/specularColorTexture/extensions")
             path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
-            export_settings['current_paths'][k] = path_
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
 
     export_settings['current_texture_transform'] = {}
 
