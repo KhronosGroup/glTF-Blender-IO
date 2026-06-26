@@ -189,8 +189,8 @@ class NodeNav:
 
     def __init__(self, node, in_socket=None, out_socket=None):
         self.node = node              # Current node
-        self.out_socket = out_socket  # Socket through which we arrived at this node
-        self.in_socket = in_socket    # Socket through which we will leave this node
+        self.out_socket = out_socket  # Socket through which we arrived at this node (when going backwards)
+        self.in_socket = in_socket    # Socket through which we will leave this node (when going backwards)
         self.stack = []      # Stack of (group node, socket) pairs descended through to get here
         self.moved = False   # Whether the last move_back call moved back or not
 
@@ -234,10 +234,45 @@ class NodeNav:
             # Select by regular name
             self.in_socket = self.node.inputs[in_soc]
 
+    def select_output_socket(self, out_soc):
+        """Selects an output socket.
+
+        Most operations that operate on the output socket can be passed an out_soc
+        parameter to select an output socket before running.
+        """
+        if out_soc is None:
+            # Keep current selected output socket
+            return
+        elif isinstance(out_soc, bpy.types.NodeSocket):
+            assert out_soc.node == self.node
+            self.out_socket = out_soc
+        elif isinstance(out_soc, int):
+            self.out_socket = self.node.outputs[out_soc]
+        else:
+            assert isinstance(out_soc, str)
+            # An identifier like "#A_Color" selects a socket by
+            # identifier. This is useful for sockets that cannot be
+            # selected because of non-unique names.
+            if out_soc.startswith('#'):
+                ident = out_soc.removeprefix('#')
+                for socket in self.node.outputs:
+                    if socket.identifier == ident:
+                        self.out_socket = socket
+                        return
+            # Select by regular name
+            self.out_socket = self.node.outputs[out_soc]
+
     def get_out_socket_index(self):
         assert self.out_socket
         for i, soc in enumerate(self.node.outputs):
             if soc == self.out_socket:
+                return i
+        assert False
+
+    def get_in_socket_index(self):
+        assert self.in_socket
+        for i, soc in enumerate(self.node.inputs):
+            if soc == self.in_socket:
                 return i
         assert False
 
@@ -250,12 +285,52 @@ class NodeNav:
             self.in_socket = self.node.inputs[i]
             self.out_socket = None
 
+    def descend_forward(self):
+        if self.node and self.node.type == 'GROUP' and self.node.node_tree and self.in_socket:
+            i = self.get_in_socket_index()
+            self.stack.append((self.node, self.in_socket))
+            self.node = next(node for node in self.node.node_tree.nodes if node.type == 'GROUP_INPUT')
+            self.out_socket = self.node.outputs[i]
+            self.in_socket = None
+
     def ascend(self):
         """Ascend from a group input node back to the group node."""
         if self.stack and self.node and self.node.type == 'GROUP_INPUT' and self.out_socket:
             i = self.get_out_socket_index()
             self.node, self.out_socket = self.stack.pop()
             self.in_socket = self.node.inputs[i]
+
+    def ascend_forward(self):
+        """Ascend from a group output node back to the group node."""
+        if self.stack and self.node and self.node.type == 'GROUP_OUTPUT' and self.in_socket:
+            i = self.get_in_socket_index()
+            self.node, self.in_socket = self.stack.pop()
+            self.out_socket = self.node.outputs[i]
+
+    def move_forward(self, out_soc=None):
+        """Move forwards through an output socket to the next node."""
+        self.select_output_socket(out_soc)
+
+        if not self.out_socket or not self.out_socket.is_linked:
+            return
+
+        # Warning, slow! socket.links is O(total number of links)!
+        link = self.out_socket.links[0]
+
+        self.node = link.to_node
+        self.in_socket = link.to_socket
+        self.out_socket = None
+        self.moved = True
+
+        # Continue moving
+        if self.node.type == 'REROUTE':
+            self.move_forward(0)
+        elif self.node.type == 'GROUP':
+            self.descend_forward()
+            self.move_forward()
+        elif self.node.type == 'GROUP_OUTPUT':
+            self.ascend_forward()
+            self.move_forward()
 
     def move_back(self, in_soc=None, no_moved_reinit=False):
         """Move backwards through an input socket to the next node."""
@@ -770,6 +845,22 @@ def previous_node(socket: NodeSocket):
     return ShNode(None, None)
 
 
+def next_node(socket: NodeSocket):
+    nav = socket.to_node_nav()
+    nav.move_forward()
+    if nav.moved:
+        return ShNode(nav.node, [group for group, _ in nav.stack])
+    return ShNode(None, None)
+
+
+def next_socket(socket: NodeSocket):
+    nav = socket.to_node_nav()
+    nav.move_forward()
+    if nav.moved:
+        return NodeSocket(nav.in_socket, [group for group, _ in nav.stack])
+    return NodeSocket(None, None)
+
+
 def get_texture_transform_from_mapping_node(mapping_node, export_settings):
     if mapping_node.node.vector_type not in ["TEXTURE", "POINT", "VECTOR"]:
         export_settings['log'].warning(
@@ -828,22 +919,22 @@ def get_texture_transform_from_mapping_node(mapping_node, export_settings):
         path_['length'] = 2
         path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/offset"
         path_['vector_type'] = mapping_node.node.vector_type
-        export_settings['current_texture_transform']["node_tree." + \
-            mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
+        export_settings['current_texture_transform']["node_tree." +
+                                                     mapping_node.node.inputs['Location'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 2
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/scale"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." + \
-        mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
+    export_settings['current_texture_transform']["node_tree." +
+                                                 mapping_node.node.inputs['Scale'].path_from_id() + ".default_value"] = path_
 
     path_ = {}
     path_['length'] = 1
     path_['path'] = "/materials/XXX/YYY/KHR_texture_transform/rotation"
     path_['vector_type'] = mapping_node.node.vector_type
-    export_settings['current_texture_transform']["node_tree." + \
-        mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
+    export_settings['current_texture_transform']["node_tree." +
+                                                 mapping_node.node.inputs['Rotation'].path_from_id() + ".default_value[2]"] = path_
 
     return texture_transform
 
@@ -927,53 +1018,55 @@ def detect_iridescence_thickness_texure(socket, minimum_thickness_socket, export
     # Check that the socket is linked to a Mix node
     if not socket.socket.is_linked:
         return False, None
-    mix_node = socket.socket.links[0].from_node
-    if mix_node is None or mix_node.type != "MIX":
+    mix_node = previous_node(socket)
+    if mix_node.node is None or mix_node.node.type != "MIX":
         return False, None
-    if mix_node.data_type != "FLOAT":
+    if mix_node.node.data_type != "FLOAT":
         return False, None
 
     # Check that the mix node factor is linked to a separate RGB node, with R
     # linked to the iridescence thickness texture
-    if not mix_node.inputs['Factor'].is_linked:
+    if not mix_node.node.inputs['Factor'].is_linked:
         return False, None
-    separate_rgb_node = mix_node.inputs['Factor'].links[0].from_node
-    if separate_rgb_node is None or separate_rgb_node.type != "SEPARATE_COLOR":
+    separate_rgb_node = previous_node(NodeSocket(mix_node.node.inputs['Factor'], mix_node.group_path))
+    if separate_rgb_node.node is None or separate_rgb_node.node.type != "SEPARATE_COLOR":
         return False, None
-    if not separate_rgb_node.inputs[0].is_linked:
+    if not separate_rgb_node.node.inputs[0].is_linked:
         return False, None
-    iridescence_thickness_texture_node = separate_rgb_node.inputs[0].links[0].from_node
-    if iridescence_thickness_texture_node is None or iridescence_thickness_texture_node.type != "TEX_IMAGE":
+    iridescence_thickness_texture_node = previous_node(NodeSocket(
+        separate_rgb_node.node.inputs[0], separate_rgb_node.group_path))
+    if iridescence_thickness_texture_node.node is None or iridescence_thickness_texture_node.node.type != "TEX_IMAGE":
         return False, None
 
     # Check that the mix node A is linked to a value node, that is itself
     # linked (output) to the iridescence minimum thickness socket of the glTF
     # material output node
-    if not mix_node.inputs['A'].is_linked:
+    if not mix_node.node.inputs['A'].is_linked:
         return False, None
-    value_node = mix_node.inputs['A'].links[0].from_node
-    if value_node is None or value_node.type != "VALUE":
+    value_node = previous_node(NodeSocket(mix_node.node.inputs['A'], mix_node.group_path))
+    if value_node.node is None or value_node.node.type != "VALUE":
         return False, None
-    if not value_node.outputs[0].is_linked:
+    if not value_node.node.outputs[0].is_linked:
         return False, None
-    if not len(value_node.outputs[0].links) == 2:
+    if not len(value_node.node.outputs[0].links) == 2:
         return False, None
     if minimum_thickness_socket.socket is None:
         return False, None
-    if minimum_thickness_socket.socket.links[0].from_node != value_node:
+    min_val_node = previous_node(minimum_thickness_socket)
+    if min_val_node.node != value_node.node:
         return False, None
 
     # Check that the mix node B is linked to a value node
-    if not mix_node.inputs['B'].is_linked:
+    if not mix_node.node.inputs['B'].is_linked:
         return False, None
-    value_node_2 = mix_node.inputs['B'].links[0].from_node
-    if value_node_2 is None or value_node_2.type != "VALUE":
+    value_node_2 = previous_node(NodeSocket(mix_node.node.inputs['B'], mix_node.group_path))
+    if value_node_2.node is None or value_node_2.node.type != "VALUE":
         return False, None
 
     return True, {
-        'thickness_minimum': value_node.outputs[0],
-        'thickness_maximum': value_node_2.outputs[0],
-        'tex_socket': NodeSocket(separate_rgb_node.inputs[0], socket.group_path),
+        'thickness_minimum': value_node.node.outputs[0],
+        'thickness_maximum': value_node_2.node.outputs[0],
+        'tex_socket': NodeSocket(separate_rgb_node.node.inputs[0], socket.group_path),
     }
 
 
@@ -1013,94 +1106,122 @@ def detect_anisotropy_nodes(
         return False, None
     if not anisotropy_tangent_socket.socket.is_linked:
         return False, None
-    anisotropy_multiply_node = anisotropy_socket.socket.links[0].from_node
-    if anisotropy_multiply_node is None or anisotropy_multiply_node.type != "MATH":
+    anisotropy_multiply_node = previous_node(anisotropy_socket)
+    if anisotropy_multiply_node.node is None or anisotropy_multiply_node.node.type != "MATH":
         return False, None
-    if anisotropy_multiply_node.operation != "MULTIPLY":
+    if anisotropy_multiply_node.node.operation != "MULTIPLY":
         return False, None
     # this multiply node should have the first input linked to separate XYZ, on Z
-    if not anisotropy_multiply_node.inputs[0].is_linked:
+    if not anisotropy_multiply_node.node.inputs[0].is_linked:
         return False, None
-    separate_xyz_node = anisotropy_multiply_node.inputs[0].links[0].from_node
-    if separate_xyz_node is None or separate_xyz_node.type != "SEPXYZ":
+    separate_xyz_node = previous_node(
+        NodeSocket(
+            anisotropy_multiply_node.node.inputs[0],
+            anisotropy_multiply_node.group_path))
+    if separate_xyz_node.node is None or separate_xyz_node.node.type != "SEPXYZ":
         return False, None
-    separate_xyz_z_socket = anisotropy_multiply_node.inputs[0].links[0].from_socket
-    if separate_xyz_z_socket.identifier != "Z":
+    separate_xyz_z_socket = previous_socket(
+        NodeSocket(
+            anisotropy_multiply_node.node.inputs[0],
+            anisotropy_multiply_node.group_path))
+    if separate_xyz_z_socket.socket is None or separate_xyz_z_socket.socket.identifier != "Z":
         return False, None
     # This separate XYZ node output should be linked to ArcTan2 node (X on inputs[1], Y on inputs[0])
-    if not separate_xyz_node.outputs[0].is_linked:
+    if not separate_xyz_node.node.outputs[0].is_linked:
         return False, None
-    arctan2_node = separate_xyz_node.outputs[0].links[0].to_node
-    if arctan2_node.type != "MATH":
+    arctan2_node = next_node(NodeSocket(separate_xyz_node.node.outputs[0], separate_xyz_node.group_path))
+    if arctan2_node.node.type != "MATH":
         return False, None
-    if arctan2_node.operation != "ARCTAN2":
+    if arctan2_node.node.operation != "ARCTAN2":
         return False, None
-    if arctan2_node.inputs[0].links[0].from_socket.identifier != "Y":
+    arctan2_node_prev_y_socket = previous_socket(
+        NodeSocket(
+            arctan2_node.node.inputs[0],
+            arctan2_node.group_path))
+    if arctan2_node_prev_y_socket.socket is None or arctan2_node_prev_y_socket.socket.identifier != "Y":
         return False, None
-    if arctan2_node.inputs[1].links[0].from_socket.identifier != "X":
+    arctan2_node_prev_x_socket = previous_socket(
+        NodeSocket(
+            arctan2_node.node.inputs[1],
+            arctan2_node.group_path))
+    if arctan2_node_prev_x_socket.socket is None or arctan2_node_prev_x_socket.socket.identifier != "X":
         return False, None
     # This arctan2 node output should be linked to anisotropy rotation (Math add node)
-    if not arctan2_node.outputs[0].is_linked:
+    if not arctan2_node.node.outputs[0].is_linked:
         return False, None
-    anisotropy_rotation_node = arctan2_node.outputs[0].links[0].to_node
-    if anisotropy_rotation_node.type != "MATH":
+    anisotropy_rotation_node = next_node(NodeSocket(arctan2_node.node.outputs[0], arctan2_node.group_path))
+    if anisotropy_rotation_node.node.type != "MATH":
         return False, None
-    if anisotropy_rotation_node.operation != "ADD":
+    if anisotropy_rotation_node.node.operation != "ADD":
         return False, None
     # This anisotropy rotation node should have the output linked to rotation conversion node
-    if not anisotropy_rotation_node.outputs[0].is_linked:
+    if not anisotropy_rotation_node.node.outputs[0].is_linked:
         return False, None
-    rotation_conversion_node = anisotropy_rotation_node.outputs[0].links[0].to_node
-    if rotation_conversion_node.type != "MATH":
+    rotation_conversion_node = next_node(
+        NodeSocket(
+            anisotropy_rotation_node.node.outputs[0],
+            anisotropy_rotation_node.group_path))
+    if rotation_conversion_node.node.type != "MATH":
         return False, None
-    if rotation_conversion_node.operation != "DIVIDE":
+    if rotation_conversion_node.node.operation != "DIVIDE":
         return False, None
     # This rotation conversion node should have the second input value PI
-    if abs(rotation_conversion_node.inputs[1].default_value - 6.283185) > 0.0001:
+    if abs(rotation_conversion_node.node.inputs[1].default_value - 6.283185) > 0.0001:
         return False, None
     # This rotation conversion node should have the output linked to anisotropy rotation socket of Principled BSDF
-    if not rotation_conversion_node.outputs[0].is_linked:
+    if not rotation_conversion_node.node.outputs[0].is_linked:
         return False, None
-    if rotation_conversion_node.outputs[0].links[0].to_socket.identifier != "Anisotropic Rotation":
+    rotation_conversion_node_next_socket = next_socket(
+        NodeSocket(
+            rotation_conversion_node.node.outputs[0],
+            rotation_conversion_node.group_path))
+
+    if rotation_conversion_node_next_socket.socket is None or rotation_conversion_node_next_socket.socket.identifier != "Anisotropic Rotation":
         return False, None
-    if rotation_conversion_node.outputs[0].links[0].to_node.type != "BSDF_PRINCIPLED":
+    if rotation_conversion_node_next_socket.socket.node.type != "BSDF_PRINCIPLED":
         return False, None
 
     # Separate XYZ node should have the input linked to anisotropy multiply Add node (for normalization)
-    if not separate_xyz_node.inputs[0].is_linked:
+    if not separate_xyz_node.node.inputs[0].is_linked:
         return False, None
-    anisotropy_multiply_add_node = separate_xyz_node.inputs[0].links[0].from_node
-    if anisotropy_multiply_add_node.type != "VECT_MATH":
+    anisotropy_multiply_add_node = previous_node(
+        NodeSocket(
+            separate_xyz_node.node.inputs[0],
+            separate_xyz_node.group_path))
+    if anisotropy_multiply_add_node.node.type != "VECT_MATH":
         return False, None
-    if anisotropy_multiply_add_node.operation != "MULTIPLY_ADD":
+    if anisotropy_multiply_add_node.node.operation != "MULTIPLY_ADD":
         return False, None
-    if list(anisotropy_multiply_add_node.inputs[1].default_value) != [2.0, 2.0, 1.0]:
+    if list(anisotropy_multiply_add_node.node.inputs[1].default_value) != [2.0, 2.0, 1.0]:
         return False, None
-    if list(anisotropy_multiply_add_node.inputs[2].default_value) != [-1.0, -1.0, 0.0]:
+    if list(anisotropy_multiply_add_node.node.inputs[2].default_value) != [-1.0, -1.0, 0.0]:
         return False, None
-    if not anisotropy_multiply_add_node.inputs[0].is_linked:
+    if not anisotropy_multiply_add_node.node.inputs[0].is_linked:
         return False, None
     # This anisotropy multiply Add node should have the first input linked to a texture node
-    anisotropy_texture_node = anisotropy_multiply_add_node.inputs[0].links[0].from_node
-    if anisotropy_texture_node.type != "TEX_IMAGE":
+    anisotropy_texture_node = previous_node(
+        NodeSocket(
+            anisotropy_multiply_add_node.node.inputs[0],
+            anisotropy_multiply_add_node.group_path))
+    if anisotropy_texture_node.node.type != "TEX_IMAGE":
         return False, None
 
     tex_ok = has_image_node_from_socket(
         NodeSocket(
-            anisotropy_multiply_add_node.inputs[0],
-            anisotropy_socket.group_path),
+            anisotropy_multiply_add_node.node.inputs[0],
+            anisotropy_multiply_add_node.group_path),
         export_settings)
     if tex_ok is False:
         return False, None
 
     strength, path_strength = get_const_from_socket(NodeSocket(
-        anisotropy_multiply_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+        anisotropy_multiply_node.node.inputs[1], anisotropy_multiply_node.group_path), 'VALUE')
     rotation, path_rotation = get_const_from_socket(NodeSocket(
-        anisotropy_rotation_node.inputs[1], anisotropy_socket.group_path), 'VALUE')
+        anisotropy_rotation_node.node.inputs[1], anisotropy_rotation_node.group_path), 'VALUE')
 
     return True, {
         'anisotropyStrength': (strength, path_strength),
         'anisotropyRotation': (rotation, path_rotation),
         'tangent': tangent_node.node.uv_map,
-        'tex_socket': NodeSocket(anisotropy_multiply_add_node.inputs[0], anisotropy_socket.group_path),
+        'tex_socket': NodeSocket(anisotropy_multiply_add_node.node.inputs[0], anisotropy_multiply_add_node.group_path),
     }
