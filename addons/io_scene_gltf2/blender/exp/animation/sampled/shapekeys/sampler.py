@@ -24,6 +24,7 @@ from .keyframes import gather_sk_sampled_keyframes
 
 
 def gather_sk_sampled_animation_sampler(
+        id_type,
         obj_uuid,
         action_name,
         slot_identifier,
@@ -31,6 +32,7 @@ def gather_sk_sampled_animation_sampler(
 ):
 
     keyframes = __gather_keyframes(
+        id_type,
         obj_uuid,
         action_name,
         slot_identifier,
@@ -58,12 +60,14 @@ def gather_sk_sampled_animation_sampler(
 
 
 def __gather_keyframes(
+        id_type,
         obj_uuid,
         action_name,
         slot_identifier,
         export_settings):
 
     keyframes = gather_sk_sampled_keyframes(
+        id_type,
         obj_uuid,
         action_name,
         slot_identifier,

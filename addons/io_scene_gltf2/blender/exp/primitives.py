@@ -87,6 +87,7 @@ def gather_primitives(
                 export_settings)
         else:
             # UDIM case
+            blender_mat = None
             base_material, material_info, unique_material_id, tile = udim_material
             material = get_final_material(
                 blender_data,
@@ -98,6 +99,9 @@ def gather_primitives(
 
             # Force change name of material to get the tile number in the name
             material.name = material.name + "." + tile
+
+        if blender_mat is not None:
+            export_settings['material_identifiers'][id(blender_mat)]['gltf'] = material
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
@@ -398,6 +402,10 @@ def __gather_extensions(blender_data,
                     base_material,
                     material_info["uv_info"],
                     export_settings)
+
+                # Make sure to store material in export settings, to be able to retrieve it later for animation pointer
+                export_settings['material_identifiers'][id(i.material)] = {}
+                export_settings['material_identifiers'][id(i.material)]['blender'] = i.material
             else:
                 mat = None
 
