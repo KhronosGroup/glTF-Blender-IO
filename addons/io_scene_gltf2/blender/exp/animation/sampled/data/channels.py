@@ -106,36 +106,36 @@ def gather_data_sampled_channels(blender_main_type, blender_type_data, blender_i
                     channels.append(channel)
 
                     # Manage multiple Texture Transform for the same path
-            for additional_path in export_settings['KHR_animation_pointer'][blender_type_data][blender_id]['paths'][path].get('additional', [
-            ]):
+                    for additional_path in export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['paths'][path].get('additional', [
+                    ]):
 
-                new_target = gltf2_io.AnimationChannelTarget(
-                    extensions=channel.target.extensions,
-                    extras=channel.target.extras,
-                    node=channel.target.node,
-                    path=additional_path
-                )
+                        new_target = gltf2_io.AnimationChannelTarget(
+                            extensions=channel.target.extensions,
+                            extras=channel.target.extras,
+                            node=channel.target.node,
+                            path=additional_path
+                        )
 
-                new_sampler = gltf2_io.AnimationSampler(
-                    extensions=None,
-                    extras=None,
-                    input=deepcopy(channel.sampler.input),
-                    interpolation=channel.sampler.interpolation,
-                    output=deepcopy(channel.sampler.output)
-                )
+                        new_sampler = gltf2_io.AnimationSampler(
+                            extensions=None,
+                            extras=None,
+                            input=deepcopy(channel.sampler.input),
+                            interpolation=channel.sampler.interpolation,
+                            output=deepcopy(channel.sampler.output)
+                        )
 
-                new_channel = gltf2_io.AnimationChannel(
-                    extensions=None,
-                    extras=None,
-                    sampler=new_sampler,
-                    target=new_target
-                )
+                        new_channel = gltf2_io.AnimationChannel(
+                            extensions=None,
+                            extras=None,
+                            sampler=new_sampler,
+                            target=new_target
+                        )
 
-                channels.append(new_channel)
+                        channels.append(new_channel)
 
-        if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id][
-                'paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
-            baseColorFactor_alpha_merged_already_done = True
+                if export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id][
+                        'paths'][path]['path'] == "/materials/XXX/pbrMetallicRoughness/baseColorFactor":
+                    baseColorFactor_alpha_merged_already_done = True
 
     return channels
 
