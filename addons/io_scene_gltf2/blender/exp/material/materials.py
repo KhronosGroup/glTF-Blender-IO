@@ -252,22 +252,22 @@ class BlenderMaterialIndentifier:
         socket = NodeSocket(active_output_node.inputs[0], [self.get_used_material().node_tree])
 
         # Be careful not to misidentify a lightpath trick as mix-alpha.
-        result = gltf2_unlit.detect_lightpath_trick(socket)  # TODO: rewrite detect_lightpath_trick with NavNode
+        result = gltf2_unlit.detect_lightpath_trick(socket)
         if result is not None:
             socket = result['next_socket']
         else:
-            result = gltf2_unlit.detect_mix_alpha(socket)  # TODO: rewrite detect_mix_alpha with NavNode
+            result = gltf2_unlit.detect_mix_alpha(socket)
             if result is not None:
                 socket = result['next_socket']
                 info['alpha_socket'] = result['alpha_socket']
 
-            result = gltf2_unlit.detect_lightpath_trick(socket)  # TODO: rewrite detect_lightpath_trick with NavNode
+            result = gltf2_unlit.detect_lightpath_trick(socket)
             if result is not None:
                 socket = result['next_socket']
 
         # Check if a color socket, or connected to a color socket
         if socket.socket.type != 'RGBA':
-            from_socket = previous_socket(socket)  # TODO replace this previoous_socket with NavNode
+            from_socket = previous_socket(socket)
             if from_socket.socket is None:
                 return None
             if from_socket.socket.type != 'RGBA':
