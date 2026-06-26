@@ -60,14 +60,6 @@ class BlenderPointerAnim():
         return None
 
     @staticmethod
-    def __previous_node(socket):
-        nav = socket.to_node_nav()
-        nav.move_back()
-        if nav.moved:
-            return nav.node
-        return None
-
-    @staticmethod
     def do_channel(
             gltf, anim_idx, channel, asset, asset_idx, asset_type, name=None, is_unlit=False, target_id_type=None):
         animation = gltf.data.animations[anim_idx]
