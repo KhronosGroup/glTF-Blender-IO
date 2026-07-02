@@ -16,6 +16,7 @@ import bpy
 from typing import List, Optional, Tuple
 import numpy as np
 from ...io.com import gltf2_io, constants as gltf2_io_constants, gltf2_io_extensions
+from ...io.exp.meshopt import MeshoptEncoder
 from ...blender.com.data_path import get_sk_exported
 from ...io.exp import binary_data as gltf2_io_binary_data
 from .cache import cached, cached_by_key
@@ -86,6 +87,7 @@ def gather_primitives(
                 export_settings)
         else:
             # UDIM case
+            blender_mat = None
             base_material, material_info, unique_material_id, tile = udim_material
             material = get_final_material(
                 blender_data,
@@ -97,6 +99,9 @@ def gather_primitives(
 
             # Force change name of material to get the tile number in the name
             material.name = material.name + "." + tile
+
+        if blender_mat is not None:
+            export_settings['material_identifiers'][id(blender_mat)]['gltf'] = material
 
         primitive = gltf2_io.MeshPrimitive(
             attributes=internal_primitive['attributes'],
@@ -237,9 +242,28 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
             ') and needs to be split before export.')
         return None
 
+    if export_settings['gltf_meshopt_compression']:
+
+        byteStride = 4 if component_type == gltf2_io_constants.ComponentType.UnsignedInt else 2
+
+        compressed_indices, filter = MeshoptEncoder.encode_indices(
+            blender_primitive.get('mode'), indices, export_settings)
+
     element_type = gltf2_io_constants.DataType.Scalar
     binary_data = gltf2_io_binary_data.BinaryData(
         indices.tobytes(), bufferViewTarget=gltf2_io_constants.BufferViewTarget.ELEMENT_ARRAY_BUFFER)
+
+    if export_settings['gltf_meshopt_compression']:
+        mode = 'TRIANGLES' if blender_primitive.get('mode') in [4, None] else 'INDICES'
+        binary_data.set_extension(export_settings['gltf_meshopt_extension'], {
+            'buffer': compressed_indices,  # to be filled in later by the exporter, use data in placeholder for now
+            'byteOffset': None,  # to be filled in later by the exporter
+            'byteLength': len(compressed_indices),
+            'byteStride': byteStride,
+            'count': len(indices),
+            'mode': mode,
+            'filter': filter
+        })
     return gather_accessor(
         binary_data,
         component_type,
@@ -247,6 +271,7 @@ def __gather_indices(blender_primitive, blender_data, modifiers, export_settings
         None,
         None,
         element_type,
+        None,
         export_settings
     )
 
@@ -275,6 +300,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
                     target = {}
                     internal_target_position = blender_primitive["attributes"][target_position_id]["data"]
                     target["POSITION"] = array_to_accessor(
+                        'SK_POSITION',
                         internal_target_position,
                         export_settings,
                         component_type=gltf2_io_constants.ComponentType.Float,
@@ -289,6 +315,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
 
                         internal_target_normal = blender_primitive["attributes"][target_normal_id]["data"]
                         target['NORMAL'] = array_to_accessor(
+                            'SK_NORMAL',
                             internal_target_normal,
                             export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
@@ -301,6 +328,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
                             and blender_primitive["attributes"].get(target_tangent_id) is not None:
                         internal_target_tangent = blender_primitive["attributes"][target_tangent_id]["data"]
                         target['TANGENT'] = array_to_accessor(
+                            'SK_TANGENT',
                             internal_target_tangent,
                             export_settings,
                             component_type=gltf2_io_constants.ComponentType.Float,
@@ -374,6 +402,10 @@ def __gather_extensions(blender_data,
                     base_material,
                     material_info["uv_info"],
                     export_settings)
+
+                # Make sure to store material in export settings, to be able to retrieve it later for animation pointer
+                export_settings['material_identifiers'][id(i.material)] = {}
+                export_settings['material_identifiers'][id(i.material)]['blender'] = i.material
             else:
                 mat = None
 
