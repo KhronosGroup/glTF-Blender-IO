@@ -54,27 +54,35 @@ def get_cache_data(path: str,
         # If object is not in vtree, this is a material, light or camera for pointers
         obj_uuids = [blender_obj_uuid] if blender_obj_uuid in export_settings['vtree'].nodes.keys() else []
 
-    depsgraph = bpy.context.evaluated_depsgraph_get()
+    # depsgraph = bpy.context.evaluated_depsgraph_get()
 
     frame = min_
+    print("\t\t", "Start looping")
+    print("\t\t", obj_uuids)
+
+    uuid_to_depsgraph = {}
+    for obj_uuid in obj_uuids:
+        # Search if this ID already has a depsgraph, if not, create it
+        dep = next((d for d in set(uuid_to_depsgraph.values()) if d.has_id(
+            export_settings['vtree'].nodes[obj_uuid].blender_object)), None)
+        if dep is None:
+            dep = bpy.context.scene.depsgraph_new()
+            dep.build_from_id(export_settings['vtree'].nodes[obj_uuid].blender_object)
+        uuid_to_depsgraph[obj_uuid] = dep
+
     while frame <= max_:
-        bpy.context.scene.frame_set(int(frame))
+        for dep in set(uuid_to_depsgraph.values()):
+            dep.evaluate_on_framechange(int(frame))
         current_instance = {}  # For GN instances, we are going to track instances by their order in instance iterator
 
         object_caching(data, obj_uuids, current_instance, action_name,
-                       slot_identifier, frame, depsgraph, export_settings)
-
-        # KHR_animation_pointer caching for materials, lights, cameras
-        if export_settings['gltf_export_anim_pointer'] is True:
-            material_nodetree_caching(data, action_name, slot_identifier, frame, export_settings)
-            material_caching(data, action_name, slot_identifier, frame, export_settings)
-            light_nodetree_caching(data, action_name, slot_identifier, frame, export_settings)
-            camera_caching(data, action_name, slot_identifier, frame, export_settings)
-            light_caching(data, action_name, slot_identifier, frame, export_settings)
-            extras_caching(data, action_name, slot_identifier, frame, export_settings)
+                       slot_identifier, frame, uuid_to_depsgraph, export_settings)
 
         frame += step
 
+    for dep in set(uuid_to_depsgraph.values()):
+        dep.free()
+    print("\t\t", "End looping")
     return data
 
 
@@ -370,7 +378,15 @@ def material_nodetree_caching(data, action_name, slot_identifier, frame, export_
                         :export_settings['KHR_animation_pointer'][None]['materials'][mat]['paths'][path]['length']]
 
 
-def armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, frame, export_settings):
+def armature_caching(
+        data,
+        obj_uuid,
+        blender_obj,
+        action_name,
+        slot_identifier,
+        frame,
+        uuid_to_depsgraph,
+        export_settings):
     bones = export_settings['vtree'].get_all_bones(obj_uuid)
     if blender_obj.animation_data and blender_obj.animation_data.action \
             and blender_obj.animation_data.action_slot \
@@ -391,12 +407,12 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, 
         data[key1][key2][key3][key4] = {}
 
     for bone_uuid in [bone for bone in bones if export_settings['vtree'].nodes[bone].leaf_reference is None]:
-        blender_bone = export_settings['vtree'].nodes[bone_uuid].blender_bone
+        blender_bone = blender_obj.pose.bones[export_settings['vtree'].nodes[bone_uuid].blender_bone.name]
 
         if export_settings['vtree'].nodes[bone_uuid].parent_uuid is not None and export_settings['vtree'].nodes[
                 export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_type == VExportNode.BONE:
-            blender_bone_parent = export_settings['vtree'].nodes[export_settings['vtree']
-                                                                 .nodes[bone_uuid].parent_uuid].blender_bone
+            blender_bone_parent = blender_obj.pose.bones[export_settings['vtree']
+                                                         .nodes[export_settings['vtree'].nodes[bone_uuid].parent_uuid].blender_bone.name]
             rest_mat = blender_bone_parent.bone.matrix_local.inverted_safe() @ blender_bone.bone.matrix_local
             matrix = rest_mat.inverted_safe() @ blender_bone_parent.matrix.inverted_safe() @ blender_bone.matrix
         else:
@@ -415,14 +431,22 @@ def armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, 
         data[key1][key2][key3][key4][blender_bone.name][frame] = matrix
 
 
-def object_caching(data, obj_uuids, current_instance, action_name, slot_identifier, frame, depsgraph, export_settings):
+def object_caching(
+        data,
+        obj_uuids,
+        current_instance,
+        action_name,
+        slot_identifier,
+        frame,
+        uuid_to_depsgraph,
+        export_settings):
     for obj_uuid in obj_uuids:
 
         # Do not cache real collection
         if export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.COLLECTION:
             continue
 
-        blender_obj = export_settings['vtree'].nodes[obj_uuid].blender_object
+        blender_obj = uuid_to_depsgraph[obj_uuid].id_eval_get(export_settings['vtree'].nodes[obj_uuid].blender_object)
         if blender_obj is None:  # GN instance
             if export_settings['vtree'].nodes[obj_uuid].parent_uuid not in current_instance.keys():
                 current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] = 0
@@ -437,13 +461,16 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_identifi
                     VExportNode.BONE]:
                 if export_settings['vtree'].nodes[export_settings['vtree']
                                                   .nodes[obj_uuid].parent_uuid].blender_type != VExportNode.COLLECTION:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree']
-                                                                .nodes[obj_uuid].parent_uuid].blender_object.matrix_world
+                    parent_eval = uuid_to_depsgraph[export_settings['vtree'].nodes[obj_uuid].parent_uuid].id_eval_get(
+                        export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object)
+                    parent_mat = parent_eval.matrix_world
                 else:
-                    parent_mat = export_settings['vtree'].nodes[export_settings['vtree']
-                                                                .nodes[obj_uuid].parent_uuid].matrix_world
+                    parent_eval = uuid_to_depsgraph[export_settings['vtree'].nodes[obj_uuid].parent_uuid].id_eval_get(
+                        export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object)
+                    parent_mat = parent_eval.matrix_world
             else:
                 # Object animated is parented to a bone
+                # TODO eval
                 blender_bone = export_settings['vtree'].nodes[export_settings['vtree']
                                                               .nodes[obj_uuid].parent_bone_uuid].blender_bone
                 armature_object = export_settings['vtree'].nodes[export_settings['vtree']
@@ -461,16 +488,17 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_identifi
         if blender_obj:
             mat = parent_mat.inverted_safe() @ blender_obj.matrix_world
         else:
-            eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(
-                depsgraph)
-            cpt_inst = 0
-            for inst in depsgraph.object_instances:  # use only as iterator
-                if inst.parent == eval:
-                    if current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] == cpt_inst:
-                        mat = inst.matrix_world.copy()
-                        current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] += 1
-                        break
-                    cpt_inst += 1
+            pass  # No GN management for now
+            # eval = export_settings['vtree'].nodes[export_settings['vtree'].nodes[obj_uuid].parent_uuid].blender_object.evaluated_get(
+            #     depsgraph)
+            # cpt_inst = 0
+            # for inst in depsgraph.object_instances:  # use only as iterator
+            #     if inst.parent == eval:
+            #         if current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] == cpt_inst:
+            #             mat = inst.matrix_world.copy()
+            #             current_instance[export_settings['vtree'].nodes[obj_uuid].parent_uuid] += 1
+            #             break
+            #         cpt_inst += 1
 
         if obj_uuid not in data.keys():
             data[obj_uuid] = {}
@@ -494,7 +522,15 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_identifi
         # Store data for all bones, if object is an armature
 
         if blender_obj and blender_obj.type == "ARMATURE":
-            armature_caching(data, obj_uuid, blender_obj, action_name, slot_identifier, frame, export_settings)
+            armature_caching(
+                data,
+                obj_uuid,
+                blender_obj,
+                action_name,
+                slot_identifier,
+                frame,
+                uuid_to_depsgraph,
+                export_settings)
 
         elif blender_obj is None:  # GN instances
             # case of baking object, for GN instances
