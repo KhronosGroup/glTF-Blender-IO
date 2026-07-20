@@ -604,7 +604,12 @@ class PrimitiveCreator:
                             self.export_settings['gltf_vertex_color_name']) != -1 else None
                         vc_alpha_name = self.export_settings['gltf_vertex_color_name'] if self.blender_mesh.color_attributes.find(
                             self.export_settings['gltf_vertex_color_name']) != -1 else None
-
+                    elif self.export_settings['gltf_vertex_color'] == "ACTIVE":
+                        # Even if we have something in node tree (or not), we need to use the active Vertex Color
+                        # So force the active Vertex Color, whatever we have in node tree
+                        if self.blender_mesh.color_attributes.render_color_index != -1:
+                            vc_color_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
+                            vc_alpha_name = self.blender_mesh.color_attributes[self.blender_mesh.color_attributes.render_color_index].name
                     else:
                         if material_info['vc_info']['color_type'] == "name":
                             vc_color_name = material_info['vc_info']['color']
