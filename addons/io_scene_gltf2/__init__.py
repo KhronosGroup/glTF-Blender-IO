@@ -370,6 +370,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 'Be aware of a possible loss in quality'),
                ('WEBP', 'WebP Format',
                 'Save images as WebPs as main image (no fallback)'),
+               ('KTX2', 'KTX2 Format',
+               'Save images as KTX2 with BasisU supercompression'),
                ('NONE', 'None',
                 'Don\'t export images'),
                ),
@@ -380,21 +382,31 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='AUTO'
     )
 
-    export_image_add_webp: BoolProperty(
-        name='Create WebP',
+    export_image_add_compressed_images: BoolProperty(
+        name='Create Compressed Images',
         description=(
-            "Creates WebP textures for every texture. "
-            "For already WebP textures, nothing happens"
+            "Creates compressed textures (WebP or KTX2)for every texture. "
+            "For already compressed textures, nothing happens"
         ),
         default=False
     )
 
-    export_image_webp_fallback: BoolProperty(
-        name='WebP Fallback',
+    export_compressed_images_fallback: BoolProperty(
+        name='Compressed Images Fallback',
         description=(
-            "For all WebP textures, create a PNG fallback texture"
+            "For all compressed textures (WebP or KTX2), create a PNG fallback texture"
         ),
         default=False
+    )
+
+    export_compressed_images_type: EnumProperty(
+        name='Compressed Images Type',
+        items=(('WEBP', 'WebP', 'Use WebP format for compressed textures'),
+               ('KTX2', 'KTX2', 'Use KTX2 format with BasisU supercompression for compressed textures')),
+        description=(
+            "Choose the format for compressed textures fallback (WebP or KTX2 with BasisU supercompression)"
+        ),
+        default='WEBP'
     )
 
     export_texture_dir: StringProperty(
@@ -1169,8 +1181,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
-        export_settings['gltf_add_webp'] = self.export_image_add_webp
-        export_settings['gltf_webp_fallback'] = self.export_image_webp_fallback
+        export_settings['gltf_add_compressed_images'] = self.export_image_add_compressed_images
+        export_settings['gltf_compressed_images_fallback'] = self.export_compressed_images_fallback
+        export_settings['gltf_compressed_images_type'] = self.export_compressed_images_type
         export_settings['gltf_image_quality'] = self.export_image_quality
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
@@ -1583,13 +1596,16 @@ def export_panel_data_material(layout, operator):
         if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
             col.prop(operator, 'export_image_quality')
         col = body.column()
-        col.active = operator.export_image_format != "WEBP" and operator.export_materials not in [
+        col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
             'PLACEHOLDER', 'NONE', 'VIEWPORT']
-        col.prop(operator, "export_image_add_webp")
+        col.prop(operator, "export_image_add_compressed_images")
         col = body.column()
-        col.active = operator.export_image_format != "WEBP" and operator.export_materials not in [
+        col.active = operator.export_image_add_compressed_images
+        col.prop(operator, "export_compressed_images_type")
+        col = body.column()
+        col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
             'PLACEHOLDER', 'NONE', 'VIEWPORT']
-        col.prop(operator, "export_image_webp_fallback")
+        col.prop(operator, "export_compressed_images_fallback")
 
         header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
         header.label(text="Unused Textures & Images")
