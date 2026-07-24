@@ -176,15 +176,29 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
 
+        # Special cases for glTF official extensions (for example Gaussian Splatting)
+        if attr == "KHR_gaussian_splatting:ROTATION":
+            blender_attribute_data_type = "QUATERNION"
+
         if blender_attribute_data_type is None:
             continue
 
         blender_attribute = pointcloud.attributes.new(attr, blender_attribute_data_type, 'POINT')
+
+        # Special cases for glTF official extensions (for example Gaussian Splatting)
+        # where you know the content of the attribute, and you need to convert (for example, rotation)
+        if attr == "KHR_gaussian_splatting:ROTATION":
+            # Convert quaternions from glTF to Blender
+
+            gltf.quats_batch_gltf_to_blender(attributes[attr])
+
         if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attributes[attr].flatten())
         elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
             if blender_attribute_data_type in ["BYTE_COLOR", "FLOAT_COLOR"]:
                 blender_attribute.data.foreach_set('color', attributes[attr].flatten())
+            elif blender_attribute_data_type == "QUATERNION":
+                blender_attribute.data.foreach_set('value', attributes[attr].flatten())
             else:
                 blender_attribute.data.foreach_set('vector', attributes[attr].flatten())
 
