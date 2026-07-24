@@ -82,7 +82,9 @@ def create_pointcloud(gltf, mesh_idx, is_gsplat):
     # Set up the point cloud to be displayed as Gaussian Splatting if applicable
     if is_gsplat:
         pointcloud.render_as = 'SPLATS'
-        # TODO : Set SH degree
+        # Set SH degree
+        sh_degree = detect_sh_degree_from_gltf(pypc.primitives[0], gltf)
+        pointcloud.spherical_harmonics_degree = sh_degree
 
     # no need to parent the pointcloud to an object, as there is no skinning or shapekeys for point clouds
     do_primitives_pointcloud(gltf, mesh_idx, pointcloud)
