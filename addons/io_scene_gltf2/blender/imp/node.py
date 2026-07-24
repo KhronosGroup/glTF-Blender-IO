@@ -295,6 +295,7 @@ class BlenderNode():
 
         # Detect if the mesh will be a Point Cloud or not
         is_point_cloud = False
+        is_gsplat = False
         if gltf.import_settings.get('import_point_as_pointcloud', False):
             if all([prim.mode == 0 for prim in pymesh.primitives]):  # All POINTS
                 is_point_cloud = True
@@ -303,6 +304,7 @@ class BlenderNode():
             if all([prim.extensions is not None and 'KHR_gaussian_splatting' in prim.extensions.keys()
                    for prim in pymesh.primitives]):
                 is_point_cloud = True
+                is_gsplat = True
             else:
                 is_point_cloud = False
 
@@ -329,7 +331,7 @@ class BlenderNode():
                 mesh = BlenderMesh.create(gltf, pynode.mesh, pynode.skin)
             else:
                 gltf.log.info("Blender create Point Cloud node {}".format(pymesh.name or pynode.mesh))
-                mesh = BlenderMesh.create_pointcloud(gltf, pynode.mesh)
+                mesh = BlenderMesh.create_pointcloud(gltf, pynode.mesh, is_gsplat)
 
             if cache_key is not None:
                 pymesh.blender_name[cache_key] = mesh.name

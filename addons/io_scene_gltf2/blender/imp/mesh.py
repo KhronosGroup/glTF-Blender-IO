@@ -36,9 +36,9 @@ class BlenderMesh():
         return create_mesh(gltf, mesh_idx, skin_idx)
 
     @staticmethod
-    def create_pointcloud(gltf, mesh_idx):
+    def create_pointcloud(gltf, mesh_idx, is_gsplat):
         """Point Cloud creation."""
-        return create_pointcloud(gltf, mesh_idx)
+        return create_pointcloud(gltf, mesh_idx, is_gsplat)
 
 
 # Maximum number of TEXCOORD_n/COLOR_n sets to import
@@ -71,12 +71,17 @@ def create_mesh(gltf, mesh_idx, skin_idx):
     return mesh
 
 
-def create_pointcloud(gltf, mesh_idx):
+def create_pointcloud(gltf, mesh_idx, is_gsplat):
     pypc = gltf.data.meshes[mesh_idx]
     import_user_extensions('gather_import_pointcloud_before_hook', gltf, pypc)
 
     name = pypc.name or 'PointCloud_%d' % mesh_idx
     pointcloud = bpy.data.pointclouds.new(name)
+
+    # Set up the point cloud to be displayed as Gaussian Splatting if applicable
+    if is_gsplat:
+        pointcloud.render_as = 'SPLATS'
+        # TODO : Set SH degree
 
     # no need to parent the pointcloud to an object, as there is no skinning or shapekeys for point clouds
     do_primitives_pointcloud(gltf, mesh_idx, pointcloud)
