@@ -23,6 +23,7 @@ from ..com.extras import set_extras
 from ..com.gltf2_blender_utils import fast_structured_np_unique
 from .material import BlenderMaterial
 from .draco_compression_extension import decode_primitive
+from .gsplat import detect_sh_degree_from_gltf
 
 
 class BlenderMesh():
