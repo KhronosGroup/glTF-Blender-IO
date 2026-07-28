@@ -796,7 +796,7 @@ def __export_unlit(bmat, export_settings):
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
         export_settings['KHR_animation_pointer']['extras']['materials'][bmat.id]['glTF_extras'] = material
 
-    export_user_extensions('gather_material_unlit_hook', export_settings, material, bmat.get_used_material())
+    export_user_extensions('gather_material_unlit_hook', export_settings, material, bmat.material)
 
     # Now we have exported the material itself, we need to store some additional data
     # This will be used when trying to export some KHR_animation_pointer
