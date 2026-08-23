@@ -459,6 +459,7 @@ def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):
         needs_to_mesh_clear = True
 
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
+        __keep_material_info(materials, True, export_settings)
         modifiers = None
         blender_object_for_skined_data = None
 
