@@ -220,10 +220,17 @@ def get_source(mh, pytexture):
     except Exception:
         webp_src = None
 
+    try:
+        ktx_src = pytexture.extensions['KHR_texture_basisu']['source']
+    except Exception:
+        ktx_src = None
+
     if mh.gltf.import_settings['import_webp_texture']:
         return webp_src if webp_src is not None else src
+    elif mh.gltf.import_settings['import_ktx_texture']:
+        return ktx_src if ktx_src is not None else src
     else:
-        return src if src is not None else webp_src
+        return src if src is not None else webp_src if webp_src is not None else ktx_src
 
 
 def set_filtering(tex_img, pysampler):
