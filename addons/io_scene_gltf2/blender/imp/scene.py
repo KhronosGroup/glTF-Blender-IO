@@ -27,7 +27,7 @@ class BlenderScene():
         raise RuntimeError("%s should not be instantiated" % cls)
 
     @staticmethod
-    def create(gltf):
+    def create(gltf, wm=None):
         """Scene creation."""
         scene = bpy.context.scene
         gltf.blender_scene = scene.name
@@ -44,9 +44,13 @@ class BlenderScene():
                 set_extras(scene, pyscene.extras)
 
         compute_vnodes(gltf)
+        if wm is not None:
+            wm.progress_update(20)
 
         gltf.display_current_node = 0  # for debugging
         BlenderNode.create_vnode(gltf, 'root')
+        if wm is not None:
+            wm.progress_update(75)
 
         # User extensions before scene creation
         gltf_scene = None
@@ -55,6 +59,8 @@ class BlenderScene():
         import_user_extensions('gather_import_scene_after_nodes_hook', gltf, gltf_scene, scene)
 
         BlenderScene.create_animations(gltf)
+        if wm is not None:
+            wm.progress_update(88)
 
         # User extensions after scene creation
         gltf_scene = None
