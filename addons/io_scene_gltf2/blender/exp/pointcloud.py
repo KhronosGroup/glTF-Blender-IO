@@ -14,6 +14,7 @@
 
 
 from ..com import conversion as gltf2_blender_conversion
+from .primitive_extract import PrimitiveCreator
 from .attribute_utils import extract_attribute_data
 import numpy as np
 
@@ -36,6 +37,7 @@ def gather_point_cloud(blender_pointcloud, export_settings):
     if source:
         source.foreach_get(foreach_attribute, locs)
     locs = locs.reshape(len(blender_pointcloud.attributes['position'].data), 3)
+    PrimitiveCreator.zup2yup(locs)
 
     # Radius
     radius = np.empty(
