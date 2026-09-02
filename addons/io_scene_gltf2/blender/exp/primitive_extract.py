@@ -437,7 +437,6 @@ class PrimitiveCreator:
             export_settings):
 
         vc_infos = []
-        material_idxs_using_vc = {}
 
         # There are multiple case to take into account for VC
         if export_settings['gltf_vertex_color'] == "NONE":
@@ -491,10 +490,10 @@ class PrimitiveCreator:
                             'gltf_name': 'COLOR_' + str(loop_data.vc_infos_index),
                             'forced': False
                         })
-                        material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index)
+                        loop_data.material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index)
                         loop_data.vc_infos_index += 1
                     else:
-                        material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index - 1)
+                        loop_data.material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index - 1)
                         pass  # Using the same Vertex Color
             elif base_material is not None and export_settings['gltf_vertex_color'] == "MATERIAL":
                 # Check if there is an active Vertex Color in mesh
@@ -565,11 +564,11 @@ class PrimitiveCreator:
                         'gltf_name': 'COLOR_' + str(loop_data.vc_infos_index),
                         'forced': False
                     })
-                    material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index)
+                    loop_data.material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index)
                     loop_data.vc_infos_index += 1
 
                 else:
-                    material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index - 1)
+                    loop_data.material_idxs_using_vc[material_idx] = 'COLOR_' + str(loop_data.vc_infos_index - 1)
                     pass  # Using the same Vertex Color
 
         return vc_infos, loop_data
