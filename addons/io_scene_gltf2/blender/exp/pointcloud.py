@@ -19,7 +19,7 @@ from .attribute_utils import extract_attribute_data
 import numpy as np
 
 
-def gather_point_cloud(blender_pointcloud, export_settings):
+def gather_point_cloud(blender_pointcloud, materials, export_settings):
 
     primitives = []
 
