@@ -23,6 +23,9 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
 
     primitives = []
 
+    if not export_settings['gltf_pointclouds']:
+        return []
+
     # Position
     locs = np.empty(
         len(blender_pointcloud.attributes['position'].data) * 3, dtype=np.float32)
