@@ -541,6 +541,9 @@ class PrimitiveCreator:
                 if data.color_attributes.render_color_index != -1:
                     vc_color_name = data.color_attributes[data.color_attributes.render_color_index].name
                     vc_alpha_name = data.color_attributes[data.color_attributes.render_color_index].name
+            elif for_pointcloud is True and export_settings['gltf_vertex_color'] == "ACTIVE":
+                # There is no 'active" vertex color for point cloud, so do nothing
+                pass
             else:
                 if material_info['vc_info']['color_type'] == "name":
                     vc_color_name = material_info['vc_info']['color']
