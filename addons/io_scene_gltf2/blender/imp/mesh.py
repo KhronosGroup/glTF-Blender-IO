@@ -126,8 +126,8 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         vs = BinaryData.decode_accessor(gltf, prim.attributes['POSITION'], cache=True)
         point_locs = np.concatenate((point_locs, vs[unique_indices]))
 
-        # Custom Attributes for this primitive
-        custom_attrs = [k for k in prim.attributes if k.startswith('_') or k.startswith('KHR_')]
+        # Custom Attributes for this primitive, and Vertex Color
+        custom_attrs = [k for k in prim.attributes if k.startswith(('_', 'KHR_', 'COLOR_'))]
         for attr in custom_attrs:
             if attr not in attributes:  # This attribute is not yet known
                 # So set it up
@@ -163,13 +163,17 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
 
     # Custom Attributes
 
+    # Special cases (for example, _RADIUS will be imported as 'radius'))
+    specials = {
+        '_RADIUS': 'radius'}
+
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
 
         if blender_attribute_data_type is None:
             continue
 
-        blender_attribute = pointcloud.attributes.new(attr, blender_attribute_data_type, 'POINT')
+        blender_attribute = pointcloud.attributes.new(specials.get(attr, attr), blender_attribute_data_type, 'POINT')
         if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attributes[attr].flatten())
         elif DataType.num_elements(gltf.data.accessors[prim.attributes[attr]].type) > 1:
