@@ -184,7 +184,10 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
 
     # Special cases (for example, _RADIUS will be imported as 'radius'))
     specials = {
-        '_RADIUS': 'radius'}
+        '_RADIUS': 'radius',
+        'KHR_gaussian_splatting:ROTATION': 'rotation',
+        'KHR_gaussian_splatting:SCALE': 'scale'
+    }
 
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
@@ -202,7 +205,6 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         # where you know the content of the attribute, and you need to convert (for example, rotation)
         if attr == "KHR_gaussian_splatting:ROTATION":
             # Convert quaternions from glTF to Blender
-
             gltf.quats_batch_gltf_to_blender(attributes[attr])
 
         if DataType.num_elements(attribute_type[attr]) == 1:
