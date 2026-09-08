@@ -206,6 +206,9 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         if attr == "KHR_gaussian_splatting:ROTATION":
             # Convert quaternions from glTF to Blender
             gltf.quats_batch_gltf_to_blender(attributes[attr])
+        elif attr == "KHR_gaussian_splatting:SCALE":
+            # Convert scale from glTF to Blender
+            gltf.locs_batch_gltf_to_blender(attributes[attr])
 
         if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attributes[attr].flatten())
