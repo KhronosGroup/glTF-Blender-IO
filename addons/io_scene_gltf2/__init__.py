@@ -17,8 +17,8 @@ bl_info = {
     # This is now displayed as the maintainer, so show the foundation.
     # "author": "Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein", # Original Authors
     'author': "Blender Foundation, Khronos Group",
-    "version": (5, 3, 2),
-    'blender': (5, 2, 0),
+    "version": (5, 3, 23),
+    'blender': (5, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
     'warning': '',
@@ -124,8 +124,6 @@ def on_export_format_changed(self, context):
 
     # Also change the filter
     sfile.params.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
-    # Force update of file list, because update the filter does not update the real file list
-    bpy.ops.file.refresh()
 
 
 def on_export_action_filter_changed(self, context):
@@ -542,7 +540,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
              'Viewport',
              'Export minimal materials as defined in Viewport display properties'),
             ('NONE',
-             'No export',
+             'No Export',
              'Do not export materials, and combine mesh primitive groups, losing material slot information')),
         description='Export materials',
         default='EXPORT')
@@ -617,6 +615,12 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             'Export loose points as glTF points, using the material from the first material slot'
         ),
         default=False,
+    )
+
+    export_pointclouds: BoolProperty(
+        name='Point Clouds',
+        description='Export point clouds',
+        default=True
     )
 
     export_cameras: BoolProperty(
@@ -1091,13 +1095,13 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                     setattr(self, k, v)
                 self.will_save_settings = True
 
-                # Update filter if user saved settings
-                if hasattr(self, 'export_format'):
-                    self.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
-
             except (AttributeError, TypeError):
                 self.report({"ERROR"}, "Loading export settings failed. Removed corrupted settings")
                 del context.scene[self.scene_key]
+
+        # Update filter if user saved settings or use last used format
+        if hasattr(self, 'export_format'):
+            self.filter_glob = '*.glb' if self.export_format == 'GLB' else '*.gltf'
 
         return ExportHelper.invoke(self, context, event)
 
@@ -1156,6 +1160,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['exported_texture_nodes'] = []
         export_settings['additional_texture_export'] = []
         export_settings['additional_texture_export_current_idx'] = {}
+        export_settings['material_identifiers'] = {}
+        export_settings['mesh_identifiers'] = {}
 
         export_settings['timestamp'] = datetime.datetime.now()
         export_settings['gltf_export_id'] = self.gltf_export_id
@@ -1178,6 +1184,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_tangents'] = self.export_tangents and self.export_normals
         export_settings['gltf_loose_edges'] = self.use_mesh_edges
         export_settings['gltf_loose_points'] = self.use_mesh_vertices
+        export_settings['gltf_pointclouds'] = self.export_pointclouds
 
         if is_draco_available():
             export_settings['gltf_draco_mesh_compression'] = self.export_draco_mesh_compression_enable
@@ -1262,15 +1269,11 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             else:
                 export_settings['gltf_anim_scene_split_object'] = False
 
-            if export_settings['gltf_animation_mode'] in ['NLA_TRACKS', 'SCENE']:
-                export_settings['gltf_export_anim_pointer'] = self.export_pointer_animation
-                if self.export_pointer_animation:
-                    export_settings['gltf_trs_w_animation_pointer'] = self.export_convert_animation_pointer
-                else:
-                    export_settings['gltf_trs_w_animation_pointer'] = False
+            export_settings['gltf_export_anim_pointer'] = self.export_pointer_animation
+            if self.export_pointer_animation:
+                export_settings['gltf_trs_w_animation_pointer'] = self.export_convert_animation_pointer
             else:
                 export_settings['gltf_trs_w_animation_pointer'] = False
-                export_settings['gltf_export_anim_pointer'] = False
 
             if export_settings['gltf_animation_mode'] != "ACTIONS":
                 export_settings['gltf_merge_animation'] = "NLA_TRACK"
@@ -1462,7 +1465,7 @@ def export_main(layout, operator, is_file_browser):
     if operator.export_format == 'GLTF_EMBEDDED':
         layout.label(
             text="This is the least efficient of the available forms, and should only be used when required.",
-            icon='ERROR')
+            icon='STATUS_WARNING')
 
     layout.prop(operator, 'export_copyright')
     if is_file_browser:
@@ -1512,6 +1515,7 @@ def export_panel_data(layout, operator):
     if body:
         export_panel_data_scene_graph(body, operator)
         export_panel_data_mesh(body, operator)
+        export_panel_data_pointclouds(body, operator)
         export_panel_data_material(body, operator)
         export_panel_data_shapekeys(body, operator)
         export_panel_data_armature(body, operator)
@@ -1565,7 +1569,7 @@ def export_panel_data_mesh(layout, operator):
                 row = sub_body.row()
                 row.label(
                     text="Note that fully compliant glTF 2.0 engine/viewer will use it as multiplicative factor for base color.",
-                    icon='ERROR')
+                    icon='STATUS_WARNING')
                 row = sub_body.row()
                 row.label(text="If you want to use VC for any other purpose than vertex color, you should use custom attributes.")
             row = sub_body.row()
@@ -1574,6 +1578,15 @@ def export_panel_data_mesh(layout, operator):
             row = sub_body.row()
             row.active = operator.export_vertex_color != "NONE"
             row.prop(operator, 'export_active_vertex_color_when_no_material')
+
+
+def export_panel_data_pointclouds(layout, operator):
+    header, body = layout.panel("GLTF_export_data_pointclouds", default_closed=True)
+    header.use_property_split = False
+    header.prop(operator, "export_pointclouds", text="")
+    header.label(text="Point Clouds")
+    if body:
+        pass
 
 
 def export_panel_data_material(layout, operator):
@@ -1826,7 +1839,6 @@ def export_panel_animation_sampling(layout, operator):
 def export_panel_animation_pointer(layout, operator):
     header, body = layout.panel("GLTF_export_animation_pointer", default_closed=True)
     header.use_property_split = False
-    header.active = operator.export_animations and operator.export_animation_mode in ['NLA_TRACKS', 'SCENE']
     header.prop(operator, "export_pointer_animation", text="")
     header.label(text="Animation Pointer (Experimental)")
     if body:
@@ -2259,7 +2271,7 @@ class GLTF_AddonPreferences(bpy.types.AddonPreferences):
         if self.allow_embedded_format:
             layout.label(
                 text="This is the least efficient of the available forms, and should only be used when required.",
-                icon='ERROR')
+                icon='STATUS_WARNING')
 
 
 class IO_FH_gltf2(bpy.types.FileHandler):
