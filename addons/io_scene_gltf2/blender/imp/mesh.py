@@ -263,7 +263,10 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 blender_attribute.data.foreach_set('vector', attributes[attr].flatten())
 
     # Manage materials
-    manage_materials(gltf, pypc, pointcloud, num_points, on='POINT')
+    is_gaussian_splatting = any(attr.startswith("KHR_gaussian_splatting:")
+                                for attr in pypc.primitives[0].attributes)
+    if not is_gaussian_splatting:
+        manage_materials(gltf, pypc, pointcloud, num_points, on='POINT')
 
 
 def do_primitives(gltf, mesh_idx, skin_idx, mesh, ob):
