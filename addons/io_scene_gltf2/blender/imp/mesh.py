@@ -240,7 +240,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         if attr == "KHR_gaussian_splatting:ROTATION":
             blender_attribute_data_type = "QUATERNION"
         elif attr == "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0":
-            blender_attribute_data_type = "FLOAT_COLOR"
+            blender_attribute_data_type = "FLOAT4"
 
         blender_attribute = pointcloud.attributes.new(specials.get(attr, attr), blender_attribute_data_type, 'POINT')
 
