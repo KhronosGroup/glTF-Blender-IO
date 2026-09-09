@@ -186,18 +186,26 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     specials = {
         '_RADIUS': 'radius',
         'KHR_gaussian_splatting:ROTATION': 'rotation',
-        'KHR_gaussian_splatting:SCALE': 'scale'
+        'KHR_gaussian_splatting:SCALE': 'scale',
+        'KHR_gaussian_splatting:SH_DEGREE_0_COEF_0': 'radiance:base',
     }
 
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
 
+        if blender_attribute_data_type is None:
+            continue
+
+        if attr == "KHR_gaussian_splatting:OPACITY":
+            # Ignore this attribute, but the data will be merged with the
+            # KHR_gaussian_splatting:SH_DEGREE_0_COEF_0 attribute later
+            continue
+
         # Special cases for glTF official extensions (for example Gaussian Splatting)
         if attr == "KHR_gaussian_splatting:ROTATION":
             blender_attribute_data_type = "QUATERNION"
-
-        if blender_attribute_data_type is None:
-            continue
+        elif attr == "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0":
+            blender_attribute_data_type = "FLOAT_COLOR"
 
         blender_attribute = pointcloud.attributes.new(specials.get(attr, attr), blender_attribute_data_type, 'POINT')
 
@@ -209,6 +217,11 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         elif attr == "KHR_gaussian_splatting:SCALE":
             # Convert scale from glTF to Blender
             gltf.locs_batch_gltf_to_blender(attributes[attr])
+        elif attr == "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0" and "KHR_gaussian_splatting:OPACITY" in attributes:
+            # We need to merge concatenate the data with the opacity
+            # going from VEC3 + SCALAR to VEC4
+            attributes[attr] = np.concatenate(
+                [attributes[attr], attributes["KHR_gaussian_splatting:OPACITY"].reshape(-1, 1)], axis=1)
 
         if DataType.num_elements(attribute_type[attr]) == 1:
             blender_attribute.data.foreach_set('value', attributes[attr].flatten())
