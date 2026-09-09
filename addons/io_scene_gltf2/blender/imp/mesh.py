@@ -23,7 +23,7 @@ from ..com.extras import set_extras
 from ..com.gltf2_blender_utils import fast_structured_np_unique
 from .material import BlenderMaterial
 from .draco_compression_extension import decode_primitive
-from .gsplat import detect_sh_degree_from_gltf
+from .gsplat import convert_sh_d1_batch, convert_sh_d2_batch, convert_sh_d3_batch
 
 
 class BlenderMesh():
@@ -208,6 +208,16 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 coeff += 1
         else:
             break
+
+    # SH conversion from Yup to Zup
+    sh_degree = degree - 1  # The last degree that was found
+    sh_prefix = 'KHR_gaussian_splatting:SH_DEGREE_'
+    if sh_degree >= 1:
+        convert_sh_d1_batch(*(attributes[f'{sh_prefix}1_COEF_{n}'] for n in range(3)))
+    if sh_degree >= 2:
+        convert_sh_d2_batch(*(attributes[f'{sh_prefix}2_COEF_{n}'] for n in range(5)))
+    if sh_degree >= 3:
+        convert_sh_d3_batch(*(attributes[f'{sh_prefix}3_COEF_{n}'] for n in range(7)))
 
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
