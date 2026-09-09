@@ -30,6 +30,10 @@ class BlenderMaterial():
     def create(gltf, material_idx, vertex_color):
         """Material creation."""
 
+        if material_idx not in gltf.socket_infos:
+            gltf.socket_infos[material_idx] = {}
+        # Vertex Color?
+
         if material_idx is None:
             # If no material is specified, we create a default one
             mat = bpy.data.materials.new(name="DefaultMaterial")
@@ -41,8 +45,11 @@ class BlenderMaterial():
             mat.node_tree.links.new(shader_node.outputs[0], output_node.inputs[0])
             if vertex_color:
                 # Add vertex color node
-                vertex_color_node = mat.node_tree.nodes.new(type='ShaderNodeVertexColor')
+                vertex_color_node = mat.node_tree.nodes.new(type='ShaderNodeAttribute')
                 vertex_color_node.location = (-400, 0)
+                # point cloud does not have active vertex color, so we have to fill the attribute name
+                name = 'Color' if int(vertex_color[6:7]) == 0 else 'Color.%03d' % int(vertex_color[6:7])
+                vertex_color_node.attribute_name = name
                 mat.node_tree.links.new(vertex_color_node.outputs[0], shader_node.inputs[0])
             return mat.name
 
@@ -58,17 +65,20 @@ class BlenderMaterial():
         pymaterial.blender_material[vertex_color] = mat.name
 
         set_extras(mat, pymaterial.extras)
+        if pymaterial.extras:
+            pymaterial.extras['blender_object_data'] = mat  # Used in case of for KHR_animation_pointer
+
         BlenderMaterial.set_double_sided(pymaterial, mat)
         BlenderMaterial.set_eevee_surface_render_method(pymaterial, mat)
         BlenderMaterial.set_viewport_color(pymaterial, mat, vertex_color)
 
         mat.node_tree.nodes.clear()
 
-        mh = MaterialHelper(gltf, pymaterial, mat, vertex_color)
+        mh = MaterialHelper(gltf, material_idx, pymaterial, mat, vertex_color)
 
         exts = pymaterial.extensions or {}
         if 'KHR_materials_unlit' in exts:
-            unlit(mh)
+            unlit(material_idx, vertex_color, mh)
             pymaterial.pbr_metallic_roughness.blender_nodetree = mat.node_tree  # Used in case of for KHR_animation_pointer
             # Used in case of for KHR_animation_pointer #TODOPointer Vertex Color...
             pymaterial.pbr_metallic_roughness.blender_mat = mat
