@@ -27,6 +27,7 @@ def convert_sh_d1_batch(c0, c1, c2):
     c0[:] = c1
     c1[:] = -c0
     # No change for c2
+    return c0, c1, c2
 
 
 def convert_sh_d2_batch(c0, c1, c2, c3, c4):
@@ -36,6 +37,7 @@ def convert_sh_d2_batch(c0, c1, c2, c3, c4):
     c2[:] = -0.5 * c2 - (SQRT3 / 2) * c4
     c3[:] = -c0
     c4[:] = -(SQRT3 / 2) * c2 + 0.5 * c4
+    return c0, c1, c2, c3, c4
 
 
 def convert_sh_d3_batch(c0, c1, c2, c3, c4, c5, c6):
@@ -50,6 +52,7 @@ def convert_sh_d3_batch(c0, c1, c2, c3, c4, c5, c6):
     c4[:] = -0.25 * c4 - (SQRT15 / 4) * c6
     c5[:] = (SQRT10 / 4) * c2 - (SQRT6 / 4) * c0
     c6[:] = -(SQRT15 / 4) * c4 + 0.25 * c6
+    return c0, c1, c2, c3, c4, c5, c6
 
 
 def detect_sh_degree_from_gltf(prim, gltf):

@@ -213,11 +213,17 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     sh_degree = degree - 1  # The last degree that was found
     sh_prefix = 'KHR_gaussian_splatting:SH_DEGREE_'
     if sh_degree >= 1:
-        convert_sh_d1_batch(*(attributes[f'{sh_prefix}1_COEF_{n}'] for n in range(3)))
+        new_attrs = convert_sh_d1_batch(*(attributes[f'{sh_prefix}1_COEF_{n}'] for n in range(3)))
+        for n, attr_name in enumerate(f'{sh_prefix}1_COEF_{n}' for n in range(3)):
+            attributes[attr_name] = new_attrs[n]
     if sh_degree >= 2:
-        convert_sh_d2_batch(*(attributes[f'{sh_prefix}2_COEF_{n}'] for n in range(5)))
+        new_attrs = convert_sh_d2_batch(*(attributes[f'{sh_prefix}2_COEF_{n}'] for n in range(5)))
+        for n, attr_name in enumerate(f'{sh_prefix}2_COEF_{n}' for n in range(5)):
+            attributes[attr_name] = new_attrs[n]
     if sh_degree >= 3:
-        convert_sh_d3_batch(*(attributes[f'{sh_prefix}3_COEF_{n}'] for n in range(7)))
+        new_attrs = convert_sh_d3_batch(*(attributes[f'{sh_prefix}3_COEF_{n}'] for n in range(7)))
+        for n, attr_name in enumerate(f'{sh_prefix}3_COEF_{n}' for n in range(7)):
+            attributes[attr_name] = new_attrs[n]
 
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
@@ -245,7 +251,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
             gltf.quats_batch_gltf_to_blender(attributes[attr])
         elif attr == "KHR_gaussian_splatting:SCALE":
             # Convert scale from glTF to Blender
-            gltf.locs_batch_gltf_to_blender(attributes[attr])
+            gltf.scales_batch_gltf_to_blender(attributes[attr])
         elif attr == "KHR_gaussian_splatting:SH_DEGREE_0_COEF_0" and "KHR_gaussian_splatting:OPACITY" in attributes:
             # We need to merge concatenate the data with the opacity
             # going from VEC3 + SCALAR to VEC4
