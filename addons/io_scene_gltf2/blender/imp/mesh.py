@@ -187,8 +187,27 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
         '_RADIUS': 'radius',
         'KHR_gaussian_splatting:ROTATION': 'rotation',
         'KHR_gaussian_splatting:SCALE': 'scale',
-        'KHR_gaussian_splatting:SH_DEGREE_0_COEF_0': 'radiance:base',
     }
+
+    # Manage SH attribute names
+    degree = 0
+    coeff = 0
+    index = 0
+    while True:
+        sh_attr = f'KHR_gaussian_splatting:SH_DEGREE_{degree}_COEF_{coeff}'
+        if sh_attr in attributes:
+            if degree == 0 and coeff == 0:
+                specials[sh_attr] = 'radiance:base'
+            else:
+                specials[sh_attr] = f'radiance:sh_{index}'
+            index += 1
+            if coeff == degree * 2:
+                degree += 1
+                coeff = 0
+            else:
+                coeff += 1
+        else:
+            break
 
     for attr in attributes:
         blender_attribute_data_type = attribute_data_type[attr]
