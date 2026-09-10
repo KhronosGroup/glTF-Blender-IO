@@ -18,6 +18,7 @@ from typing import Optional, Tuple
 import numpy as np
 import tempfile
 import enum
+from ....io.exp.ktx import KtxEncoder
 
 
 class Channel(enum.IntEnum):
@@ -455,26 +456,42 @@ class ExportImage:
 
 
 def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_settings) -> bytes:
-    with tempfile.TemporaryDirectory() as tmpdirname:
-        tmpfilename = tmpdirname + '/img'
-        tmp_image.filepath_raw = tmpfilename
 
-        tmp_image.file_format = file_format
+    if file_format != "KTX2":
 
-        try:
-            # if image is jpeg, use quality export settings
-            if file_format in ["JPEG", "WEBP"]:
-                tmp_image.save(quality=export_settings['gltf_image_quality'])
-            elif file_format == "KTX2":
-                tmp_image.save()  # TODO add KTX2 options
-            else:
-                tmp_image.save()
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tmpfilename = tmpdirname + '/img'
+            tmp_image.filepath_raw = tmpfilename
+
+            tmp_image.file_format = file_format
+
+            try:
+                # if image is jpeg, use quality export settings
+                if file_format in ["JPEG", "WEBP"]:
+                    tmp_image.save(quality=export_settings['gltf_image_quality'])
+                else:
+                    tmp_image.save()
+
+                with open(tmpfilename, "rb") as f:
+                    return f.read()
+            except Exception as e:
+                export_settings['log'].error("Error while saving image: %s" % e)
+                return b''
+
+    else:
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            tmpfilename = tmpdirname + '/img'
+            KtxEncoder.encode_file(
+                export_settings,
+                tmpfilename,
+                tmp_image.pixels[:],
+                tmp_image.size[0],
+                tmp_image.size[1],
+                4,
+                quality=80)
 
             with open(tmpfilename, "rb") as f:
                 return f.read()
-        except Exception as e:
-            export_settings['log'].error("Error while saving image: %s" % e)
-            return b''
 
 
 class TmpImageGuard:
