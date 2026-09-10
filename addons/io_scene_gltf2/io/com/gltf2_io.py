@@ -963,6 +963,8 @@ class Node:
         self.translation = translation
         self.weights = weights
 
+        self.index = None
+
     @staticmethod
     def from_dict(obj):
         assert isinstance(obj, dict)
