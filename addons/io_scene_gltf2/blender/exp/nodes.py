@@ -343,18 +343,23 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_data_owner = blender_object.evaluated_get(depsgraph)
                 blender_data = blender_data_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
-                # Seems now (from 4.2) the custom properties are Statically Typed
-                # so no need to copy them in that case, because overwriting them will crash
-                if len(blender_data.keys()) == 0:
-                    # Copy custom properties
-                    for prop in [p for p in blender_object.data.keys() if (
-                            (p not in BLACK_LIST) or p.startswith("gltf"))]:
+                # Copy non-blacklisted custom properties from original to evaluated mesh.
+                # From 4.2 some properties are Statically Typed and overwriting them
+                # would crash, so we use try/except to skip those gracefully.
+                for prop in [p for p in blender_object.data.keys() if (
+                        (p not in BLACK_LIST) or p.startswith("gltf"))]:
+                    try:
                         blender_data[prop] = blender_object.data[prop]
-                else:
-                    # But we need to remove some properties that are not needed
-                    for prop in [p for p in blender_object.data.keys() if (
-                            p in BLACK_LIST and not p.startswith("gltf"))]:
+                    except Exception:
+                        pass
+                # Remove blacklisted properties that may have been carried over
+                # by the modifier evaluation pipeline
+                for prop in [p for p in blender_data.keys() if (
+                        p in BLACK_LIST and not p.startswith("gltf"))]:
+                    try:
                         del blender_data[prop]
+                    except Exception:
+                        pass
                 # Store the fact that this evaluated data has been created by the
                 # exporter, and is not a GN instance data
                 blender_data['gltf2_mesh_applied'] = True
