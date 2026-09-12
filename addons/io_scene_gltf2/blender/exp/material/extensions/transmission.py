@@ -65,6 +65,7 @@ def export_transmission(bmat, export_settings):
             transmission_socket,
             transmission_slots,
             export_settings,
+            kind='DATA',
         )
         if has_transmission_texture:
             transmission_extension['transmissionTexture'] = combined_texture
