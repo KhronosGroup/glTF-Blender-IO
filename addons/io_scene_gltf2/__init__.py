@@ -407,6 +407,20 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='WEBP'
     )
 
+    export_use_ktx_compression: BoolProperty(
+        name='Zstandard Compression',
+        description='Enable Zstandard compression for (UASTC) non-color KTX2 textures',
+        default=False
+    )
+
+    export_ktx_zstd_level: IntProperty(
+        name='Zstandard Compression Level',
+        description='Set the Zstandard compression level for (UASTC) non-color KTX2 textures (1 is fastest/lowest ratio, 22 is slowest/highest ratio)',
+        default=1,
+        min=1,
+        max=22
+    )
+
     export_texture_dir: StringProperty(
         name='Textures',
         description='Folder to place texture files in. Relative to the .gltf file',
@@ -1190,6 +1204,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_add_compressed_images'] = self.export_image_add_compressed_images
         export_settings['gltf_compressed_images_fallback'] = self.export_compressed_images_fallback
         export_settings['gltf_compressed_images_type'] = self.export_compressed_images_type
+        export_settings['gltf_use_zstd'] = self.export_use_ktx_compression
+        export_settings['gltf_ktx_zstd_level'] = self.export_ktx_zstd_level
         export_settings['gltf_image_quality'] = self.export_image_quality
         export_settings['gltf_copyright'] = self.export_copyright
         export_settings['gltf_texcoords'] = self.export_texcoords
@@ -1619,6 +1635,10 @@ def export_panel_data_material(layout, operator):
         col = body.column()
         col.active = operator.export_image_add_compressed_images
         col.prop(operator, "export_compressed_images_type")
+        if operator.export_compressed_images_type == "KTX2":
+            col.prop(operator, "export_use_ktx_compression")
+            if operator.export_use_ktx_compression:
+                col.prop(operator, "export_ktx_zstd_level")
         col = body.column()
         col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
             'PLACEHOLDER', 'NONE', 'VIEWPORT']

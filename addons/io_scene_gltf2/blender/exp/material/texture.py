@@ -30,6 +30,7 @@ from . import image
 def gather_texture(
         blender_shader_sockets: typing.Tuple[bpy.types.NodeSocket],
         use_tile: bool,
+        is_data: bool,
         export_settings):
     """
     Gather texture sampling information and image channels from a blender shader texture attached to a shader socket.
@@ -43,7 +44,7 @@ def gather_texture(
         return None, None, None
 
     source, webp_image, ktx2_image, image_data, factor, udim_image = __gather_source(
-        blender_shader_sockets, use_tile, export_settings)
+        blender_shader_sockets, use_tile, is_data, export_settings)
 
     exts, remove_source = __gather_extensions(blender_shader_sockets, source,
                                               webp_image, ktx2_image, image_data, export_settings)
@@ -320,8 +321,9 @@ def __gather_sampler(blender_shader_sockets, export_settings):
         export_settings)
 
 
-def __gather_source(blender_shader_sockets, use_tile, export_settings):
-    source, image_data, factor, udim_image = image.gather_image(blender_shader_sockets, use_tile, export_settings)
+def __gather_source(blender_shader_sockets, use_tile, is_data, export_settings):
+    source, image_data, factor, udim_image = image.gather_image(
+        blender_shader_sockets, use_tile, is_data, export_settings)
 
     if export_settings['gltf_keep_original_textures'] is False \
             and export_settings['gltf_image_format'] != "KTX2" \

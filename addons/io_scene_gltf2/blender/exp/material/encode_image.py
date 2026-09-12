@@ -123,8 +123,14 @@ class ExportImage:
         self.original = original  # In case of keeping original texture images
         self.numpy_calc = None
 
+        # Used for KTX export
+        self.is_data = False
+
     def set_calc(self, numpy_calc):
         self.numpy_calc = numpy_calc  # In case of numpy calculation (no direct channel mapping)
+
+    def set_is_data(self, is_data: bool):
+        self.is_data = is_data
 
     @staticmethod
     def from_blender_image(image: bpy.types.Image):
@@ -278,9 +284,9 @@ class ExportImage:
                     export_settings['exported_images'][fill.image.name] = 2  # 2 = partially used
 
         if not images:
-            # No ImageFills; use a 1x1 white pixel
-            pixels = np.array([1.0, 1.0, 1.0, 1.0], np.float32)
-            return self.__encode_from_numpy_array(pixels, (1, 1), export_settings)
+            # No ImageFills; use a 4x4 white pixel
+            pixels = np.array([1.0, 1.0, 1.0, 1.0] * 16, np.float32)
+            return self.__encode_from_numpy_array(pixels, (4, 4), export_settings)
 
         # We need to open the original UDIM image tile to get size & pixel data
         original_image_sizes = []
@@ -343,9 +349,9 @@ class ExportImage:
                     export_settings['exported_images'][fill.image.name] = 2  # 2 = partially used
 
         if not images:
-            # No ImageFills; use a 1x1 white pixel
-            pixels = np.array([1.0, 1.0, 1.0, 1.0], np.float32)
-            return self.__encode_from_numpy_array(pixels, (1, 1), export_settings)
+            # No ImageFills; use a 4x4 white pixel
+            pixels = np.array([1.0, 1.0, 1.0, 1.0] * 16, np.float32)
+            return self.__encode_from_numpy_array(pixels, (4, 4), export_settings)
 
         width = max(image.size[0] for image in images)
         height = max(image.size[1] for image in images)
@@ -391,7 +397,7 @@ class ExportImage:
 
             tmp_image.pixels.foreach_set(pixels)
 
-            return _encode_temp_image(tmp_image, self.file_format, export_settings)
+            return _encode_temp_image(tmp_image, self.file_format, self.is_data, export_settings)
 
     def __encode_from_image(self, image: bpy.types.Image, export_settings) -> bytes:
         # See if there is an existing file we can use.
@@ -425,7 +431,7 @@ class ExportImage:
         with TmpImageGuard() as guard:
             make_temp_image_copy(guard, src_image=image)
             tmp_image = guard.image
-            return _encode_temp_image(tmp_image, self.file_format, export_settings)
+            return _encode_temp_image(tmp_image, self.file_format, self.is_data, export_settings)
 
     def __encode_from_image_tile(self, udim_image, tile, export_settings):
         data = None
@@ -455,7 +461,7 @@ class ExportImage:
         return b''
 
 
-def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_settings) -> bytes:
+def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, is_data: bool, export_settings) -> bytes:
 
     if file_format != "KTX2":
 
@@ -481,6 +487,12 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
     else:
         with tempfile.TemporaryDirectory() as tmpdirname:
             tmpfilename = tmpdirname + '/img'
+
+            quality = export_settings['gltf_image_quality']
+            compress_level = 0
+            if export_settings['gltf_use_zstd']:
+                compress_level = export_settings['gltf_ktx_zstd_level']
+
             KtxEncoder.encode_file(
                 export_settings,
                 tmpfilename,
@@ -488,7 +500,10 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, export_sett
                 tmp_image.size[0],
                 tmp_image.size[1],
                 4,
-                quality=80)
+                quality=quality,
+                is_data=is_data,
+                use_uastc=None,  # Keep default behavior based on is_data
+                compress=compress_level)
 
             with open(tmpfilename, "rb") as f:
                 return f.read()
