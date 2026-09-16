@@ -404,9 +404,27 @@ class VExportTree:
         if is_collection is False and (blender_object.instance_type ==
                                        'COLLECTION' and blender_object.instance_collection):
             if self.export_settings['gltf_hierarchy_full_collections'] is False:
+
+                # Even if we are not managing Collection hierarchy,
+                # We are going to keep the tree here (in instance collection), because we want to keep
+                # renderability/visibility that can come from collections
+
                 for dupli_object in _sort_by_name(blender_object.instance_collection.all_objects):
-                    if dupli_object.parent is not None:
+                    if dupli_object.parent is not None and len(dupli_object.parent.users_collection) > 0 \
+                            and len(dupli_object.users_collection) > 0 \
+                            and dupli_object.users_collection[0].name == dupli_object.parent.users_collection[0].name:
+                        # If the objet has a parent inside the collection
+                        # (this case will be managed by classic parenting)
                         continue
+                    elif dupli_object.parent is None and len(dupli_object.users_collection) > 0 \
+                            and dupli_object.users_collection[0].name != blender_object.instance_collection.name:
+                        # If the object has no parent but is not part of the instance collection
+                        # (because the object is inside a sub-collection for example)
+                        continue
+
+                    # So we have here an object that either has a parent outside the collection
+                    # or has no parent and belongs to the instance collection
+
                     self.recursive_node_traverse(
                         dupli_object,
                         None,
@@ -417,6 +435,7 @@ class VExportTree:
                         is_children_in_collection=True)
 
                 # Some objects are parented to instance collection
+                # (classic parenting)
                 for child in _sort_by_name(blender_children[blender_object]):
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
                                                  new_delta or delta, blender_children)
@@ -429,7 +448,8 @@ class VExportTree:
                         node.matrix_world,
                         new_delta or delta,
                         blender_children,
-                        is_collection=True)
+                        is_collection=True,
+                        is_children_in_collection=True)
             else:
                 # Manage children objects
                 # Do not loop on children of the instance collection,
@@ -465,7 +485,7 @@ class VExportTree:
                         blender_children,
                         is_collection=True)
 
-        if is_collection is True:  # Only for gltf_hierarchy_full_collections == True
+        if is_collection is True:  # Only for gltf_hierarchy_full_collections == True or hierarchy of instanced collections
             # Manage children objects
             collection_objects = set(blender_object.objects)
             for child in _sort_by_name(collection_objects):
