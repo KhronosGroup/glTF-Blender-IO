@@ -709,11 +709,9 @@ class VExportTree:
         # are defined at collection level, and we need to use these values
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
-        if parent_keep_tag is None:
+        if parent_keep_tag is None or parent_keep_tag is True:
             self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(
                 uuid) and self.node_filter_inheritable_is_kept(uuid)
-        elif parent_keep_tag is True:
-            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(uuid)
         elif parent_keep_tag is False:
             self.nodes[uuid].keep_tag = False
         else:
@@ -728,6 +726,13 @@ class VExportTree:
                     self.recursive_filter_tag(child, parent_keep_tag)
             else:
                 self.recursive_filter_tag(child, parent_keep_tag)
+
+        # When coming from collection instance, we can have some collection here
+        # There were kept to be able to manage the visibility/renderability
+        # But the collection itself can be removed
+        # (We managed it after recursion on children, so the properties are correctly propagated)
+        if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+            self.nodes[uuid].keep_tag = False
 
     def recursive_filter(self, uuid, parent_kept_uuid):
         children = self.nodes[uuid].children.copy()
