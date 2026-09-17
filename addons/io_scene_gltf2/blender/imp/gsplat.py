@@ -53,30 +53,3 @@ def convert_sh_d3_batch(c0, c1, c2, c3, c4, c5, c6):
     c5[:] = (SQRT10 / 4) * c2 - (SQRT6 / 4) * c0
     c6[:] = -(SQRT15 / 4) * c4 + 0.25 * c6
     return c0, c1, c2, c3, c4, c5, c6
-
-
-def detect_sh_degree_from_gltf(prim, gltf):
-    """Detect the SH degree from the glTF primitive."""
-
-    degree = 3
-    if any([attr for attr in prim.attributes.keys() if attr.startswith("KHR_gaussian_splatting:SH_DEGREE_3")]):
-        return degree
-    else:
-        degree = 2
-
-    if any([attr for attr in prim.attributes.keys() if attr.startswith("KHR_gaussian_splatting:SH_DEGREE_2")]):
-        return degree
-    else:
-        degree = 1
-
-    if any([attr for attr in prim.attributes.keys() if attr.startswith("KHR_gaussian_splatting:SH_DEGREE_1")]):
-        return degree
-    else:
-        degree = 0
-
-    if any([attr for attr in prim.attributes.keys() if attr.startswith("KHR_gaussian_splatting:SH_DEGREE_0")]):
-        return degree
-    else:
-        gltf.log.error(
-            "Could not detect SH degree for the current primitive. Defaulting to degree 0.")
-    return degree
