@@ -84,6 +84,11 @@ def create_pointcloud(gltf, mesh_idx):
     # no need to parent the pointcloud to an object, as there is no skinning or shapekeys for point clouds
     do_primitives_pointcloud(gltf, mesh_idx, pointcloud)
     set_extras(pointcloud, gltf.data.meshes[mesh_idx].extras)
+
+    # If the Point Cloud is Gaussian Splats, set the Blender property to display it correctly
+    if any(prim.extensions and "KHR_gaussian_splatting" in prim.extensions for prim in pypc.primitives):
+        pointcloud.type = 'GAUSSIAN_SPLAT'
+
     if pypc.extras:
         pypc.extras['blender_object_data'] = pointcloud  # Used in case of for KHR_animation_pointer
 
