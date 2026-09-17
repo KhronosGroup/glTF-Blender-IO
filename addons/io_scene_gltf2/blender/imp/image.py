@@ -60,7 +60,7 @@ def create_from_file(gltf, img_idx, use_ktx_loader):
 
     path = join(dirname(gltf.filename), uri_to_path(img.uri))
     path = os.path.abspath(path)
-    if bpy.data.is_saved and bpy.context.preferences.filepaths.use_relative_paths:
+    if bpy.data.is_saved and bpy.context.preferences.filepaths.use_relative_paths and use_ktx_loader is False:
         try:
             path = bpy.path.relpath(path)
         except Exception as _e:
@@ -69,6 +69,7 @@ def create_from_file(gltf, img_idx, use_ktx_loader):
 
     img_name = img.name or basename(path)
 
+    # TODO
     if 1 == 1:
 
         if not use_ktx_loader:
