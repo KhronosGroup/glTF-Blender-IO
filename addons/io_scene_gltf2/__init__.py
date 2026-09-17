@@ -368,8 +368,6 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
                 'Be aware of a possible loss in quality'),
                ('WEBP', 'WebP Format',
                 'Save images as WebPs as main image (no fallback)'),
-               ('KTX2', 'KTX2 Format',
-               'Save images as KTX2 with BasisU supercompression'),
                ('NONE', 'None',
                 'Don\'t export images'),
                ),
