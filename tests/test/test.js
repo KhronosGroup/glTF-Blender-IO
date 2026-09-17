@@ -4386,7 +4386,8 @@ describe('Exporter', function () {
                     assert.ok("sheenColorTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']);
                     assert.ok(!("sheenRoughnessTexture" in mat_SheenTextureFactor.extensions['KHR_materials_sheen']));
 
-                    assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']);
+                    // Because of factor 0.0 => No texture exported
+                    assert.ok(!("sheenRoughnessTexture" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']));
                     assert.ok(!("sheenRoughnessFactor" in mat_SheenSigmaTexture.extensions['KHR_materials_sheen']));
 
                     assert.ok("sheenRoughnessTexture" in mat_SheenSigmaTextureFactor.extensions['KHR_materials_sheen']);
