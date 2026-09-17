@@ -106,6 +106,9 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
     attribute_data_type = {}
     total_num_points = 0
 
+    is_gaussian_splatting = any(attr.startswith("KHR_gaussian_splatting:")
+                                for attr in pypc.primitives[0].attributes)
+
     for prim_idx, prim in enumerate(pypc.primitives):
         if 'POSITION' not in prim.attributes:
             continue
@@ -150,7 +153,9 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                     gltf.data.accessors[prim.attributes[attr]].type
                 )
 
-        if 'glTF_primitive_index' not in attributes:
+        # When importing GS, we need to ignore materials,
+        # So no need to store the primitive index for Gaussian Splatting
+        if not is_gaussian_splatting and 'glTF_primitive_index' not in attributes:
             attribute_type['glTF_primitive_index'] = 'SCALAR'
             attributes['glTF_primitive_index'] = np.zeros(
                 len(point_locs) - len(vs[unique_indices]), dtype=np.uint32
@@ -171,9 +176,10 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 )
                 attributes[attr] = np.concatenate((attributes[attr], attr_data))
 
-        attributes['glTF_primitive_index'] = np.concatenate(
-            (attributes['glTF_primitive_index'], np.full(
-                len(unique_indices), prim_idx, dtype=np.uint32)))
+        if not is_gaussian_splatting:
+            attributes['glTF_primitive_index'] = np.concatenate(
+                (attributes['glTF_primitive_index'], np.full(
+                    len(unique_indices), prim_idx, dtype=np.uint32)))
 
         prim.num_points = len(unique_indices)
         total_num_points += prim.num_points
@@ -274,8 +280,6 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 blender_attribute.data.foreach_set('vector', attributes[attr].flatten())
 
     # Manage materials
-    is_gaussian_splatting = any(attr.startswith("KHR_gaussian_splatting:")
-                                for attr in pypc.primitives[0].attributes)
     if not is_gaussian_splatting:
         manage_materials(gltf, pypc, pointcloud, num_points, on='POINT')
 
