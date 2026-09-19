@@ -532,7 +532,7 @@ class VExportTree:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             children_found = False
             for (
-                dupl,
+                dupli,
                 mat) in [
                 (dup.object.original,
                  dup.matrix_world.copy()) for dup in depsgraph.object_instances if
@@ -544,7 +544,7 @@ class VExportTree:
             ]:
                 children_found = True
                 self.recursive_node_traverse(
-                    dupl,
+                    dupli,
                     None,
                     node.uuid,
                     parent_coll_matrix_world,
