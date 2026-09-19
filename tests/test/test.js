@@ -3565,6 +3565,21 @@ describe('Exporter', function () {
 
             });
 
+            it('exports metaball as non-empty mesh', function () {
+                let gltfPath = path.resolve(outDirPath, '40_metaball.gltf');
+                var asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // Soft asserts: tessellation of META varies; only require non-empty geometry.
+                assert.ok(asset.meshes && asset.meshes.length >= 1, 'expected at least one mesh');
+                const mesh = asset.meshes[0];
+                assert.ok(mesh.primitives && mesh.primitives.length >= 1, 'expected at least one primitive');
+                const primitive = mesh.primitives[0];
+                assert.ok(primitive.attributes && primitive.attributes.POSITION !== undefined,
+                    'expected POSITION attribute');
+                const posAccessor = asset.accessors[primitive.attributes.POSITION];
+                assert.ok(posAccessor.count > 0, 'expected POSITION accessor count > 0');
+            });
+
             it('export iridecence', function () {
                 let gltfPath = path.resolve(outDirPath, '39_iridescence.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath));
