@@ -38,21 +38,30 @@ def save(context, export_settings):
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(0)
 
-    __notify_start(context, export_settings)
-    start_time = time.time()
-    pre_export_callbacks = export_settings["pre_export_callbacks"]
-    for callback in pre_export_callbacks:
-        callback(export_settings)
+    wm = bpy.context.window_manager
+    wm.progress_begin(0, 100)
+    try:
+        __notify_start(context, export_settings)
+        start_time = time.time()
+        pre_export_callbacks = export_settings["pre_export_callbacks"]
+        for callback in pre_export_callbacks:
+            callback(export_settings)
+        wm.progress_update(5)
 
-    json, buffer = __export(export_settings)
+        json, buffer = __export(export_settings, wm)
+        wm.progress_update(80)
 
-    post_export_callbacks = export_settings["post_export_callbacks"]
-    for callback in post_export_callbacks:
-        callback(export_settings)
-    __write_file(json, buffer, export_settings)
+        post_export_callbacks = export_settings["post_export_callbacks"]
+        for callback in post_export_callbacks:
+            callback(export_settings)
+        __write_file(json, buffer, export_settings)
+        wm.progress_update(95)
 
-    end_time = time.time()
-    __notify_end(context, end_time - start_time, export_settings)
+        end_time = time.time()
+        __notify_end(context, end_time - start_time, export_settings)
+        wm.progress_update(100)
+    finally:
+        wm.progress_end()
 
     if not export_settings['gltf_current_frame']:
         bpy.context.scene.frame_set(int(original_frame))
@@ -60,9 +69,10 @@ def save(context, export_settings):
     return {'FINISHED'}
 
 
-def __export(export_settings):
+def __export(export_settings, wm):
     exporter = GlTF2Exporter(export_settings)
     __gather_gltf(exporter, export_settings)
+    wm.progress_update(60)
 
     # If the directory does not exist, create it
     if not os.path.isdir(export_settings['gltf_filedirectory']):
@@ -73,6 +83,7 @@ def __export(export_settings):
 
     buffer = __create_buffer(exporter, export_settings)
     exporter.finalize_images()
+    wm.progress_update(70)
 
     export_user_extensions('gather_gltf_extensions_hook', export_settings, exporter.glTF)
     exporter.traverse_extensions()
@@ -106,6 +117,7 @@ def __export(export_settings):
     # Or extensionsUsed / extensionsRequired that are empty
     # (because we removed some extensions)
     json = __fix_json(json, export_settings, passthrough_extensions)
+    wm.progress_update(78)
 
     # Convert additional data if needed
     if export_settings['gltf_unused_textures'] is True:
