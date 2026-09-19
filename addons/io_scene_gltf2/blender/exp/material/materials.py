@@ -311,8 +311,9 @@ def gather_material(mat, export_settings):
 
     :param mat: the blender material used in the glTF primitive
     :param export_settings:
-    :return: a glTF material
+    :return: a glTF material and some info about UV maps, vertex colors, and UDIMs
     """
+    # Also: Make sure to return bmat, so temporary inline material node tree will continue to exist
 
     bmat = BlenderMaterialIndentifier(mat, export_settings)
 
