@@ -41,7 +41,7 @@ This project contains all features from the [previous exporter](https://github.c
 The shared codebase is organized into common (Blender-independent) and Blender-specific packages:
 
 ![Packages](docs/packages.png)
-Package organisation
+Package organization
 
 This structure allows common code to be reused by third-party Python packages working with the glTF 2.0 format.
 
