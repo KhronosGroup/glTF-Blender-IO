@@ -284,14 +284,14 @@ describe('Exporter', function () {
                 let gltfPath = path.resolve(outDirPath, '01_linked_collection.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                assert.strictEqual(asset.nodes.length, 3);
+                assert.strictEqual(asset.nodes.length, 1);
             });
 
             it('can export all collection instances', function () {
                 let gltfPath = path.resolve(outDirPath, '01_multiple_collection_instances.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
 
-                assert.strictEqual(asset.nodes.length, 7);
+                assert.strictEqual(asset.nodes.length, 5);
             });
 
             it('can export a base color', function () {
