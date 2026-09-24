@@ -213,7 +213,7 @@ def __gather_name(export_image, use_tile, export_settings):
             # img.name is a datablock name, not a filename, so only strip a
             # genuine image extension. Otherwise names like "Image.001" lose
             # their suffix and collide with "Image" (#2691).
-            if extension.lower() not in ['.png', '.jpg', '.jpeg', '.webp']:
+            if extension.lower() not in ['.png', '.jpg', '.jpeg', '.webp', '.ktx2']:
                 name = img.name
             names.append(name)
         name = '-'.join(names)
