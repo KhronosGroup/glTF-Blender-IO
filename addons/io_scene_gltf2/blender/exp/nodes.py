@@ -286,7 +286,7 @@ def __gather_matrix(blender_object, export_settings):
 def __gather_mesh(vnode, blender_object, export_settings):
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
-    if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
+    if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT', 'META']:
         return __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings)
     if blender_object is None and type(vnode.data).__name__ not in ["Mesh", "PointCloud"]:
         return None  # TODO
@@ -430,12 +430,16 @@ def __keep_material_info(materials, originals, export_settings):
 
 
 def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):
-    """Handles curves, surfaces, text, etc."""
+    """Handles curves, surfaces, text, metaballs, etc."""
     needs_to_mesh_clear = False
     try:
         # Convert to a mesh
         try:
-            if export_settings['gltf_apply']:
+            # Metaballs only have geometry when evaluated; Object.to_mesh() without
+            # evaluation returns an empty mesh. Always evaluate META regardless of
+            # the "Apply Modifiers" export setting.
+            use_evaluated = export_settings['gltf_apply'] or blender_object.type == 'META'
+            if use_evaluated:
                 depsgraph = bpy.context.evaluated_depsgraph_get()
                 blender_data_owner = blender_object.evaluated_get(depsgraph)
                 blender_mesh = blender_data_owner.to_mesh(preserve_all_data_layers=True, depsgraph=depsgraph)
