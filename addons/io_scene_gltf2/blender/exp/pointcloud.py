@@ -110,6 +110,11 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
 
 def __get_custom_attributes(blender_pointcloud, export_settings):
     custom_attributes = {}
+
+    # Be sure that user choose to export custom attributes
+    if not export_settings['gltf_attributes']:
+        return custom_attributes
+
     for attribute in blender_pointcloud.attributes:
         if attribute.domain != 'POINT':
             continue
