@@ -211,7 +211,7 @@ def do_primitives_pointcloud(gltf, mesh_idx, pointcloud):
                 specials[sh_attr] = 'radiance:base'
             else:
                 specials[sh_attr] = f'radiance:sh_{index}'
-            index += 1
+                index += 1
             if coeff == degree * 2:
                 degree += 1
                 coeff = 0
