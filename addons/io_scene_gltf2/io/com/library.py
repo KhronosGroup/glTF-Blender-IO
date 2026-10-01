@@ -40,7 +40,10 @@ def dll_path(lib_name, lib_display_name) -> Path | None:
         # the directory names match `scripts/site/sitecustomize.py`.
         base = os.path.dirname(local)
         if sys.platform != 'win32':
-            base = os.path.join(base, 'lib')
+            if lib_display_name == "KTX":  # TODO to be fixed after ktx library is internal
+                base = os.path.join(base, '../lib')
+            else:
+                base = os.path.join(base, 'lib')
         elif os.path.isdir(base_shared := os.path.join(base, 'blender.shared')):
             # Absent when built as a Python module, which keeps its libraries in the root directory.
             base = base_shared
