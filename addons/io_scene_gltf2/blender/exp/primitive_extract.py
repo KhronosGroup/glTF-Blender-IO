@@ -617,7 +617,7 @@ class PrimitiveCreator:
 
             self.material_idxs_using_vc[int(material_idx)] = []
 
-            base_material, material_info = get_base_material(material_idx, self.materials, self.export_settings)
+            _, base_material, material_info = get_base_material(material_idx, self.materials, self.export_settings)
 
             # UVMaps
             self.uvmap_attribute_list = list(
@@ -796,7 +796,7 @@ class PrimitiveCreator:
                     if indices.shape[0] == 0:
                         continue
 
-                    # Reset UVMap to 0-1 : reset to Blener UVMAP => slide to 0-1 => go to glTF UVMap
+                    # Reset UVMap to 0-1 : reset to Blender UVMAP => slide to 0-1 => go to glTF UVMap
                     self.dots[uvmap_name + '1'][indices] -= 1
                     self.dots[uvmap_name + '1'][indices] *= -1
                     self.dots[uvmap_name + '0'][indices] -= u
