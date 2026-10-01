@@ -43,7 +43,7 @@ from .search_node_tree import \
     previous_socket, next_node
 
 
-class BlenderMaterialIndentifier:
+class BlenderMaterialIdentifier:
     def __init__(self, blender_material, export_settings):
         self.id = id(blender_material)
         self.used = None
@@ -209,7 +209,8 @@ class BlenderMaterialIndentifier:
                 self.__get_all_nodes_recursive(node.node_tree, new_group_path)
 
             # Check if we have the glTF material node
-            if self.gltf_material_node == -1 and node.node_tree.name.lower() in gltf_node_group_names:
+            if self.gltf_material_node == -1 \
+                    and any(node.node_tree.name.lower().startswith(name) for name in gltf_node_group_names):
                 self.gltf_material_node = node
                 self.gltf_material_node_group_path = group_path.copy()
 
@@ -315,7 +316,7 @@ def gather_material(mat, export_settings):
     """
     # Also: Make sure to return bmat, so temporary inline material node tree will continue to exist
 
-    bmat = BlenderMaterialIndentifier(mat, export_settings)
+    bmat = BlenderMaterialIdentifier(mat, export_settings)
 
     if not __filter_material(bmat, export_settings):
         return bmat, None, {"uv_info": {}, "vc_info": {'color': None, 'alpha': None,
@@ -332,7 +333,7 @@ def gather_material(mat, export_settings):
 
     mat_unlit, uvmap_info, vc_info, udim_info = __export_unlit(bmat, export_settings)
     if mat_unlit is not None:
-        # Make sure to expose bmat.material (the original material), so users can retrieve additional proporties
+        # Make sure to expose bmat.material (the original material), so users can retrieve additional properties
         # (These properties are not available on the inline material)
         export_user_extensions('gather_material_hook', export_settings, mat_unlit, bmat.material)
         return bmat, mat_unlit, {"uv_info": uvmap_info, "vc_info": vc_info, "udim_info": udim_info}
@@ -423,7 +424,7 @@ def gather_material(mat, export_settings):
     if material.emissive_factor is not None and bmat.get_socket("Base Color").socket is None:
         material.pbr_metallic_roughness = gltf2_pbr_metallic_roughness.get_default_pbr_for_emissive_node()
 
-    # Make sure to expose bmat.material (the original material), so users can retrieve additional proporties
+    # Make sure to expose bmat.material (the original material), so users can retrieve additional properties
     # (These properties are not available on the inline material)
     export_user_extensions('gather_material_hook', export_settings, material, bmat.material)
 
@@ -640,7 +641,7 @@ def __gather_orm_texture(bmat, export_settings):
     hasRough = roughness_socket.socket is not None and has_image_node_from_socket(roughness_socket, export_settings)
 
     # Warning: for default socket, do not use NodeSocket object, because it will break cache
-    # Using directlty the Blender socket object
+    # Using directly the Blender socket object
     if not hasMetal and not hasRough:
         metallic_roughness = bmat.get_socket_from_gltf_material_node("MetallicRoughness")
         if metallic_roughness.socket is None or not has_image_node_from_socket(metallic_roughness, export_settings):
@@ -797,7 +798,7 @@ def __export_unlit(bmat, export_settings):
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
         export_settings['KHR_animation_pointer']['extras']['materials'][bmat.id]['glTF_extras'] = material
 
-    # Make sure to expose bmat.material (the original material), so users can retrieve additional proporties
+    # Make sure to expose bmat.material (the original material), so users can retrieve additional properties
     # (These properties are not available on the inline material)
     export_user_extensions('gather_material_unlit_hook', export_settings, material, bmat.material)
 
@@ -933,7 +934,7 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
                 material.extensions["KHR_materials_sheen"].extension['sheenRoughnessTexture'].tex_coord = ind
         elif tex == "thicknessTexture":
             if material.extensions["KHR_materials_volume"].extension['thicknessTexture']:
-                material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_ccord = ind
+                material.extensions["KHR_materials_volume"].extension['thicknessTexture'].tex_coord = ind
         elif tex == "anisotropyTexture":
             if material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture']:
                 material.extensions["KHR_materials_anisotropy"].extension['anisotropyTexture'].tex_coord = ind
