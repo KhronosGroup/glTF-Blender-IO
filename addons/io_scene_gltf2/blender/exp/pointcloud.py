@@ -65,34 +65,6 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
         'component_type': gltf2_blender_conversion.get_component_type('FLOAT')
     }
 
-    # Detect Vertex Color usage
-    loop_data = LoopData(
-        vc_infos_index=0,
-        materials_use_vc=None,
-        warning_already_displayed=False,
-        warning_already_displayed_vc_nodetree=False
-    )
-    _, base_material, material_info = get_base_material(0, materials, export_settings)
-
-    vc_infos = PrimitiveCreator.manage_VC(
-        base_material,
-        0,
-        material_info,
-        blender_pointcloud,
-        loop_data,
-        export_settings,
-        for_pointcloud=True
-    )
-
-    # Add COLOR_0 attribute if vertex colors are used
-    if vc_infos:
-        custom_attributes['COLOR_0'] = {
-            'data': __get_color_attribute_data(blender_pointcloud.attributes[vc_infos[0]['color']], blender_pointcloud),
-            'data_type': gltf2_blender_conversion.get_data_type('FLOAT_COLOR'),
-            'component_type': gltf2_blender_conversion.get_component_type('FLOAT_COLOR')
-        }
-
-    # And now, create the primitive infos
     primitives.append({
         'attributes': custom_attributes,
         'mode': 0,  # POINTS
