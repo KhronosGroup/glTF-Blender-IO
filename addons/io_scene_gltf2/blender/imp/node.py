@@ -106,6 +106,8 @@ class BlenderNode():
         if isinstance(vnode_id, int):
             pynode = gltf.data.nodes[vnode_id]
             set_extras(obj, pynode.extras)
+            if pynode.extras:
+                pynode.extras['blender_object_data'] = obj  # Used in case of for KHR_animation_pointer
 
         # Set transform
         trans, rot, scale = vnode.trs()
@@ -243,7 +245,6 @@ class BlenderNode():
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
                 set_extras(editbone, pynode.extras)
-
         # Set all bone parents
         for id in bone_ids:
             vnode = gltf.vnodes[id]
@@ -272,6 +273,9 @@ class BlenderNode():
             if isinstance(id, int):
                 pynode = gltf.data.nodes[id]
                 set_extras(pose_bone, pynode.extras)
+                if pynode.extras:
+                    pynode.extras['blender_object_data'] = blender_arma  # Used in case of for KHR_animation_pointer
+                    pynode.extras['blender_bone_name'] = pose_bone.name  # Used in case of for KHR_animation_pointer
 
             if gltf.import_settings['bone_heuristic'] == "BLENDER" and gltf.import_settings['disable_bone_shape'] is False:
                 pose_bone.custom_shape = bpy.data.objects[gltf.bone_shape]
@@ -311,7 +315,12 @@ class BlenderNode():
             if all([prim.mode == 0 for prim in pymesh.primitives]):  # All POINTS
                 is_point_cloud = True
         else:
-            is_point_cloud = False
+            # If all primitives are Gaussian Splatting, we will create a Point Cloud object
+            if all([prim.extensions is not None and 'KHR_gaussian_splatting' in prim.extensions.keys()
+                   for prim in pymesh.primitives]):
+                is_point_cloud = True
+            else:
+                is_point_cloud = False
 
         # Key to cache the Blender mesh by.
         # Same cache key = instances of the same Blender mesh.

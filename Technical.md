@@ -14,8 +14,8 @@ Here are the main step of the importer:
 If you want to add a new material extension, here are some steps you need to follow:
 
 - Add the extension in list of managed extensions, in *extensions_managed* list of *glTFImporter* class
-- If your extension need a node that is not Principled Shader node, add it, and correspondance links, in *make_output_nodes* function, in *pbrMetallicRoughness.py* file
-- Add your newly created nodes for textures in *calc_locations* function, in order to have the nodes correcly displayed without overlapping
+- If your extension need a node that is not Principled Shader node, add it, and correspondence links, in *make_output_nodes* function, in *pbrMetallicRoughness.py* file
+- Add your newly created nodes for textures in *calc_locations* function, in order to have the nodes correctly displayed without overlapping
 - Add you new function at end of *pbr_metallic_roughness* function. Create this function in a new file, on *blender/imp/* directory
 
 

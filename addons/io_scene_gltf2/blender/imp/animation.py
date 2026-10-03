@@ -68,7 +68,7 @@ class BlenderAnimation():
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.occlusion_texture,
                                             mat_idx, 'MATERIAL_PBR', name=mat.name)
                 if mat.pbr_metallic_roughness is not None and len(mat.pbr_metallic_roughness.animations) != 0:
-                    # This can be a regulat PBR or unlit material
+                    # This can be a regular PBR or unlit material
                     is_unlit = mat.extensions is not None and "KHR_materials_unlit" in mat.extensions
                     BlenderPointerAnim.anim(gltf, anim_idx, mat.pbr_metallic_roughness, mat_idx,
                                             'MATERIAL_PBR', name=mat.name, is_unlit=is_unlit)
@@ -83,7 +83,7 @@ class BlenderAnimation():
 
                 for tex in [t for t in texs if t is not None]:
                     if tex.extensions is not None and "KHR_texture_transform" in tex.extensions:
-                        # This can be a regulat PBR or unlit material
+                        # This can be a regular PBR or unlit material
                         is_unlit = mat.extensions is not None and "KHR_materials_unlit" in mat.extensions
                         BlenderPointerAnim.anim(
                             gltf,
@@ -146,6 +146,67 @@ class BlenderAnimation():
                 ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)
+
+            # Extras Node
+            for node_idx, node in enumerate(gltf.data.nodes if gltf.data.nodes else []):
+                if node.extras is not None and "gltf_tmp_data_animations" in node.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        node.extras,
+                        node_idx,
+                        'EXTRAS',
+                        name=node.name,
+                        target_id_type='OBJECT')
+
+            # Extras Mesh
+            for mesh_idx, mesh in enumerate(gltf.data.meshes if gltf.data.meshes else []):
+                if mesh.extras is not None and "gltf_tmp_data_animations" in mesh.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        mesh.extras,
+                        mesh_idx,
+                        'EXTRAS',
+                        name=mesh.name,
+                        target_id_type='MESH')
+
+            # Extras Material
+            for mat_idx, mat in enumerate(gltf.data.materials if gltf.data.materials else []):
+                if mat.extras is not None and "gltf_tmp_data_animations" in mat.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        mat.extras,
+                        mat_idx,
+                        'EXTRAS',
+                        name=mat.name,
+                        target_id_type='MATERIAL')
+
+            # Extras Light
+            if gltf.data.extensions is not None and "KHR_lights_punctual" in gltf.data.extensions:
+                for light_idx, light in enumerate(gltf.data.extensions["KHR_lights_punctual"]["lights"]):
+                    if light.get('extras') is not None and "gltf_tmp_data_animations" in light['extras']:
+                        BlenderPointerAnim.anim(
+                            gltf,
+                            anim_idx,
+                            light['extras'],
+                            light_idx,
+                            'EXTRAS',
+                            name=light['name'] if 'name' in light else None,
+                            target_id_type='LIGHT')
+
+            # Extras Camera
+            for cam_idx, cam in enumerate(gltf.data.cameras if gltf.data.cameras else []):
+                if cam.extras is not None and "gltf_tmp_data_animations" in cam.extras:
+                    BlenderPointerAnim.anim(
+                        gltf,
+                        anim_idx,
+                        cam.extras,
+                        cam_idx,
+                        'EXTRAS',
+                        name=cam.name,
+                        target_id_type='CAMERA')
 
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name

@@ -73,7 +73,7 @@ gather_animation_object_sampled_channel_target_hook(self, blender_object, channe
 gather_attribute_keep(self, keep_attribute, export_settings)
 gather_attribute_change(self, attribute, data, is_normalized_byte_color, export_settings)
 gather_attributes_change(self, attributes, export_settings)
-gather_gltf_additional_textures_hook(self, json, additioan_json_textures, export_settings)
+gather_gltf_additional_textures_hook(self, json, additional_json_textures, export_settings)
 gather_node_mesh_hook(self, option, blender_object, export_settings)
 extra_animation_manage(self, extra_samplers, obj_uuid, blender_object, blender_action, gltf_channels, export_settings)
 animation_action_hook(self, gltf2_animation, blender_object, blender_action_data, export_settings)
