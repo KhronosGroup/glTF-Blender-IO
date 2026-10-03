@@ -100,6 +100,11 @@ class VExportNode:
         self.data = None
         self.materials = None
 
+        # Used to retrieve extras (custom properties), based on object id
+        # Used for animation pointer on mesh extras animation
+        self.mesh_id = None
+        self.blender_object_id = None
+
         self.is_instancer = False
 
     def add_child(self, uuid):
@@ -133,7 +138,7 @@ class VExportTree:
 
         self.export_settings = export_settings
 
-        self.tree_troncated = False
+        self.tree_truncated = False
 
         self.axis_basis_change = Matrix.Identity(4)
         if self.export_settings['gltf_yup']:
@@ -180,15 +185,27 @@ class VExportTree:
                     blender_children,
                     is_collection=True)
             else:
-                # Scene / classic export
-                self.recursive_node_traverse(
-                    blender_scene.collection,
-                    None,
-                    None,
-                    Matrix.Identity(4),
-                    False,
-                    blender_children,
-                    is_collection=True)
+                # If user limits export to active collection
+                if self.export_settings['gltf_active_collection']:
+                    active_collection = bpy.context.view_layer.active_layer_collection.collection
+                    self.recursive_node_traverse(
+                        active_collection,
+                        None,
+                        None,
+                        Matrix.Identity(4),
+                        False,
+                        blender_children,
+                        is_collection=True)
+                else:
+                    # Scene / classic export
+                    self.recursive_node_traverse(
+                        blender_scene.collection,
+                        None,
+                        None,
+                        Matrix.Identity(4),
+                        False,
+                        blender_children,
+                        is_collection=True)
 
     def recursive_node_traverse(
             self,
@@ -216,9 +233,10 @@ class VExportTree:
         if parent_uuid is not None:
             self.add_children(parent_uuid, node.uuid)
 
-            # 2 cases where we will need to store the fact that children are in collection or a real children
+            # 3 cases where we will need to store the fact that children are in collection or a real children
             #       1. GN instance
             #       2. Old Dupli vertices feature
+            #       3. Instance collection
             # For any other case, children are real children
             if (self.nodes[parent_uuid].blender_type == VExportNode.INST_COLLECTION or original_object is not None) or (self.nodes[parent_uuid].blender_type !=
                                                                                                                         VExportNode.COLLECTION and self.nodes[parent_uuid].blender_object is not None and self.nodes[parent_uuid].blender_object.is_instancer is True):
@@ -414,19 +432,28 @@ class VExportTree:
                         is_collection=True)
             else:
                 # Manage children objects
-                self.recursive_node_traverse(
-                    blender_object.instance_collection,
-                    None,
-                    node.uuid,
-                    node.matrix_world,
-                    new_delta or delta,
-                    blender_children,
-                    is_collection=True,
-                    is_children_in_collection=True)
+                # Do not loop on children of the instance collection,
+                # But on the children of the collection itself
+
+                ref_collection = blender_object.instance_collection
+                collection_objects = set(ref_collection.objects)
+                for child in _sort_by_name(collection_objects):
+                    # On Collection, .objects returns all objects & instance collection
+                    # Not only the direct children
+
+                    # Keep only object if it has no parent, or parent is not in the collection
+                    if child.parent is not None and len(child.parent.users_collection) > 0 \
+                            and len(child.users_collection) > 0 \
+                            and child.users_collection[0].name == child.parent.users_collection[0].name:
+                        continue
+
+                    self.recursive_node_traverse(child, None, node.uuid, node.matrix_world,
+                                                 new_delta or delta, blender_children, is_children_in_collection=True)
+
                 # Some objects are parented to instance collection
                 for child in _sort_by_name(blender_children[blender_object]):
                     self.recursive_node_traverse(child, None, node.uuid, parent_coll_matrix_world,
-                                                 new_delta or delta, blender_children, is_children_in_collection=True)
+                                                 new_delta or delta, blender_children)
                 # Manage children collections
                 for child in _sort_by_name(blender_object.instance_collection.children):
                     self.recursive_node_traverse(
@@ -505,7 +532,7 @@ class VExportTree:
             depsgraph = bpy.context.evaluated_depsgraph_get()
             children_found = False
             for (
-                dupl,
+                dupli,
                 mat) in [
                 (dup.object.original,
                  dup.matrix_world.copy()) for dup in depsgraph.object_instances if
@@ -517,7 +544,7 @@ class VExportTree:
             ]:
                 children_found = True
                 self.recursive_node_traverse(
-                    dupl,
+                    dupli,
                     None,
                     node.uuid,
                     parent_coll_matrix_world,
@@ -565,7 +592,7 @@ class VExportTree:
                     if not inst.is_instance:
                         continue
                     if type(inst.object.data).__name__ == "Mesh" and len(inst.object.data.vertices) == 0:
-                        continue  # This is nested instances, and this mesh has no vertices, so is an instancier for other instances
+                        continue  # This is nested instances, and this mesh has no vertices, so is an instancer for other instances
                     node.is_instancer = True
                     self.recursive_node_traverse(
                         None,
@@ -711,12 +738,12 @@ class VExportTree:
 
             # If parent_uuid is not parent_kept_uuid, we need to modify children list of parent_kept_uuid
             if parent_kept_uuid != self.nodes[uuid].parent_uuid and parent_kept_uuid is not None:
-                self.tree_troncated = True
+                self.tree_truncated = True
                 self.nodes[parent_kept_uuid].children.append(uuid)
 
             # If parent_kept_uuid is None, and parent_uuid was not, add to root list
             if self.nodes[uuid].parent_uuid is not None and parent_kept_uuid is None:
-                self.tree_troncated = True
+                self.tree_truncated = True
                 self.roots.append(uuid)
 
             # Modify parent uuid
@@ -995,7 +1022,7 @@ class VExportTree:
         return skins
 
     def variants_reset_to_original(self):
-        # Only if Variants are displayed and exported
+        # Only if variants are displayed and exported
         if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
             return
         objects = [self.nodes[o].blender_object for o in self.get_all_node_of_type(VExportNode.OBJECT) if self.nodes[o].blender_object.type == "MESH"
@@ -1028,7 +1055,7 @@ class VExportTree:
         # TODO: if we get real collection one day, we probably need to adapt this code
         for obj in self.get_all_objects():
             if self.nodes[obj].armature is not None and self.nodes[obj].parent_uuid == self.nodes[obj].armature:
-                continue  # Keep skined meshs as children of armature
+                continue  # Keep skined meshes as children of armature
             if self.nodes[obj].parent_uuid is not None:
                 self.nodes[self.nodes[obj].parent_uuid].children.remove(obj)
                 self.nodes[obj].parent_uuid = None

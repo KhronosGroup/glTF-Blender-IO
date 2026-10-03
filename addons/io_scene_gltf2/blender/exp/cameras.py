@@ -14,7 +14,7 @@
 
 import bpy
 from ...io.com import gltf2_io
-from ...blender.com.conversion import yvof_blender_to_gltf
+from ...blender.com.conversion import yfov_blender_to_gltf
 from ...io.exp.user_extensions import export_user_extensions
 from ..com.extras import generate_extras
 from .cache import cached
@@ -35,6 +35,8 @@ def gather_camera(blender_camera, export_settings):
         perspective=__gather_perspective(blender_camera, export_settings),
         type=__gather_type(blender_camera, export_settings)
     )
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        export_settings['KHR_animation_pointer']['extras']['cameras'][id(blender_camera)]['glTF_extras'] = camera
 
     export_user_extensions('gather_camera_hook', export_settings, camera, blender_camera)
 
@@ -51,7 +53,7 @@ def __gather_extensions(blender_camera, export_settings):
 
 def __gather_extras(blender_camera, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_camera)
+        return generate_extras(blender_camera, 'cameras', export_settings)
     return None
 
 
@@ -127,7 +129,7 @@ def __gather_perspective(blender_camera, export_settings):
         perspective.aspect_ratio = width / height
         del _render
 
-        perspective.yfov = yvof_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
+        perspective.yfov = yfov_blender_to_gltf(blender_camera.angle, width, height, blender_camera.sensor_fit)
 
         perspective.znear = blender_camera.clip_start
         perspective.zfar = blender_camera.clip_end

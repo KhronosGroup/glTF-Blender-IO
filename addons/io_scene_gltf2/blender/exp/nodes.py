@@ -77,6 +77,10 @@ def gather_node(vnode, export_settings):
         translation=None,
         weights=__gather_weights(blender_object, export_settings)
     )
+    vnode.blender_object_id = id(blender_object)
+
+    if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+        export_settings['KHR_animation_pointer']['extras']['objects'][vnode.blender_object_id]['glTF_extras'] = node
 
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
@@ -100,12 +104,16 @@ def __gather_camera(vnode, export_settings):
     cam = gltf2_blender_gather_cameras.gather_camera(vnode.blender_object.data, export_settings)
 
     if len(export_settings['current_paths']) > 0:
-        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)] = {}
-        export_settings['KHR_animation_pointer']['cameras'][id(
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(vnode.blender_object.data)] = {}
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(
             vnode.blender_object.data)]['paths'] = export_settings['current_paths'].copy()
-        export_settings['KHR_animation_pointer']['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
+        export_settings['KHR_animation_pointer'][None]['cameras'][id(vnode.blender_object.data)]['glTF_camera'] = cam
 
     export_settings['current_paths'] = {}
+
+    if 'camera_identifiers' not in export_settings.keys():
+        export_settings['camera_identifiers'] = {}
+    export_settings['camera_identifiers'][id(vnode.blender_object.data)] = {}
 
     return cam
 
@@ -281,11 +289,18 @@ def __gather_extensions(vnode, export_settings):
                     "light": light_extension
                 }
             )
+
+            # Link for KHR_animation_pointer on extras
+            if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
+                export_settings['KHR_animation_pointer']['extras']['lights'][id(
+                    blender_lamp)]['glTF_extras'] = light_extension
+
             if len(export_settings['current_paths']) > 0:
-                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)] = {}
-                export_settings['KHR_animation_pointer']['lights'][id(
+                export_settings['KHR_animation_pointer'][None]['lights'][id(blender_lamp)] = {}
+                export_settings['KHR_animation_pointer'][None]['lights'][id(
                     blender_lamp)]['paths'] = export_settings['current_paths'].copy()
-                export_settings['KHR_animation_pointer']['lights'][id(blender_lamp)]['glTF_light'] = light_extension
+                export_settings['KHR_animation_pointer'][None]['lights'][id(
+                    blender_lamp)]['glTF_light'] = light_extension
 
             export_settings['current_paths'] = {}
 
@@ -314,12 +329,16 @@ def __gather_extensions(vnode, export_settings):
                     required=True
                 )
 
+        if 'lamp_identifiers' not in export_settings.keys():
+            export_settings['lamp_identifiers'] = {}
+        export_settings['lamp_identifiers'][id(blender_lamp)] = {}
+
     return extensions if extensions else None
 
 
 def __gather_extras(blender_object, export_settings):
     if export_settings['gltf_extras']:
-        return generate_extras(blender_object)
+        return generate_extras(blender_object, 'objects', export_settings)
     return None
 
 
@@ -332,7 +351,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
     if vnode.blender_type == VExportNode.COLLECTION:
         return None
     if blender_object and blender_object.type in ['CURVE', 'SURFACE', 'FONT']:
-        return __gather_mesh_from_blender_nonmesh(blender_object, export_settings)
+        return __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings)
     if blender_object is None and type(vnode.data).__name__ not in ["Mesh", "PointCloud"]:
         return None  # TODO
     if blender_object is None:
@@ -375,6 +394,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # modifiers changed them
                 materials = tuple(ms.material for ms in blender_object.material_slots)
                 __keep_material_info(materials, True, export_settings)
+                __keep_mesh_info(blender_object.data, blender_data, export_settings)
             else:
                 armature_modifiers = {}
                 if export_settings['gltf_skins']:
@@ -413,6 +433,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
                 # We need to store link between the original material and the tmp data material,
                 # Because of animation pointer NLA that will still have the original
                 __keep_material_info(materials, False, export_settings)
+                __keep_mesh_info(blender_object.data, blender_data, export_settings)
                 if len(materials) == 1 and materials[0] is None:
                     materials = tuple(ms.material for ms in blender_object.material_slots)
                     __keep_material_info(materials, True, export_settings)
@@ -422,7 +443,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             if not export_settings['gltf_skins']:
                 modifiers = None
             else:
-                # Check if there is an armature modidier
+                # Check if there is an armature modifier
                 if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
                     modifiers = None
 
@@ -430,6 +451,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             # modifiers changed them
             materials = tuple(ms.material for ms in blender_object.material_slots)
             __keep_material_info(materials, True, export_settings)
+            __keep_mesh_info(blender_object.data, blender_data, export_settings)
 
         # retrieve armature
         # Because data will be transforms to skeleton space,
@@ -447,23 +469,31 @@ def __gather_mesh(vnode, blender_object, export_settings):
                                                    materials,
                                                    None,
                                                    export_settings)
+    vnode.mesh_id = id(blender_data)
 
     if export_settings['gltf_apply'] and modifiers is not None:
         blender_data_owner.to_mesh_clear()
     return result
 
 
+def __keep_mesh_info(original, mesh, export_settings):
+    export_settings['mesh_identifiers'][id(mesh)] = {}
+    export_settings['mesh_identifiers'][id(mesh)]['blender'] = original
+
+
 def __keep_material_info(materials, originals, export_settings):
     for m in [m for m in materials if m is not None]:
-        if 'material_identifiers' not in export_settings.keys():
-            export_settings['material_identifiers'] = {}
         if originals is True:
-            export_settings['material_identifiers'][id(m)] = m
+            export_settings['material_identifiers'][id(m)] = {}
+            export_settings['material_identifiers'][id(m)]['blender'] = m
         else:
-            export_settings['material_identifiers'][id(m)] = m.original
+            export_settings['material_identifiers'][id(m)] = {}
+            export_settings['material_identifiers'][id(m)]['blender'] = m.original
+            export_settings['material_identifiers'][id(m.original)] = {}
+            export_settings['material_identifiers'][id(m.original)]['blender'] = m.original
 
 
-def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):
+def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):
     """Handles curves, surfaces, text, etc."""
     needs_to_mesh_clear = False
     try:
@@ -489,6 +519,7 @@ def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):
         needs_to_mesh_clear = True
 
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
+        __keep_material_info(materials, True, export_settings)
         modifiers = None
         blender_object_for_skined_data = None
 
@@ -499,6 +530,8 @@ def __gather_mesh_from_blender_nonmesh(blender_object, export_settings):
                                                        materials,
                                                        blender_object.data,
                                                        export_settings)
+
+        vnode.mesh_id = id(blender_mesh)
 
     finally:
         if needs_to_mesh_clear:
@@ -615,13 +648,17 @@ def gather_skin(vnode, export_settings):
         return None
 
     # Prevent infinite recursive error. A data can't have an Armature modifier
-    # and be bone parented to a bone of this armature
+    # and be bone parented to a bone of this armature, directly or through an
+    # ancestor. Otherwise the skin's joint becomes an ancestor of this node in
+    # the exported hierarchy, forming a cycle (skin -> joint -> ... -> node).
     # In that case, ignore the armature modifier, keep only the bone parenting
-    if blender_object.parent is not None \
-            and blender_object.parent_type == 'BONE' \
-            and blender_object.parent.name == modifiers["ARMATURE"].object.name:
-
-        return None
+    ancestor = blender_object
+    while ancestor is not None:
+        if ancestor.parent is not None \
+                and ancestor.parent_type == 'BONE' \
+                and ancestor.parent.name == modifiers["ARMATURE"].object.name:
+            return None
+        ancestor = ancestor.parent
 
     # glTF Skins and mesh must be in the same glTF node, which is different from how blender handles armatures
     return gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)

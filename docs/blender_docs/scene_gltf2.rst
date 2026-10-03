@@ -520,7 +520,7 @@ Mask
    .. figure:: /images/addons_import-export_scene-gltf2_material-round-alpha.png
 
    Rounding snaps alpha values that are 0.5 or greater up to 1, and ones below 0.5 down to
-   1. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
+   0. It is also possible to use a cutoff value different than 0.5 by using Math nodes to
    do ``1 - (alpha < cutoff)``.
 
    Mask mode is essentially the same as EEVEE's "Alpha Clip" blend mode, but is done with
@@ -669,6 +669,7 @@ are supported directly by this add-on:
 - ``EXT_mesh_gpu_instancing``
 - ``EXT_meshopt_compression``
 - ``KHR_meshopt_compression``
+- ``KHR_animation_pointer``
 
 .. rubric:: Export
 
@@ -689,6 +690,7 @@ are supported directly by this add-on:
 - ``EXT_mesh_gpu_instancing``
 - ``EXT_meshopt_compression``
 - ``KHR_meshopt_compression``
+- ``KHR_animation_pointer``
 
 Third-party glTF Extensions
 ---------------------------
@@ -837,6 +839,14 @@ You can choose to export a single glTF animation, or each object separately.
 .. note::
 
    Only `Actions (default)`_ and `Active Actions merged`_ mode can handle not sampled animations.
+
+Animation Pointer
+=================
+
+Animation Pointer is a way to export some properties of a material, or a light, or a camera, as an animation.
+This is an experimental feature.
+
+Custom Properties (extras in glTF) can be animated, but only for 1 composant data for now (float, int, bool).
 
 
 File Format Variations
@@ -1245,6 +1255,15 @@ Sampling Rate
 Sampling Interpolation Fallback
    Interpolation chosen for properties that are not keyed (LINEAR or STEP/CONSTANT)
 
+Animation - Pointer
+^^^^^^^^^^^^^^^^^^^
+This enables to export some of the materials, light & camera property animations that are valid in glTF.
+
+Animation Pointer (Experimental)
+   Export some of the materials, light & camera property animations that are valid in glTF.
+   This is an experimental feature, and not all properties are supported yet.
+Convert TRS/Weights to Animation Pointer
+   Convert TRS & Shape Keys to animation pointer
 
 Animation - Optimize
 ^^^^^^^^^^^^^^^^^^^^
