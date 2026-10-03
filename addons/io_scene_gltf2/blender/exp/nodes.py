@@ -385,7 +385,7 @@ def __gather_mesh(vnode, blender_object, export_settings):
             if not export_settings['gltf_skins']:
                 modifiers = None
             else:
-                # Check if there is an armature modidier
+                # Check if there is an armature modifier
                 if len([mod for mod in blender_object.modifiers if mod.type == "ARMATURE"]) == 0:
                     modifiers = None
 
@@ -419,16 +419,12 @@ def __gather_mesh(vnode, blender_object, export_settings):
 
 
 def __keep_mesh_info(original, mesh, export_settings):
-    if 'mesh_identifiers' not in export_settings.keys():
-        export_settings['mesh_identifiers'] = {}
     export_settings['mesh_identifiers'][id(mesh)] = {}
     export_settings['mesh_identifiers'][id(mesh)]['blender'] = original
 
 
 def __keep_material_info(materials, originals, export_settings):
     for m in [m for m in materials if m is not None]:
-        if 'material_identifiers' not in export_settings.keys():
-            export_settings['material_identifiers'] = {}
         if originals is True:
             export_settings['material_identifiers'][id(m)] = {}
             export_settings['material_identifiers'][id(m)]['blender'] = m
@@ -465,6 +461,7 @@ def __gather_mesh_from_blender_nonmesh(vnode, blender_object, export_settings):
         needs_to_mesh_clear = True
 
         materials = tuple([ms.material for ms in blender_object.material_slots if ms.material is not None])
+        __keep_material_info(materials, True, export_settings)
         modifiers = None
         blender_object_for_skined_data = None
 
@@ -593,13 +590,17 @@ def gather_skin(vnode, export_settings):
         return None
 
     # Prevent infinite recursive error. A data can't have an Armature modifier
-    # and be bone parented to a bone of this armature
+    # and be bone parented to a bone of this armature, directly or through an
+    # ancestor. Otherwise the skin's joint becomes an ancestor of this node in
+    # the exported hierarchy, forming a cycle (skin -> joint -> ... -> node).
     # In that case, ignore the armature modifier, keep only the bone parenting
-    if blender_object.parent is not None \
-            and blender_object.parent_type == 'BONE' \
-            and blender_object.parent.name == modifiers["ARMATURE"].object.name:
-
-        return None
+    ancestor = blender_object
+    while ancestor is not None:
+        if ancestor.parent is not None \
+                and ancestor.parent_type == 'BONE' \
+                and ancestor.parent.name == modifiers["ARMATURE"].object.name:
+            return None
+        ancestor = ancestor.parent
 
     # glTF Skins and mesh must be in the same glTF node, which is different from how blender handles armatures
     return gltf2_blender_gather_skins.gather_skin(export_settings['vtree'].nodes[vnode].armature, export_settings)
