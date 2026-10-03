@@ -28,9 +28,9 @@ try:
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
 
-    import_merge_material_slots=True
+    import_merge_material_slots = True
     if '--import-not-merge' in argv:
-        import_merge_material_slots=False
+        import_merge_material_slots = False
 
     bpy.ops.import_scene.gltf(filepath=argv[0], import_merge_material_slots=import_merge_material_slots)
 
@@ -50,12 +50,15 @@ try:
     if '--use-variants' in argv:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui = True
 
-    export_shared_accessors = False if '--export_not_shared_accessors' in argv else True
-    export_tangent = True if '--export-tangent' in argv else False
-    export_force_sample_anim = False if '--no-sample-anim' in argv else True
-    export_attributes = True if '--export-attributes' in argv else False
-    export_gpu_instances = True if '--export-gpu_instances' in argv else False
-
+    export_shared_accessors = '--export_not_shared_accessors' not in argv
+    export_tangent = '--export-tangent' in argv
+    export_force_sample_anim = '--no-sample-anim' not in argv
+    export_attributes = '--export-attributes' in argv
+    export_gpu_instances = '--export-gpu_instances' in argv
+    export_image_add_compressed_images = '--export_image_add_compressed_images' in argv
+    export_compressed_images_type = 'KTX2'  # will be used only if export_image_add_compressed_images is True
+    export_use_ktx_compression = '--export_use_ktx_compression' in argv
+    export_ktx_zstd_level = 22  # will be used only if export_use_ktx_compression is True
 
     bpy.ops.export_scene.gltf(
         export_format=export_format,
@@ -64,7 +67,11 @@ try:
         export_tangents=export_tangent,
         export_force_sampling=export_force_sample_anim,
         export_attributes=export_attributes,
-        export_gpu_instances=export_gpu_instances
+        export_gpu_instances=export_gpu_instances,
+        export_image_add_compressed_images=export_image_add_compressed_images,
+        export_compressed_images_type=export_compressed_images_type,
+        export_use_ktx_compression=export_use_ktx_compression,
+        export_ktx_zstd_level=export_ktx_zstd_level
     )
 except Exception as err:
     print(err, file=sys.stderr)

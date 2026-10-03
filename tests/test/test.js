@@ -4614,9 +4614,20 @@ describe('Exporter', function () {
                     assert.strictEqual(no_mat_vc.primitives.length, 6);
                     assert.strictEqual(no_mat_vc.primitives.filter(prim => prim.material === undefined).length, 0);
 
-
                 });
 
+                it('roundtrips KTX2 textures', function () {
+                    let dir = '26_KTX';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                    for (var i = 0; i < asset.textures.length; i++) {
+                        assert.ok("extensions" in asset.textures[i]);
+                        assert.strictEqual(asset.images[asset.textures[i]["extensions"]["KHR_texture_basisu"].source].mimeType, 'image/ktx2');
+                    }
+
+                });
             });
         });
     });
