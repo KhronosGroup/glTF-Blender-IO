@@ -2124,13 +2124,10 @@ describe('Exporter', function () {
                 let gltfPath_1 = path.resolve(outDirPath, '32_ktx2_mode_ktx2.gltf');
                 var asset = JSON.parse(fs.readFileSync(gltfPath_1));
 
-                for (var i = 0; i < asset.images.length; i++) {
-                    assert.strictEqual(asset.images[i].mimeType, 'image/ktx2');
-                }
-
                 for (var i = 0; i < asset.textures.length; i++) {
-                    assert.strictEqual(asset.textures[i].source, undefined);
                     assert.ok("extensions" in asset.textures[i]);
+                    assert.strictEqual(asset.images[asset.textures[i].source].mimeType, 'image/png');
+                    assert.strictEqual(asset.images[asset.textures[i]["extensions"]["KHR_texture_basisu"].source].mimeType, 'image/ktx2');
                 }
 
             });
