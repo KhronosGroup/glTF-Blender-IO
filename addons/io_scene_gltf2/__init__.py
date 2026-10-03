@@ -17,7 +17,7 @@ bl_info = {
     # This is now displayed as the maintainer, so show the foundation.
     # "author": "Julien Duroure, Scurest, Norbert Nopper, Urs Hanselmann, Moritz Becher, Benjamin Schmithüsen, Jim Eckerlein", # Original Authors
     'author': "Blender Foundation, Khronos Group",
-    "version": (5, 3, 32),
+    "version": (5, 3, 36),
     'blender': (5, 3, 0),
     'location': 'File > Import-Export',
     'description': 'Import-Export as glTF 2.0',
@@ -1801,7 +1801,7 @@ def export_panel_animation_bake_and_merge(layout, operator):
 
         row = body.row()
         row.active = operator.export_force_sampling and operator.export_animation_mode in [
-            'ACTIONS', 'ACTIVE_ACTIONS', 'BROACAST']
+            'ACTIONS', 'ACTIVE_ACTIONS', 'BROADCAST']
         row.prop(operator, 'export_bake_animation')
 
         if operator.export_animation_mode == "SCENE":
@@ -1952,7 +1952,8 @@ class ExportGLTF2(bpy.types.Operator, ExportGLTF2_Base, ExportHelper):
 
 
 def menu_func_export(self, context):
-    self.layout.operator(ExportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
+    self.layout.operator(
+        ExportGLTF2.bl_idname, text=bpy.types.FileHandler.label_with_extensions('IO_FH_gltf2'))
 
 
 class ImportGLTF2(Operator, ConvertGLTF2_Base, ImportHelper):
@@ -2331,7 +2332,7 @@ class IO_FH_gltf2(bpy.types.FileHandler):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportGLTF2.bl_idname, text='glTF 2.0 (.glb/.gltf)')
+    self.layout.operator(ImportGLTF2.bl_idname, text=bpy.types.FileHandler.label_with_extensions("IO_FH_gltf2"))
 
 
 classes = (
