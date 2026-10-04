@@ -25,6 +25,7 @@ from .animation.sampled.object.keyframes import get_cache_data
 from .animation.animations import gather_animations
 from mathutils import Vector
 
+
 def gather_gltf2(export_settings):
     """
     Gather glTF properties from the current state of blender.
@@ -136,6 +137,9 @@ def __gather_scene(blender_scene, export_settings):
                     export_settings['gltf_collection_center'] = center_object.matrix_world.translation
                 else:
                     export_settings['gltf_collection_center'] = Vector((0.0, 0.0, 0.0))
+            case 'INSTANCE_OFFSET':
+                export_settings['gltf_collection_center'] = bpy.data.collections[export_settings['gltf_collection']].instance_offset
+
     vtree.variants_reset_to_original()
 
     export_user_extensions('vtree_after_filter_hook', export_settings, vtree)

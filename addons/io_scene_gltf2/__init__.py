@@ -681,7 +681,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             ('CENTER_MASS', 'Center of Mass',
              'Export at Collection center of mass of root objects of the collection'),
             ('OBJECT_POSITION', 'Object Position',
-             'Export at object position as scene origin')),
+             'Export at object position as scene origin'),
+            ('INSTANCE_OFFSET', 'Instance Offset',
+             'Export at collection Instance Offset as scene origin'),
+        ),
         default='WORLD_ORIGIN'
     )
 
