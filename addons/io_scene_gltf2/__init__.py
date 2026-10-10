@@ -688,6 +688,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         default='WORLD_ORIGIN'
     )
 
+    # TODO: implement it via bpy.types.Collection declaration instead of a StringProperty?
     collection_center_object: StringProperty(
         name="Center Object",
         description="Object to use as exported scene origin",
