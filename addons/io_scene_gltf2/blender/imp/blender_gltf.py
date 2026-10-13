@@ -53,23 +53,35 @@ class BlenderGlTF():
     @staticmethod
     def _create(gltf):
         """Create glTF main worker method."""
-        BlenderGlTF.set_convert_functions(gltf)
-        BlenderGlTF.pre_compute(gltf)
-        BlenderScene.create(gltf)
+        wm = bpy.context.window_manager
+        wm.progress_begin(0, 100)
+        try:
+            BlenderGlTF.set_convert_functions(gltf)
+            wm.progress_update(5)
 
-        # If needed, create not used materials
-        if gltf.import_settings['import_unused_materials']:
-            for mat_idx in [i for i in range(len(gltf.data.materials)) if len(
-                    gltf.data.materials[i].blender_material) == 0]:
-                BlenderMaterial.create(gltf, mat_idx, None)
-                # Force material users (fake user)
-                bpy.data.materials[gltf.data.materials[mat_idx].blender_material[None]].use_fake_user = True
+            BlenderGlTF.pre_compute(gltf)
+            wm.progress_update(15)
 
-            # If needed, create not used images
-            for img_idx in [i for i in range(len(gltf.data.images)) if gltf.data.images[i].blender_image_name is None]:
-                BlenderImage.create(gltf, img_idx)
-                # Force image users (fake user)
-                bpy.data.images[gltf.data.images[img_idx].blender_image_name].use_fake_user = True
+            BlenderScene.create(gltf, wm)
+            wm.progress_update(90)
+
+            # If needed, create not used materials
+            if gltf.import_settings['import_unused_materials']:
+                for mat_idx in [i for i in range(len(gltf.data.materials)) if len(
+                        gltf.data.materials[i].blender_material) == 0]:
+                    BlenderMaterial.create(gltf, mat_idx, None)
+                    # Force material users (fake user)
+                    bpy.data.materials[gltf.data.materials[mat_idx].blender_material[None]].use_fake_user = True
+
+                # If needed, create not used images
+                for img_idx in [i for i in range(len(gltf.data.images)) if gltf.data.images[i].blender_image_name is None]:
+                    BlenderImage.create(gltf, img_idx)
+                    # Force image users (fake user)
+                    bpy.data.images[gltf.data.images[img_idx].blender_image_name].use_fake_user = True
+
+            wm.progress_update(100)
+        finally:
+            wm.progress_end()
 
     @staticmethod
     def set_convert_functions(gltf):
