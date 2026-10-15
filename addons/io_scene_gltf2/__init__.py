@@ -1136,10 +1136,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             'use_active_scene',
             'collection',
         ]
-        all_props = self.properties
+        all_props = dir(self.properties)
         export_props = {
-            x: getattr(self, x) for x in dir(all_props)
-            if (x.startswith("export_") or x in exceptional) and all_props.get(x) is not None
+            x: getattr(self, x) for x in all_props
+            if (x.startswith("export_") or x in exceptional) and x in all_props
         }
         context.scene[self.scene_key] = export_props
 
