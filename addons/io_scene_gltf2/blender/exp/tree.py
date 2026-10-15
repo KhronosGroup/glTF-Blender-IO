@@ -732,6 +732,7 @@ class VExportTree:
         # There were kept to be able to manage the visibility/renderability
         # But the collection itself can be removed
         # (We managed it after recursion on children, so the properties are correctly propagated)
+        # We may have to keep the collection in case of export of KHR_node_visibility animation pointer (in the future)
         if self.export_settings['gltf_hierarchy_full_collections'] is False \
                 and self.nodes[uuid].blender_type == VExportNode.COLLECTION:
             self.nodes[uuid].keep_tag = False
