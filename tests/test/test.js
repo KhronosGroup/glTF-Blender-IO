@@ -15,6 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const validator = require('gltf-validator');
+const { PNG } = require('pngjs');
 
 const OUT_PREFIX = process.env.OUT_PREFIX || '../tests_out';
 
@@ -119,6 +120,17 @@ assert.equalEpsilonArray = function (actual, expected) {
     for (let i = 0; i < length; ++i) {
         assert.equalEpsilon(actual[i], expected[i]);
     }
+};
+
+// Compares two PNG files by their decoded pixel data rather than their raw
+// file bytes, so the comparison is unaffected by PNG encoding differences
+// (compression level, metadata chunks, etc.) that don't change the image.
+assert.pngPixelsEqual = function (actualPath, expectedPath) {
+    const actual = PNG.sync.read(fs.readFileSync(actualPath));
+    const expected = PNG.sync.read(fs.readFileSync(expectedPath));
+    assert.strictEqual(actual.width, expected.width);
+    assert.strictEqual(actual.height, expected.height);
+    assert(actual.data.equals(expected.data));
 };
 
 function getAccessorData(gltfPath, asset, accessorIndex, bufferCache) {
@@ -430,9 +442,7 @@ describe('Exporter', function () {
             it('produces a Roughness texture', function () {
                 // Expect magenta (inverted green) square
                 let resultName = path.resolve(outDirPath, '08_img_rough.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_g_.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-_g_.png');
             });
 
             it('references the Roughness texture', function () {
@@ -453,9 +463,7 @@ describe('Exporter', function () {
             it('produces a Metallic texture', function () {
                 // Expect yellow (inverted blue) square
                 let resultName = path.resolve(outDirPath, '08_img_metal.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-__b.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-__b.png');
             });
 
             it('references the Metallic texture', function () {
@@ -476,9 +484,7 @@ describe('Exporter', function () {
             it('combines two images into a RoughnessMetallic texture', function () {
                 // Expect magenta (inverted green) and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_metallic-08_roughness.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-_gb.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-_gb.png');
             });
 
             it('references the RoughnessMetallic texture', function () {
@@ -501,9 +507,7 @@ describe('Exporter', function () {
                 // present, occlusion may take all channels.  This test now "expects" the
                 // grayscale PNG to be preserved exactly.
                 let resultName = path.resolve(outDirPath, '08_img_occlusion.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_img_occlusion.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_img_occlusion.png');
             });
 
             it('references the Occlusion texture', function () {
@@ -524,9 +528,7 @@ describe('Exporter', function () {
             it('combines two images into an OcclusionRoughness texture', function () {
                 // Expect cyan (inverted red) and magenta (inverted green) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-rg_.png');
             });
 
             it('references the OcclusionRoughness texture', function () {
@@ -547,9 +549,7 @@ describe('Exporter', function () {
             it('combines two images into an OcclusionMetallic texture', function () {
                 // Expect cyan (inverted red) and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_metallic.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-r_b.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-r_b.png');
             });
 
             it('references the OcclusionMetallic texture', function () {
@@ -570,9 +570,7 @@ describe('Exporter', function () {
             it('combines three images into an OcclusionRoughnessMetallic texture', function () {
                 // Expect cyan (inverted red), magenta (inverted green), and yellow (inverted blue) squares
                 let resultName = path.resolve(outDirPath, '08_occlusion-08_roughness-08_metallic.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rgb.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-rgb.png');
             });
 
             it('references the OcclusionRoughnessMetallic texture', function () {
@@ -616,9 +614,7 @@ describe('Exporter', function () {
             it('combines two images into a Clearcoat strength and roughness texture', function () {
                 // Expect cyan (inverted red) and magenta (inverted green) squares
                 let resultName = path.resolve(outDirPath, '08_cc_strength-08_cc_roughness.png');
-                let expectedRgbBuffer = fs.readFileSync('scenes/08_tiny-box-rg_.png');
-                let testBuffer = fs.readFileSync(resultName);
-                assert(testBuffer.equals(expectedRgbBuffer));
+                assert.pngPixelsEqual(resultName, 'scenes/08_tiny-box-rg_.png');
             });
 
             it('references the Clearcoat texture', function () {

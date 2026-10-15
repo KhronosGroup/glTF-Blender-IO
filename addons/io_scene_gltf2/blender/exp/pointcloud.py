@@ -41,15 +41,16 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
     PrimitiveCreator.zup2yup(locs)
 
     # Radius
-    radius = np.empty(
-        len(blender_pointcloud.attributes['radius'].data), dtype=np.float32)
-    radius_attribute = gltf2_blender_conversion.get_attribute(
-        blender_pointcloud.attributes, 'radius', 'FLOAT', 'POINT')
-    source = radius_attribute.data if radius_attribute else None
-    foreach_attribute = 'value'
-    if source:
-        source.foreach_get(foreach_attribute, radius)
-    radius = radius.reshape(len(blender_pointcloud.attributes['radius'].data))
+    if 'radius' in blender_pointcloud.attributes:
+        radius = np.empty(
+            len(blender_pointcloud.attributes['radius'].data), dtype=np.float32)
+        radius_attribute = gltf2_blender_conversion.get_attribute(
+            blender_pointcloud.attributes, 'radius', 'FLOAT', 'POINT')
+        source = radius_attribute.data if radius_attribute else None
+        foreach_attribute = 'value'
+        if source:
+            source.foreach_get(foreach_attribute, radius)
+        radius = radius.reshape(len(blender_pointcloud.attributes['radius'].data))
 
     # Get any other attributes that may be present, starting with an underscore
     custom_attributes = __get_custom_attributes(blender_pointcloud, export_settings)
@@ -59,11 +60,12 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
         'data_type': gltf2_blender_conversion.get_data_type('FLOAT_VECTOR'),
         'component_type': gltf2_blender_conversion.get_component_type('FLOAT_VECTOR')
     }
-    custom_attributes['_RADIUS'] = {
-        'data': radius,
-        'data_type': gltf2_blender_conversion.get_data_type('FLOAT'),
-        'component_type': gltf2_blender_conversion.get_component_type('FLOAT')
-    }
+    if 'radius' in blender_pointcloud.attributes:
+        custom_attributes['_RADIUS'] = {
+            'data': radius,
+            'data_type': gltf2_blender_conversion.get_data_type('FLOAT'),
+            'component_type': gltf2_blender_conversion.get_component_type('FLOAT')
+        }
 
     # Detect Vertex Color usage
     loop_data = LoopData(
@@ -72,7 +74,7 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
         warning_already_displayed=False,
         warning_already_displayed_vc_nodetree=False
     )
-    base_material, material_info = get_base_material(0, materials, export_settings)
+    _, base_material, material_info = get_base_material(0, materials, export_settings)
 
     vc_infos = PrimitiveCreator.manage_VC(
         base_material,
@@ -108,6 +110,11 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
 
 def __get_custom_attributes(blender_pointcloud, export_settings):
     custom_attributes = {}
+
+    # Be sure that user choose to export custom attributes
+    if not export_settings['gltf_attributes']:
+        return custom_attributes
+
     for attribute in blender_pointcloud.attributes:
         if attribute.domain != 'POINT':
             continue
