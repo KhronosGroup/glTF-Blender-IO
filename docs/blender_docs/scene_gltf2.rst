@@ -642,7 +642,7 @@ Visibility
 ==========
 
 Blender can import node visibility from glTF files that use the ``KHR_node_visibility`` extension.
-Note that this support is limited to not animated visibility, ``KHR_animation_pointer`` is not supported by the importer.
+Note that this support is limited to not animated visibility, ``KHR_animation_pointer`` is not supported by the importer for the visibility.
 
 The technical reason is that glTF visibility is recursive for all children, while Blender visibility is per object.
 So, if a parent node is hidden in glTF file, all children are hidden too.
