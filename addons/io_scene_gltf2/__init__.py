@@ -1139,7 +1139,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         all_props = dir(self.properties)
         export_props = {
             x: getattr(self, x) for x in all_props
-            if (x.startswith("export_") or x in exceptional) and x in all_props
+            if (x.startswith("export_") or x in exceptional) and getattr(self, x, None) is not None
         }
         context.scene[self.scene_key] = export_props
 
