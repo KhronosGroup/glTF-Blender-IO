@@ -731,7 +731,8 @@ class VExportTree:
         # There were kept to be able to manage the visibility/renderability
         # But the collection itself can be removed
         # (We managed it after recursion on children, so the properties are correctly propagated)
-        if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
+        if self.export_settings['gltf_hierarchy_full_collections'] is False \
+                and self.nodes[uuid].blender_type == VExportNode.COLLECTION:
             self.nodes[uuid].keep_tag = False
 
     def recursive_filter(self, uuid, parent_kept_uuid):
