@@ -703,15 +703,16 @@ class VExportTree:
         self.remove_empty_collections()  # Used only when exporting full collection hierarchy
         self.remove_filtered_nodes()
 
-    def recursive_filter_tag(self, uuid, parent_keep_tag):
+    def recursive_filter_tag(self, uuid, parent_keep_tag, in_instance=False):
         # parent_keep_tag is for collection instance
         # some properties (selection, visibility, renderability)
         # are defined at collection level, and we need to use these values
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
+        # in_instance is True when the node is inside a collection instance (at any depth)
         if parent_keep_tag is None or parent_keep_tag is True:
             self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(
-                uuid) and self.node_filter_inheritable_is_kept(uuid)
+                uuid) and self.node_filter_inheritable_is_kept(uuid, in_instance)
         elif parent_keep_tag is False:
             self.nodes[uuid].keep_tag = False
         else:
@@ -721,11 +722,11 @@ class VExportTree:
             if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancer:
                 # We need to split children into 2 categories: real children, and objects inside the collection
                 if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
-                    self.recursive_filter_tag(child, self.nodes[uuid].keep_tag)
+                    self.recursive_filter_tag(child, self.nodes[uuid].keep_tag, True)
                 else:
-                    self.recursive_filter_tag(child, parent_keep_tag)
+                    self.recursive_filter_tag(child, parent_keep_tag, in_instance)
             else:
-                self.recursive_filter_tag(child, parent_keep_tag)
+                self.recursive_filter_tag(child, parent_keep_tag, in_instance)
 
         # When coming from collection instance, we can have some collection here
         # There were kept to be able to manage the visibility/renderability
@@ -800,7 +801,7 @@ class VExportTree:
 
         return True
 
-    def node_filter_inheritable_is_kept(self, uuid):
+    def node_filter_inheritable_is_kept(self, uuid, in_instance=False):
 
         if self.nodes[uuid].blender_object is None:
             # geometry node instances
@@ -810,12 +811,17 @@ class VExportTree:
             # Collections, can't be filtered => we always keep them
             return True
 
-        if self.export_settings['gltf_selected'] and self.nodes[uuid].blender_object.select_get() is False:
+        # Selection and the eye in outliner are stored on the object base of the view layer.
+        # Objects inside a collection instance (for example from a linked library) may not have
+        # any base in the view layer, and select_get() / visible_get() then always return False.
+        # For these objects, the values are inherited from the instancer.
+        if self.export_settings['gltf_selected'] and in_instance is False \
+                and self.nodes[uuid].blender_object.select_get() is False:
             return False
 
         if self.export_settings['gltf_visible']:
             # The eye in outliner (object)
-            if self.nodes[uuid].blender_object.visible_get() is False:
+            if in_instance is False and self.nodes[uuid].blender_object.visible_get() is False:
                 return False
 
             # The screen in outliner (object)
