@@ -69,8 +69,7 @@ def create_from_file(gltf, img_idx, use_ktx_loader):
 
     img_name = img.name or basename(path)
 
-    # TODO
-    if 1 == 1:
+    try:
 
         if not use_ktx_loader:
 
@@ -86,7 +85,7 @@ def create_from_file(gltf, img_idx, use_ktx_loader):
         if needs_pack:
             blender_image.pack()
 
-    else:
+    except Exception as _e:
         gltf.log.error("Missing image file (index %d): %s" % (img_idx, path))
         blender_image = _placeholder_image(img_name, os.path.abspath(path))
 
