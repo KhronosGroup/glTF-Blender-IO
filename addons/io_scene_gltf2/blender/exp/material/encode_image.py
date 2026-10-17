@@ -493,20 +493,28 @@ def _encode_temp_image(tmp_image: bpy.types.Image, file_format: str, is_data: bo
             if export_settings['gltf_use_zstd']:
                 compress_level = export_settings['gltf_ktx_zstd_level']
 
-            KtxEncoder.encode_file(
-                export_settings,
-                tmpfilename,
-                tmp_image.pixels[:],
-                tmp_image.size[0],
-                tmp_image.size[1],
-                4,
-                quality=quality,
-                is_data=is_data,
-                use_uastc=None,  # Keep default behavior based on is_data
-                compress=compress_level)
+            try:
+                res = KtxEncoder.encode_file(
+                    export_settings,
+                    tmpfilename,
+                    tmp_image.pixels[:],
+                    tmp_image.size[0],
+                    tmp_image.size[1],
+                    4,
+                    quality=quality,
+                    is_data=is_data,
+                    use_uastc=None,  # Keep default behavior based on is_data
+                    compress=compress_level)
 
-            with open(tmpfilename, "rb") as f:
-                return f.read()
+                if res != 0:
+                    export_settings['log'].error("Error while encoding KTX2 image: %s" % res)
+                    return b''
+
+                with open(tmpfilename, "rb") as f:
+                    return f.read()
+            except Exception as e:
+                export_settings['log'].error("Error while encoding KTX2 image: %s" % e)
+                return b''
 
 
 class TmpImageGuard:

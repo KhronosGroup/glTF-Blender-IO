@@ -100,6 +100,4 @@ class KtxEncoder:
             int(use_uastc),
             compress,
         )
-        # TODO: manage exception instead of raise
-        if error_code != 0:
-            raise RuntimeError("KTX encoding failed with error code {}".format(error_code))
+        return error_code
