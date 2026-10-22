@@ -843,6 +843,8 @@ class VExportTree:
 
         if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
             # Collections, can't be filtered => we always keep them
+            # When using visibility (for example), all objects inside the collection will inherit the visibility from the collection
+            # So the collection will be empty, and filtered at the end of process
             return
 
         # Selection and visibility (the eye in outliner) are stored on object level.
