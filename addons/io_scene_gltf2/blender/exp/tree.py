@@ -407,7 +407,8 @@ class VExportTree:
 
                 # Even if we are not managing Collection hierarchy,
                 # We are going to keep the tree here (in instance collection), because we want to keep
-                # renderability/visibility that can come from collections
+                # renderability that can come from collections
+                # (Selectability and Visibility are not defined for objects inside a collection instance)
 
                 for dupli_object in _sort_by_name(blender_object.instance_collection.all_objects):
                     if dupli_object.parent is not None and len(dupli_object.parent.users_collection) > 0 \
@@ -705,7 +706,7 @@ class VExportTree:
 
     def recursive_filter_tag(self, uuid, parent_keep_tag, in_instance=False):
         # parent_keep_tag is for collection instance
-        # some properties (selection, visibility, renderability)
+        # some properties (selection, visibility)
         # are defined at collection level, and we need to use these values
         # for all objects of the collection instance.
         # But some properties (camera, lamp ...) are not defined at collection level
@@ -729,7 +730,7 @@ class VExportTree:
                 self.recursive_filter_tag(child, parent_keep_tag, in_instance)
 
         # When coming from collection instance, we can have some collection here
-        # There were kept to be able to manage the visibility/renderability
+        # There were kept to be able to manage the visibility/renderability recursive propagation
         # But the collection itself can be removed
         # (We managed it after recursion on children, so the properties are correctly propagated)
         # We may have to keep the collection in case of export of KHR_node_visibility animation pointer (in the future)
@@ -812,9 +813,8 @@ class VExportTree:
             # Collections, can't be filtered => we always keep them
             return True
 
-        # Selection and the eye in outliner are stored on the object base of the view layer.
-        # Objects inside a collection instance (for example from a linked library) may not have
-        # any base in the view layer, and select_get() / visible_get() then always return False.
+        # Selection and visibility (the eye in outliner) are stored on object level.
+        # Objects inside a collection instance (for example from a linked library) always return False forselect_get() / visible_get().
         # For these objects, the values are inherited from the instancer.
         if self.export_settings['gltf_selected'] and in_instance is False \
                 and self.nodes[uuid].blender_object.select_get() is False:
