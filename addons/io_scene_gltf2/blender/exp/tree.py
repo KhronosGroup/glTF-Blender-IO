@@ -698,11 +698,18 @@ class VExportTree:
             self.recursive_filter(r, None)  # Root, so no parent
 
     def filter(self):
+        self.filter_modes()
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
         self.remove_empty_collections()  # Used only when exporting full collection hierarchy
         self.remove_filtered_nodes()
+
+    def filter_modes(self):
+        # Check what kind of filtering we need to apply based on export settings (or KHR_node_visibility)
+        self.filter_visibility = self.export_settings['gltf_visible']
+        self.filter_selectability = self.export_settings['gltf_selected']
+        self.filter_renderability = self.export_settings['gltf_renderable']
 
     def recursive_filter_tag(self, uuid, parent_keep_tag, in_instance=False):
         # parent_keep_tag is for collection instance
@@ -816,11 +823,11 @@ class VExportTree:
         # Selection and visibility (the eye in outliner) are stored on object level.
         # Objects inside a collection instance (for example from a linked library) always return False forselect_get() / visible_get().
         # For these objects, the values are inherited from the instancer.
-        if self.export_settings['gltf_selected'] and in_instance is False \
+        if self.filter_selectability and in_instance is False \
                 and self.nodes[uuid].blender_object.select_get() is False:
             return False
 
-        if self.export_settings['gltf_visible']:
+        if self.filter_visibility:
             # The eye in outliner (object)
             if in_instance is False and self.nodes[uuid].blender_object.visible_get() is False:
                 return False
@@ -834,7 +841,7 @@ class VExportTree:
                 return False
 
         # The camera in outliner (object)
-        if self.export_settings['gltf_renderable']:
+        if self.filter_renderability:
             if self.nodes[uuid].blender_object.hide_render is True:
                 return False
 
