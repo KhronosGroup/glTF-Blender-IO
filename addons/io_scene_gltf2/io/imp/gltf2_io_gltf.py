@@ -71,7 +71,7 @@ class glTFImporter():
             'KHR_materials_anisotropy',
             'KHR_materials_dispersion',
             'KHR_materials_iridescence',
-            'KHR_node_visibility'
+            'KHR_node_visibility',
             'KHR_gaussian_splatting',
         ]
 
