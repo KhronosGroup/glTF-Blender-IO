@@ -495,7 +495,8 @@ class VExportTree:
                         node.matrix_world,
                         new_delta or delta,
                         blender_children,
-                        is_collection=True)
+                        is_collection=True,
+                        is_children_in_collection=True)
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True or hierarchy of instanced collections
             # Manage children objects
