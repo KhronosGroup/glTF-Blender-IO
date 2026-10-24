@@ -325,7 +325,12 @@ class VExportTree:
             if is_collection:
                 node.matrix_world = parent_coll_matrix_world.copy()
             else:
-                node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
+                reconstructed = self._reconstruct_hidden_world_matrix(
+                    blender_object, parent_uuid, parent_coll_matrix_world)
+                if reconstructed is not None:
+                    node.matrix_world = reconstructed
+                else:
+                    node.matrix_world = parent_coll_matrix_world @ blender_object.matrix_world.copy()
 
             # If object is parented to bone, and Rest pose is used for Armature, we need to keep the world matrix transformed relative relative to rest pose,
             # not the current world matrix (relation to pose)
@@ -637,6 +642,48 @@ class VExportTree:
                         data=inst.object.data,
                         original_object=blender_object,
                         is_children_in_collection=True)
+
+    def _reconstruct_hidden_world_matrix(self, blender_object, parent_uuid, parent_coll_matrix_world):
+        """Reconstruct the world matrix of a viewport-hidden object.
+
+        Objects hidden from the viewport (hide_viewport) are skipped by the
+        dependency graph, so both their matrix_world and matrix_local are stale
+        (often identity). Reconstruct the world matrix from the transform
+        properties (location/rotation/scale), which are not depsgraph-dependent,
+        combined with the already-computed parent world matrix.
+        Returns None when reconstruction is not safe (e.g. bone parenting);
+        the caller then falls back to the previous behavior.
+        See https://github.com/KhronosGroup/glTF-Blender-IO/issues/2102
+        """
+        if not blender_object.hide_viewport:
+            return None
+        if blender_object.parent_type not in ('OBJECT', 'NONE'):
+            return None
+
+        # Compose the local matrix from ID properties. Unlike matrix_local,
+        # these are not affected by depsgraph evaluation.
+        mat_local = Matrix.Translation(blender_object.location)
+        if blender_object.rotation_mode == 'QUATERNION':
+            mat_local @= blender_object.rotation_quaternion.to_matrix().to_4x4()
+        elif blender_object.rotation_mode == 'AXIS_ANGLE':
+            mat_local @= Matrix.Rotation(
+                blender_object.rotation_angle, 4, blender_object.rotation_axis)
+        else:
+            mat_local @= blender_object.rotation_euler.to_matrix().to_4x4()
+        mat_local @= Matrix.Diagonal(blender_object.scale).to_4x4()
+
+        if parent_uuid is None:
+            return parent_coll_matrix_world @ blender_object.matrix_parent_inverse @ mat_local
+
+        parent_node = self.nodes.get(parent_uuid)
+        if parent_node is None:
+            return None
+        if parent_node.blender_object is not blender_object.parent:
+            # vtree parent does not correspond to the Blender parent
+            # (e.g. collection instances); do not guess.
+            return None
+        # parent_node.matrix_world already includes the parent_coll premultiplication.
+        return parent_node.matrix_world @ blender_object.matrix_parent_inverse @ mat_local
 
     def get_all_objects(self):
         return [n.uuid for n in self.nodes.values() if n.blender_type != VExportNode.BONE]
