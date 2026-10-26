@@ -811,6 +811,17 @@ class VExportTree:
             # Modify parent uuid
             self.nodes[uuid].parent_uuid = parent_kept_uuid
 
+            if self.export_settings['gltf_armature_object_remove'] is True \
+                    and self.nodes[uuid].blender_type == VExportNode.BONE \
+                    and (parent_kept_uuid is None
+                         or self.nodes[parent_kept_uuid].blender_type != VExportNode.BONE):
+                # The armature is kept internally to gather skins, even when it is
+                # omitted from the exported scene. A bone promoted past a
+                # filtered root still needs to be a root joint of that skin.
+                armature_uuid = self.nodes[uuid].armature
+                if uuid not in self.nodes[armature_uuid].children:
+                    self.nodes[armature_uuid].children.append(uuid)
+
         for child in children:
             self.recursive_filter(child, new_parent_kept_uuid)
 
@@ -832,7 +843,7 @@ class VExportTree:
                 # that case, even if this is not a def bone
                 if len([c for c in self.nodes[uuid].children if self.nodes[c].blender_type != VExportNode.BONE]) != 0:
                     return
-                self.nodes[uuid].is_filtered = True
+                self.nodes[uuid].flag_status.is_filtered = True
 
     def node_filter_inheritable_is_kept(self, uuid, in_instance=False):
 
@@ -1129,9 +1140,18 @@ class VExportTree:
         # If user requested to remove armature, we need to check if it is possible
         # It is impossible to remove it if armature has multiple root bones. (glTF validator error)
         # Currently, we manage it at export level, not at each armature level
+        def count_root_joints(bone_uuid):
+            bone = self.nodes[bone_uuid]
+            if self.export_settings['gltf_def_bones'] is False or bone.use_deform is True \
+                    or any(self.nodes[c].blender_type != VExportNode.BONE for c in bone.children):
+                return 1
+            return sum(count_root_joints(c) for c in bone.children
+                       if self.nodes[c].blender_type == VExportNode.BONE)
+
         for arma_uuid in [n for n in self.nodes.keys() if self.nodes[n].blender_type == VExportNode.ARMATURE]:
-            # Do not cache bones here, as we will filter them later, so the cache will be wrong
-            if len(self.get_root_bones_uuid(arma_uuid, cache=False)) > 1:
+            root_count = sum(count_root_joints(c) for c in self.nodes[arma_uuid].children
+                             if self.nodes[c].blender_type == VExportNode.BONE)
+            if root_count > 1:
                 # We can't remove armature
                 self.export_settings['gltf_armature_object_remove'] = False
                 self.export_settings['log'].warning(

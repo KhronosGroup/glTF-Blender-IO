@@ -3621,6 +3621,31 @@ describe('Exporter', function () {
 
             });
 
+            it('keeps a skin when a non-deforming root is removed', function () {
+                const gltfPath = path.resolve(outDirPath, '40_nondeform_root_skin.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const meshNode = asset.nodes.find(node => node.mesh !== undefined);
+
+                assert.strictEqual(asset.skins.length, 1);
+                assert.strictEqual(asset.skins[0].joints.length, 1);
+                assert.strictEqual(asset.nodes[asset.skins[0].joints[0]].name, 'Tip');
+                assert.strictEqual(meshNode.skin, 0);
+                assert.strictEqual(asset.nodes.some(node => node.name === 'Root'), false);
+            });
+
+            it('keeps a common root for two promoted joints', function () {
+                const gltfPath = path.resolve(outDirPath, '40_nondeform_root_two_children.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                const armatureNode = asset.nodes.find(node => node.name === 'Rig');
+                const jointNames = asset.skins[0].joints.map(index => asset.nodes[index].name);
+
+                assert.strictEqual(asset.skins.length, 1);
+                assert.deepStrictEqual(jointNames.sort(), ['Other', 'Tip']);
+                assert.ok(armatureNode);
+                assert.ok(asset.skins[0].joints.every(index => armatureNode.children.includes(index)));
+                assert.strictEqual(asset.nodes.some(node => node.name === 'Root'), false);
+            });
+
         });
     });
 
