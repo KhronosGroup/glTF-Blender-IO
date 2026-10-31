@@ -855,6 +855,11 @@ class VExportTree:
             # So the collection will be empty, and filtered at the end of process
             return
 
+        if self.nodes[uuid].blender_bone is not None:
+            # Bones, set filter flags (but will be not be used by fitlers)
+            self.nodes[uuid].flag_status.is_visible = self.nodes[self.nodes[uuid]
+                                                                 .armature].bone_collections.bone_visibility[self.nodes[uuid].blender_bone.name]
+
         # Selection and visibility (the eye in outliner) are stored on object level.
         # Objects inside a collection instance (for example from a linked library) always return False for select_get() / visible_get().
         # For these objects, the values are inherited from the instancer.
