@@ -751,12 +751,15 @@ class VExportTree:
 
         # Set keep_tag based on the filtering status
         self.nodes[uuid].keep_tag = not self.nodes[uuid].flag_status.is_filtered
-        if self.filter_visibility:
-            self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_visible
-        if self.filter_selectability:
-            self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_selected
-        if self.filter_renderability:
-            self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_rendered
+
+        # Bones are always kept if they are not filtered by the flag status
+        if self.nodes[uuid].blender_bone is None:
+            if self.filter_visibility:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_visible
+            if self.filter_selectability:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_selected
+            if self.filter_renderability:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_rendered
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancer:
