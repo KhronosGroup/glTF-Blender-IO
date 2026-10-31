@@ -1185,6 +1185,12 @@ class VExportTree:
                 for coll in node.bone_collections.bones[bone]
             ) and not node.blender_object.pose.bones[bone].hide
 
+        # Some bones may not belong to any collection
+        # In that case, the bone is considered visible if it is not hidden in the pose
+        for bone in node.blender_object.pose.bones:
+            if bone.name not in node.bone_collections.bone_visibility:
+                node.bone_collections.bone_visibility[bone.name] = not bone.hide
+
 
 class BoneCollection:
     def __init__(self, name):
