@@ -96,6 +96,7 @@ class VExportNode:
 
         # Only for armature
         self.bones = {}
+        self.bone_collections = BoneCollectionTree()
 
         # For deformed object
         self.armature = None  # for deformed object and for bone
@@ -378,6 +379,10 @@ class VExportTree:
 
         # Storing this node
         self.add_node(node)
+
+        # For armature, we need to store the collection tree, in order to be able to retrieve visiblity
+        if node.blender_type == VExportNode.ARMATURE:
+            self.manage_bone_collections(node)
 
         ###### Manage children ######
 
@@ -1161,3 +1166,74 @@ class VExportTree:
             return
 
         self.export_settings['gltf_collection_center'] = sum(centers, Vector()) / len(centers)
+
+    def manage_bone_collections(self, node):
+        for collection in node.blender_object.data.collections:  # Root bone collections
+            node.bone_collections.recursive_bone_collection(node, collection)
+
+        # Propagate the collection visibility
+        for coll in node.bone_collections.collections.values():  # Root collections
+            node.bone_collections.recursive_set_visibility_collection(coll, None)
+
+        # Calculate visibility for bones
+        for bone in node.bone_collections.bones:
+            node.bone_collections.bone_visibility[bone] = any(
+                node.bone_collections.collections[coll].is_visible
+                for coll in node.bone_collections.bones[bone]
+            ) and not node.blender_object.pose.bones[bone].hide
+
+
+class BoneCollection:
+    def __init__(self, name):
+        self.name = name
+        self.children = []
+        self.is_visible = True
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def set_is_visible(self, visible):
+        self.is_visible = visible
+
+
+class BoneCollectionTree:
+    def __init__(self):
+        self.collections = {}
+        self.bones = {}     # Bone name -> list of collection names
+        self.bone_visibility = {}  # Bone name -> visibility (True/False)
+
+    def add_collection(self, name):
+        if name not in self.collections:
+            self.collections[name] = BoneCollection(name)
+        return self.collections[name]
+
+    def add_bone(self, bone_name, collection_name):
+        if bone_name not in self.bones:
+            self.bones[bone_name] = []
+        if collection_name not in self.bones[bone_name]:
+            self.bones[bone_name].append(collection_name)
+
+    def recursive_bone_collection(self, node, collection, parent_coll=None):
+        # Create the collection in the node's bone collection tree
+        coll = node.bone_collections.add_collection(collection.name)
+        coll.is_visible = collection.is_visible
+
+        # Store bones of the collection
+        for bone in collection.bones:
+            node.bone_collections.add_bone(bone.name, coll.name)
+
+        for child in collection.children:
+            self.recursive_bone_collection(node, child, coll)
+
+        # Store collection
+        if parent_coll is not None:
+            parent_coll.add_child(coll)
+
+    def recursive_set_visibility_collection(self, collection, parent_collection):
+        if parent_collection is not None:
+            collection.set_is_visible(parent_collection.is_visible and collection.is_visible)
+        else:
+            collection.set_is_visible(collection.is_visible)  # should be already set :)
+
+        for child in collection.children:
+            self.recursive_set_visibility_collection(child, collection)
