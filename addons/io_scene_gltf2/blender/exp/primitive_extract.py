@@ -603,6 +603,14 @@ class PrimitiveCreator:
         # We also need to shuffle Vertex Color data if needed
 
         new_prim_indices = {}
+        # Index of the next primitive created by UDIM tile splitting.
+        # Shared by all materials of the mesh, so that the tiles of a second UDIM material
+        # do not overwrite the tiles of the first one.
+        next_udim_prim_index = len(self.prim_indices.keys())
+        # UVs are moved to 0-1 in place, and a vertex can be used by several materials.
+        # Keep the original UVs to find the tile of each vertex, and move each vertex only once.
+        udim_original_uvs = {}
+        udim_shifted = {}
         self.additional_materials = []  # In case of UDIM
 
         self.uvmap_attribute_lists = []
@@ -757,10 +765,16 @@ class PrimitiveCreator:
             tex = list(material_info['udim_info'].keys())[0]
             image = material_info['udim_info'][tex]['image']
 
-            new_material_index = len(self.prim_indices.keys())
+            new_material_index = next_udim_prim_index
 
             # Get UVMap used for UDIM
             uvmap_name = all_uvmaps[list(all_uvmaps.keys())[0]]
+
+            if uvmap_name not in udim_original_uvs:
+                udim_original_uvs[uvmap_name] = (
+                    self.dots[uvmap_name + '0'].copy(), self.dots[uvmap_name + '1'].copy())
+                udim_shifted[uvmap_name] = np.zeros(len(self.dots), dtype=bool)
+            uv_u, uv_v = udim_original_uvs[uvmap_name]
 
             # Retrieve tiles number
             tiles = [t.number for t in image.tiles]
@@ -780,29 +794,32 @@ class PrimitiveCreator:
                     # Manage tile limits (inclusive or not), avoiding to have the same vertex
                     # in two tiles, if the vertex is on the limit
                     if int("10" + str(v) + str(u + 1 + 1)) in tiles and int("10" + str(v + 1) + str(u + 1)) in tiles:
-                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] < (u + 1)) & (
-                            self.dots[uvmap_name + '1'] <= (1 - v)) & (self.dots[uvmap_name + '1'] > 1 - (v + 1)))[0]
+                        indices = np.where((uv_u >= u) & (uv_u < (u + 1)) & (
+                            uv_v <= (1 - v)) & (uv_v > 1 - (v + 1)))[0]
                     elif int("10" + str(v) + str(u + 1 + 1)) not in tiles and int("10" + str(v + 1) + str(u + 1)) in tiles:
-                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] <= (u + 1)) & (
-                            self.dots[uvmap_name + '1'] <= (1 - v)) & (self.dots[uvmap_name + '1'] > 1 - (v + 1)))[0]
+                        indices = np.where((uv_u >= u) & (uv_u <= (u + 1)) & (
+                            uv_v <= (1 - v)) & (uv_v > 1 - (v + 1)))[0]
                     elif int("10" + str(v) + str(u + 1 + 1)) in tiles and int("10" + str(v + 1) + str(u + 1)) not in tiles:
-                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] < (u + 1)) & (
-                            self.dots[uvmap_name + '1'] <= (1 - v)) & (self.dots[uvmap_name + '1'] >= 1 - (v + 1)))[0]
+                        indices = np.where((uv_u >= u) & (uv_u < (u + 1)) & (
+                            uv_v <= (1 - v)) & (uv_v >= 1 - (v + 1)))[0]
                     else:
-                        indices = np.where((self.dots[uvmap_name + '0'] >= u) & (self.dots[uvmap_name + '0'] <= (u + 1)) & (
-                            self.dots[uvmap_name + '1'] <= (1 - v)) & (self.dots[uvmap_name + '1'] >= 1 - (v + 1)))[0]
+                        indices = np.where((uv_u >= u) & (uv_u <= (u + 1)) & (
+                            uv_v <= (1 - v)) & (uv_v >= 1 - (v + 1)))[0]
 
                     # If no vertex in this tile, continue
                     if indices.shape[0] == 0:
                         continue
 
                     # Reset UVMap to 0-1 : reset to Blender UVMAP => slide to 0-1 => go to glTF UVMap
-                    self.dots[uvmap_name + '1'][indices] -= 1
-                    self.dots[uvmap_name + '1'][indices] *= -1
-                    self.dots[uvmap_name + '0'][indices] -= u
-                    self.dots[uvmap_name + '1'][indices] -= v
-                    self.dots[uvmap_name + '1'][indices] *= -1
-                    self.dots[uvmap_name + '1'][indices] += 1
+                    # Only vertices not already moved by a previous material
+                    to_shift = indices[~udim_shifted[uvmap_name][indices]]
+                    udim_shifted[uvmap_name][to_shift] = True
+                    self.dots[uvmap_name + '1'][to_shift] -= 1
+                    self.dots[uvmap_name + '1'][to_shift] *= -1
+                    self.dots[uvmap_name + '0'][to_shift] -= u
+                    self.dots[uvmap_name + '1'][to_shift] -= v
+                    self.dots[uvmap_name + '1'][to_shift] *= -1
+                    self.dots[uvmap_name + '1'][to_shift] += 1
 
                     # Now, get every triangle, and check that it belongs to this tile
                     # Assume that we can check only the first vertex of each triangle (=> No
@@ -813,9 +830,13 @@ class PrimitiveCreator:
                             new_triangle_indices.append(self.prim_indices[material_idx][idx])
                             new_triangle_indices.append(self.prim_indices[material_idx][idx + 1])
                             new_triangle_indices.append(self.prim_indices[material_idx][idx + 2])
+                    # The tile can contain only vertices of other materials
+                    if len(new_triangle_indices) == 0:
+                        continue
                     new_prim_indices[new_material_index] = np.array(new_triangle_indices, dtype=np.uint32)
                     self.uvmap_attribute_lists.append(self.uvmap_attribute_list)
                     new_material_index += 1
+                    next_udim_prim_index = new_material_index
 
                     # Now we have to create a new material for this tile
                     # This will be the existing material, but with new textures
