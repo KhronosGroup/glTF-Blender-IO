@@ -96,7 +96,7 @@ def gather_joint_vnode(vnode, export_settings):
     node = gltf2_io.Node(
         camera=None,
         children=children,
-        extensions=__gather_extensions(blender_bone, export_settings),
+        extensions=__gather_extensions(vnode, export_settings),
         extras=__gather_extras(blender_bone, export_settings),
         matrix=None,
         mesh=None,
@@ -131,12 +131,12 @@ def __gather_extras(blender_bone, export_settings):
     return None
 
 
-def __gather_extensions(blender_bone, export_settings):
+def __gather_extensions(vnode, export_settings):
 
     extensions = {}
 
-    # Check visibility
-    if blender_bone.hide is True:
+    # Check visibility, base of the flag defined during Vtree processing
+    if export_settings['vtree'].nodes[vnode].flag_status.is_visible is False:
         extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
             name="KHR_node_visibility",
             extension={"visible": False},
