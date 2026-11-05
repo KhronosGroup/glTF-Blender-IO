@@ -217,15 +217,6 @@ def __find_parent_joint(joints, name):
     return None
 
 
-def __find_layer_collection_by_collection(layer_collection, collection):
-    if collection == layer_collection.collection:
-        return layer_collection
-    for child in layer_collection.children:
-        layer_collection = __find_layer_collection_by_collection(child, collection)
-        if layer_collection:
-            return layer_collection
-
-
 def __gather_extensions(vnode, export_settings):
     blender_object = vnode.blender_object
     extensions = {}
@@ -233,36 +224,13 @@ def __gather_extensions(vnode, export_settings):
     blender_lamp = None
 
     if vnode.blender_type == VExportNode.COLLECTION:
-        # Check visibility
-        layer_collection = __find_layer_collection_by_collection(
-            bpy.context.view_layer.layer_collection, blender_object)
-        if blender_object.hide_viewport is True or layer_collection.hide_viewport is True:
-            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-                name="KHR_node_visibility",
-                extension={"visible": False},
-                required=True
-            )
+        # Check visibility ?
+        # Currently, no filtering is set on collection, but the status is propagated to nodes inside the collection
+        pass
 
-    elif vnode.blender_type == VExportNode.INST_COLLECTION:
-        # Check visibility
-        if blender_object.hide_viewport is True or blender_object.hide_get(
-                view_layer=bpy.context.view_layer) is True:
-            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-                name="KHR_node_visibility",
-                extension={"visible": False},
-                required=True
-            )
-        # Also check status of the collection itself
-        if blender_object.instance_collection.hide_viewport is True:
-            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-                name="KHR_node_visibility",
-                extension={"visible": False},
-                required=True
-            )
     else:
         # Check visibility
-        if blender_object.hide_viewport is True or blender_object.hide_get(
-                view_layer=bpy.context.view_layer) is True:
+        if vnode.flag_status.is_visible is False:
             extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
                 name="KHR_node_visibility",
                 extension={"visible": False},
