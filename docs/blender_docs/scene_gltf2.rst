@@ -6,7 +6,7 @@ glTF 2.0
 .. reference::
 
    :Category: Import-Export
-   :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb, .gltf)`
+   :Menu:      :menuselection:`File --> Import/Export --> glTF 2.0 (.glb/.gltf)`
 
 
 Enabling Add-on
@@ -30,6 +30,7 @@ such as Unity3D, Unreal Engine 4, and Godot.
 This importer/exporter supports the following glTF 2.0 features:
 
 - Meshes
+- Gaussian Splatting (via ``KHR_gaussian_splatting``, import only for now)
 - Materials (Principled BSDF) and Shadeless (Unlit)
 - Textures
 - Cameras
@@ -417,13 +418,18 @@ Iridescence
 Iridescence can be exported using the ``KHR_materials_iridescence`` extension.
 Data will be exported using the following nodes:
 
-- Iridescence Thickness Maximum can be plugged into the Thickness socket of custom group node ``glTF Material Output``. If a texture is used, it must be plugged on (``R``) Red channel of the image.
+- Iridescence Thickness Maximum can be plugged into the
+  Thickness socket of custom group node ``glTF Material Output``.
+  If a texture is used, it must be plugged on (``R``) Red channel of the image.
 - Iridescence IOR can be plugged into the Thin Film IOR socket of Principled BSDF node.
 - Iridescence Factor can be plugged into the thickness socket of Principled BSDF node.
-- Iridescence Maximum Thickness can be plugged into the Iridescence Thickness Maximum socket of custom group node ``glTF Material Output``
+- Iridescence Maximum Thickness can be plugged into the Iridescence Thickness Maximum socket of custom
+  group node ``glTF Material Output``
 
-- Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket. You can use a Multiply node to multiply this texture with the Iridescence Factor value.
-- Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image, used as a mix factor for thickness between Minimum and Maximum thickness.
+- Texture for Iridescence Factor can be plugged on (``R``) Red channel of an image plugged into this socket.
+  You can use a Multiply node to multiply this texture with the Iridescence Factor value.
+- Texture for Iridescence Thickness can be plugged on (``G``) Green channel of an image,
+  used as a mix factor for thickness between Minimum and Maximum thickness.
 
 
 .. figure:: /images/addons_import-export_scene-gltf2_material-iridescence.png
@@ -622,11 +628,13 @@ Light Color
 -----------
 
 The color of a glTF light is determined by the product of:
-- The color field on the light object, and
-- The color output of an Emission shader node, if the light is using nodes and has an Emission shader connected to its output.
 
-If you are using EEVEE render engine, only the color field on the light object is used, and Emission shader node is ignored.
-(This reflects Viewport rendering)
+- The color field on the light object, and
+- The color output of an Emission shader node,
+  if the light is using nodes and has an Emission shader connected to its output.
+
+If you are using EEVEE render engine, only the color field on the light object is used,
+and Emission shader node is ignored. (This reflects Viewport rendering)
 
 
 Light Intensity
@@ -635,7 +643,8 @@ Light Intensity
 For Sun lights, the intensity is determined by the strength field on the light object.
 For Point and Spot lights, the intensity can also be determined by the Strength socket of a Light Falloff Node.
 
-If you are using EEVEE render engine, the node setup will be ignored, and only the strength field on the light object is used.
+If you are using EEVEE render engine, the node setup will be ignored,
+and only the strength field on the light object is used.
 
 
 Extensions
@@ -670,6 +679,9 @@ are supported directly by this add-on:
 - ``EXT_meshopt_compression``
 - ``KHR_meshopt_compression``
 - ``KHR_animation_pointer``
+- ``EXT_texture_webp``
+- ``KHR_texture_basisu``
+- ``KHR_gaussian_splatting``
 
 .. rubric:: Export
 
@@ -691,6 +703,8 @@ are supported directly by this add-on:
 - ``EXT_meshopt_compression``
 - ``KHR_meshopt_compression``
 - ``KHR_animation_pointer``
+- ``EXT_texture_webp``
+- ``KHR_texture_basisu``
 
 Third-party glTF Extensions
 ---------------------------
@@ -849,6 +863,13 @@ This is an experimental feature.
 Custom Properties (extras in glTF) can be animated, but only for 1 composant data for now (float, int, bool).
 
 
+Gaussian Splatting
+==================
+
+The ``KHR_gaussian_splatting`` extension allows importing Gaussian Splatting assets.
+Currently, this is supported for import only.
+
+
 File Format Variations
 ======================
 
@@ -927,6 +948,8 @@ Pack Images
    Pack all images into the blend-file.
 Import WebP textures
    If a texture exists in WebP format, loads the WebP texture instead of the fallback png/jpg one.
+Import KTX textures
+   If a texture exists in KTX format, loads the KTX texture instead of the fallback png/jpg one.
 Import unused Materials & Textures
    Import all materials and textures, even if they are not used in the scene.
 
@@ -1096,11 +1119,13 @@ Images
    If None is chosen, materials are exported without textures.
 Image Quality
    When exporting jpeg or WebP files, the quality of the exported file.
-Create WebP
-   Creates WebP textures for every textures, in addition to the existing texture.
+Create Compressed Images
+   Creates WebP or KTX textures for every textures, in addition to the existing texture.
    For already WebP textures, nothing happens.
-WebP fallback
-   For all WebP textures, create a png fallback texture.
+Compressed images Type
+   Choose the type of compressed images to create: WebP or KTX.
+   Compressed Images Fallback
+      For all WebP textures, create a png fallback texture.
 Unused images
    Export images that are not used in any material.
 Unused textures
@@ -1257,6 +1282,7 @@ Sampling Interpolation Fallback
 
 Animation - Pointer
 ^^^^^^^^^^^^^^^^^^^
+
 This enables to export some of the materials, light & camera property animations that are valid in glTF.
 
 Animation Pointer (Experimental)
