@@ -135,6 +135,9 @@ def __gather_extensions(vnode, export_settings):
 
     extensions = {}
 
+    if not export_settings['gltf_khr_node_visibility']:
+        return None
+
     # Check visibility, base of the flag defined during Vtree processing
     if export_settings['vtree'].nodes[vnode].flag_status.is_visible is False:
         extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(

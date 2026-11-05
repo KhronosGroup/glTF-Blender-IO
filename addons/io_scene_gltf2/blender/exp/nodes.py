@@ -223,19 +223,20 @@ def __gather_extensions(vnode, export_settings):
 
     blender_lamp = None
 
-    if vnode.blender_type == VExportNode.COLLECTION:
-        # Check visibility ?
-        # Currently, no filtering is set on collection, but the status is propagated to nodes inside the collection
-        pass
+    if export_settings['gltf_khr_node_visibility']:
+        if vnode.blender_type == VExportNode.COLLECTION:
+            # Check visibility ?
+            # Currently, no filtering is set on collection, but the status is propagated to nodes inside the collection
+            pass
 
-    else:
-        # Check visibility
-        if vnode.flag_status.is_visible is False:
-            extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
-                name="KHR_node_visibility",
-                extension={"visible": False},
-                required=True
-            )
+        else:
+            # Check visibility
+            if vnode.flag_status.is_visible is False:
+                extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
+                    name="KHR_node_visibility",
+                    extension={"visible": False},
+                    required=True
+                )
 
     if vnode.blender_type == VExportNode.COLLECTION:
         return extensions if extensions else None
