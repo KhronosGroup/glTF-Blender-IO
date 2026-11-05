@@ -68,7 +68,8 @@ class Keyframe:
             "rotation_euler": 3,
             "rotation_quaternion": 4,
             "scale": 3,
-            "value": self.__length_morph
+            "value": self.__length_morph,
+            "hide_viewport": 1
         }.get(self.target, None)
 
         if length is None:

@@ -115,6 +115,10 @@ def initialize_data_dict(data, key1, key2, key3, key4, key5):
         data[key1][key2][key3][key4] = {}
         data[key1][key2][key3][key4][key5] = {}
 
+    if key4 not in data[key1][key2][key3].keys():
+        data[key1][key2][key3][key4] = {}
+        data[key1][key2][key3][key4][key5] = {}
+
 
 def material_caching(data, action_name, slot_identifier, frame, export_settings):
     for mat in export_settings['KHR_animation_pointer'][None]['materials'].keys():
@@ -490,6 +494,25 @@ def object_caching(data, obj_uuids, current_instance, action_name, slot_identifi
 
         initialize_data_dict(data, key1, key2, key3, key4, key5)
         data[key1][key2][key3][key4][key5][frame] = mat
+
+        # Also store data for node visibility if applicable
+        if export_settings['gltf_khr_node_visibility']:
+            if blender_obj and blender_obj.animation_data and blender_obj.animation_data.action \
+                    and blender_obj.animation_data.action_slot \
+                    and export_settings['gltf_animation_mode'] in ["ACTIVE_ACTIONS", "ACTIONS", "BROADCAST"]:
+                key1, key2, key3, key4, key5 = obj_uuid, blender_obj.animation_data.action.name, blender_obj.animation_data.action_slot.identifier, "hide_viewport", None
+            elif export_settings['gltf_animation_mode'] in ["NLA_TRACKS"]:
+                # We can keep the input slot_identifier here, as we are caching only one object / NLA track
+                key1, key2, key3, key4, key5 = obj_uuid, action_name, slot_identifier, "hide_viewport", None
+            else:
+                # case of baking object.
+                # There is no animation, so use uuid of object as key
+                # slot_identifier is always None for scene export
+                key1, key2, key3, key4, key5 = obj_uuid, obj_uuid, slot_identifier, "hide_viewport", None
+
+            initialize_data_dict(data, key1, key2, key3, key4, key5)
+            # Invert hide_viewport => visible here
+            data[key1][key2][key3][key4][key5][frame] = int(blender_obj.hide_viewport is False)
 
         # Store data for all bones, if object is an armature
 

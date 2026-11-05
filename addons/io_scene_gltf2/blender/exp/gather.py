@@ -86,6 +86,9 @@ def __gather_scene(blender_scene, export_settings):
     export_settings['KHR_animation_pointer']['extras']['animations'] = {}
     export_settings['KHR_animation_pointer']['extras']['meshes'] = {}
 
+    export_settings['KHR_animation_pointer']['KHR_node_visibility'] = {}
+    export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'] = {}
+
     scene = gltf2_io.Scene(
         extensions=None,
         extras=__gather_extras(blender_scene, export_settings),

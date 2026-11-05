@@ -139,7 +139,7 @@ def __convert_keyframes(blender_type_data, blender_id, channel, keyframes, actio
 
      # store the keyframe data in a binary buffer
     component_type = gltf2_io_constants.ComponentType.Float
-    if type(keyframes[0].value).__name__ != "float":
+    if type(keyframes[0].value).__name__ not in ["float", "int"]:
         data_type = gltf2_io_constants.DataType.vec_type_from_num(len(keyframes[0].value))
     else:
         data_type = gltf2_io_constants.DataType.vec_type_from_num(1)
@@ -169,4 +169,4 @@ def __gather_interpolation(
 
 
 def __convert_to_gltf(value):
-    return value if type(value).__name__ != "float" else [value]
+    return value if type(value).__name__ not in ["float", "int"] else [value]

@@ -118,6 +118,8 @@ def gather_animated_node_for_data(blender_main_type, blender_type_data, blender_
                 else:
                     used_blender_id = blender_id
             return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][used_blender_id]['glTF_extras']
+    elif blender_main_type == "KHR_node_visibility":
+        return export_settings['KHR_animation_pointer'][blender_main_type][blender_type_data][blender_id]['glTF_node']
     else:
         pass  # This should never happen
 

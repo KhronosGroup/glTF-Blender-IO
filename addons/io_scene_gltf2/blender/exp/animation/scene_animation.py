@@ -268,6 +268,39 @@ def gather_scene_animations(export_settings):
 
                     total_channels = []
 
+        # Node visibility
+        for obj in export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'].keys():
+            if len(export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'][obj]['paths']) == 0:
+                continue
+
+            blender_object = export_settings['vtree'].nodes[obj].blender_object
+
+            export_settings['ranges'][obj] = {}
+            export_settings['ranges'][obj][obj] = {'start': start_frame, 'end': end_frame}
+
+            if export_settings['gltf_anim_slide_to_zero'] is True and start_frame > 0:
+                add_slide_data(start_frame, obj, obj, export_settings, add_drivers=False)
+
+            # Setting slot_identifier to None, always
+            channels = gather_data_sampled_channels(
+                'KHR_node_visibility', 'objects', obj, obj, None, None, export_settings)
+            if channels is not None:
+                total_channels.extend(channels)
+
+            if export_settings['gltf_anim_scene_split_object'] is True:
+                if len(total_channels) > 0:
+                    animation = gltf2_io.Animation(
+                        channels=total_channels,
+                        extensions=None,
+                        extras=None,
+                        name=blender_object.name,
+                        samplers=[]
+                    )
+                    link_samplers(animation, export_settings)
+                    animations.append(animation)
+
+                total_channels = []
+
     if export_settings['gltf_anim_scene_split_object'] is False:
         if len(total_channels) > 0:
             animation = gltf2_io.Animation(

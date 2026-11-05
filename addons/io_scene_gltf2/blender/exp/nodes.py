@@ -82,6 +82,19 @@ def gather_node(vnode, export_settings):
     if export_settings['gltf_extras'] and export_settings['gltf_export_anim_pointer']:
         export_settings['KHR_animation_pointer']['extras']['objects'][vnode.blender_object_id]['glTF_extras'] = node
 
+    if export_settings['gltf_khr_node_visibility'] and export_settings['gltf_export_anim_pointer']:
+
+        export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'][vnode.uuid] = {}
+        export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'][vnode.uuid]['paths'] = {}
+
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/nodes/" + "XXX" + "/extensions/KHR_node_visibility/visible"
+
+        export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'][vnode.uuid]['paths'][None] = path_
+
+        export_settings['KHR_animation_pointer']['KHR_node_visibility']['objects'][vnode.uuid]['glTF_node'] = node
+
     # If node mesh is skined, transforms should be ignored at import, so no need to set them here
     if node.skin is None:
         node.translation, node.rotation, node.scale = __gather_trans_rot_scale(vnode, export_settings)
@@ -232,6 +245,7 @@ def __gather_extensions(vnode, export_settings):
         else:
             # Check visibility
             if vnode.flag_status.is_visible is False:
+                # TODO animation pointer: always export in case of animation, and then remove if not needed?
                 extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
                     name="KHR_node_visibility",
                     extension={"visible": False},

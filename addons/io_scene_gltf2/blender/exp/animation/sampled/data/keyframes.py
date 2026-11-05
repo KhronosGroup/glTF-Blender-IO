@@ -76,11 +76,16 @@ def gather_data_sampled_keyframes(
         else:
             length = 4
 
-        key = Keyframe([None] * length, frame, 'value')
+        if blender_main_type == "KHR_node_visibility" and blender_type_data == "objects":
+            val = "hide_viewport"
+        else:
+            val = "value"
+
+        key = Keyframe([None] * length, frame, val)
         key.set_id_type(blender_type_data.upper())
 
         value = get_cache_data(
-            'value',
+            val,
             used_blender_id,
             channel,
             action_name,
@@ -197,7 +202,7 @@ def gather_data_sampled_keyframes(
 
 
 def fcurve_is_constant(keyframes):
-    if type(keyframes[0].value).__name__ == "float":
+    if type(keyframes[0].value).__name__ in ["float", "int"]:
         return all([j < 0.0001 for j in np.ptp([[k.value] for k in keyframes], axis=0)])
     else:
         return all([j < 0.0001 for j in np.ptp([[k.value[i]
