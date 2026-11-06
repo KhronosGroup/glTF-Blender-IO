@@ -420,9 +420,9 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_texture_dir: StringProperty(
-        name='Textures',
-        description='Folder to place texture files in. Relative to the .gltf file',
-        default='',
+        name='Textures Folder',
+        description='Folder to place texture files in, relative to the .gltf file. When Prefer Originals is enabled, this folder will only be used for newly-created images.',
+        default='textures',
     )
 
     # Keep for back compatibility
@@ -443,12 +443,14 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         max=100
     )
 
-    export_keep_originals: BoolProperty(
-        name='Use Original',
-        description=('Reference the original texture files where possible instead of packing them. '
-                     'For compatibility, the PBR metallic and roughness components must share the '
-                     'same texture for exports to work as expected.'
-                     ),
+    export_image_use_originals: BoolProperty(
+        name='Prefer Originals',
+        description=('Reference the original texture files where possible instead of packing them.'
+                    '\n'
+                    'Due to format constraints, the PBR metallic and roughness components must share the '
+                    'same texture for exports to work as expected. Roughness will always be sampled '
+                    'from the G channel, and metalness from the B channel.'
+                    ),
         default=False,
     )
 
@@ -1211,7 +1213,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
             export_settings['gltf_filedirectory'],
             self.export_texture_dir,
         )
-        export_settings['gltf_keep_original_textures'] = self.export_keep_originals
+        export_settings['gltf_use_original_textures'] = self.export_image_use_originals
 
         export_settings['gltf_format'] = self.export_format
         export_settings['gltf_image_format'] = self.export_image_format
@@ -1508,16 +1510,9 @@ def export_main(layout, operator, is_file_browser):
         layout.label(
             text="This is the least efficient of the available forms, and should only be used when required.",
             icon='STATUS_WARNING')
-    else:
-        layout.prop(operator, 'export_keep_originals')
-        if operator.export_keep_originals:
-            layout.label(
-                text="Using separate textures for metallic and roughness may cause unexpected results.",
-                icon='STATUS_INFO')
 
-    if operator.export_format == 'GLTF_SEPARATE':
-        if not operator.export_keep_originals:
-            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
+    elif operator.export_format == 'GLTF_SEPARATE':
+        layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
 
     layout.prop(operator, 'export_copyright')
     if is_file_browser:
@@ -1643,41 +1638,44 @@ def export_panel_data_pointclouds(layout, operator):
         pass
 
 
-def export_panel_data_material(layout, operator):
+def export_panel_data_material(layout: bpy.types.UILayout, operator: bpy.types.Operator):
     header, body = layout.panel("GLTF_export_data_material", default_closed=True)
     header.label(text="Material")
-    if body:
-        body.prop(operator, 'export_materials')
-        col = body.column()
-        col.active = operator.export_materials == "EXPORT"
-        col.prop(operator, 'export_image_format')
-        if operator.export_image_format in ["AUTO", "JPEG", "WEBP"]:
-            col.prop(operator, 'export_image_quality')
-        col = body.column()
-        col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
-            'PLACEHOLDER', 'NONE', 'VIEWPORT']
-        col.prop(operator, "export_image_add_compressed_images")
-        col = body.column()
-        col.active = operator.export_image_add_compressed_images
-        col.prop(operator, "export_compressed_images_type")
-        if operator.export_compressed_images_type == "KTX2":
-            col.prop(operator, "export_use_ktx_compression")
-            if operator.export_use_ktx_compression:
-                col.prop(operator, "export_ktx_zstd_level")
-        col = body.column()
-        col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
-            'PLACEHOLDER', 'NONE', 'VIEWPORT']
-        col.prop(operator, "export_compressed_images_fallback")
+    
+    if not body:
+        return
+    
+    body.prop(operator, 'export_materials')
+    mat_col = body.column()
+    mat_col.active = operator.export_materials == 'EXPORT'
+    mat_col.prop(operator, 'export_image_format')
 
-        header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
-        header.label(text="Unused Textures & Images")
-        header.active = operator.export_materials == "EXPORT"
-        if sub_body:
-            sub_body.active = operator.export_materials == "EXPORT"
-            row = sub_body.row()
-            row.prop(operator, 'export_unused_images')
-            row = sub_body.row()
-            row.prop(operator, 'export_unused_textures')
+    image_col = mat_col.column()
+    image_col.active = operator.export_image_format != 'NONE'
+    image_col.prop(operator, 'export_image_quality')
+    image_col.prop(operator, 'export_image_use_originals')
+
+    texture_col = image_col.column()
+    texture_col.active = operator.export_image_format not in ["WEBP", "KTX2"] and operator.export_materials not in [
+        'PLACEHOLDER', 'NONE', 'VIEWPORT']
+    texture_col.prop(operator, "export_image_add_compressed_images")
+
+    compressed_col = texture_col.column()
+    compressed_col.active = operator.export_image_add_compressed_images
+    compressed_col.prop(operator, "export_compressed_images_type")
+    compressed_col.prop(operator, "export_compressed_images_fallback")
+    if operator.export_compressed_images_type == "KTX2":
+        texture_col.prop(operator, "export_use_ktx_compression")
+        if operator.export_use_ktx_compression:
+            texture_col.prop(operator, "export_ktx_zstd_level")
+
+    header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
+    header.label(text="Unused Textures & Images")
+    header.active = operator.export_materials == "EXPORT"
+    if sub_body:
+        sub_body.active = header.active
+        sub_body.prop(operator, 'export_unused_images')
+        sub_body.prop(operator, 'export_unused_textures')
 
 
 def export_panel_data_shapekeys(layout, operator):

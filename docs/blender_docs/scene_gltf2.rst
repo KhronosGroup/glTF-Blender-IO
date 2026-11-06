@@ -994,10 +994,6 @@ Export
 
 Format
    See: `File Format Variations`_.
-Keep Original
-   For glTF Separate file format only. Keep original textures files if possible.
-   Warning: if you use more than one texture, where PBR standard requires only one,
-   only one texture will be used. This can lead to unexpected results
 Textures
    For glTF Separate file format only. Folder to place texture files in. Relative to the gltf-file.
 Copyright
@@ -1117,6 +1113,13 @@ Images
    web applications due to the smaller file size.
    If WebP is chosen, all textures will be saved as WebP, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
+Use Originals
+   Reference the original texture files where possible instead of packing them.
+.. note::
+   Due to format constraints, the PBR metallic and roughness components must share the
+   same texture for exports to work as expected. Roughness will always be sampled
+   from the ``G`` channel, and metalness from the ``B`` channel.
+
 Image Quality
    When exporting jpeg or WebP files, the quality of the exported file.
 Create Compressed Images
