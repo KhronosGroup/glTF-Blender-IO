@@ -1504,14 +1504,17 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
 
 def export_main(layout, operator, is_file_browser):
     layout.prop(operator, 'export_format')
-    if operator.export_format == 'GLTF_SEPARATE':
-        layout.prop(operator, 'export_keep_originals')
-        if operator.export_keep_originals is False:
-            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
+
     if operator.export_format == 'GLTF_EMBEDDED':
         layout.label(
             text="This is the least efficient of the available forms, and should only be used when required.",
             icon='STATUS_WARNING')
+    else:
+        layout.prop(operator, 'export_keep_originals')
+
+    if operator.export_format == 'GLTF_SEPARATE':
+        if operator.export_keep_originals is False:
+            layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
 
     layout.prop(operator, 'export_copyright')
     if is_file_browser:
