@@ -1662,12 +1662,13 @@ def export_panel_data_material(layout: bpy.types.UILayout, operator: bpy.types.O
 
     compressed_col = texture_col.column()
     compressed_col.active = operator.export_image_add_compressed_images
-    compressed_col.prop(operator, "export_compressed_images_type")
     compressed_col.prop(operator, "export_compressed_images_fallback")
+    compressed_col.prop(operator, "export_compressed_images_type")
+
     if operator.export_compressed_images_type == "KTX2":
-        texture_col.prop(operator, "export_use_ktx_compression")
+        compressed_col.prop(operator, "export_use_ktx_compression")
         if operator.export_use_ktx_compression:
-            texture_col.prop(operator, "export_ktx_zstd_level")
+            compressed_col.prop(operator, "export_ktx_zstd_level")
 
     header, sub_body = body.panel("GLTF_export_data_material_unused", default_closed=True)
     header.label(text="Unused Textures & Images")

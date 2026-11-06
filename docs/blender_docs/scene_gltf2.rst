@@ -1117,18 +1117,28 @@ Image Quality
    When exporting jpeg or WebP files, the quality of the exported file.
 Prefer Originals
    Reference the original texture files where possible instead of packing them.
-.. note::
-   Due to format constraints, the PBR metallic and roughness components must share the
-   same texture for exports to work as expected. Roughness will always be sampled
-   from the ``G`` channel, and metalness from the ``B`` channel.
+
+   .. note::
+      Because the exporter will not modify the source images, the
+      PBR metallic and roughness components must share the same texture
+      for exports to work as expected. Roughness will always be sampled
+      from the ``G`` channel, and metalness from the ``B`` channel.
+      See `Metallic and Roughness`_.
 
 Create Compressed Images
-   Creates WebP or KTX textures for every textures, in addition to the existing texture.
+   Creates WebP or KTX2 textures for each texture, alongside the originals.
    For already WebP textures, nothing happens.
-Compressed images Type
-   Choose the type of compressed images to create: WebP or KTX.
-   Compressed Images Fallback
-      For all WebP textures, create a png fallback texture.
+Compressed Images Fallback
+   Create a png fallback texture for all compressed (WebP or KTX2) textures.
+Compressed Images Type
+   Choose the type of compressed images to create.
+
+   :WebP:
+      Export textures as WebP compressed images.
+
+   :KTX2:
+      Export textures as KTX2 gpu-compressed images.
+
 Unused images
    Export images that are not used in any material.
 Unused textures
