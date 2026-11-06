@@ -132,7 +132,11 @@ def __filter_image(sockets, export_settings):
 
 
 @cached
-def __gather_buffer_view(image_data, mime_type, name, export_settings):
+def __gather_buffer_view(image_data: ExportImage, mime_type: str, name: str, export_settings):
+    if export_settings['gltf_keep_original_textures'] is True:
+        if image_data.original is not None:
+            return None, None
+
     if export_settings['gltf_format'] != 'GLTF_SEPARATE':
         data, factor = image_data.encode(mime_type, export_settings)
         if len(data) == 0:

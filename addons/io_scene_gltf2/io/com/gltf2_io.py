@@ -643,7 +643,7 @@ class Image:
 
     def to_dict(self):
         result = {}
-        result["bufferView"] = from_union([from_int, from_none], None if self.uri else self.buffer_view)
+        result["bufferView"] = from_union([from_int, from_none], self.buffer_view)
         result["extensions"] = from_union([lambda x: from_dict(from_extension, x), from_none],
                                           self.extensions)
         result["extras"] = from_extra(self.extras)
