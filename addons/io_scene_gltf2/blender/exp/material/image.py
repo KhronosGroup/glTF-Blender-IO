@@ -330,7 +330,12 @@ def __get_image_data_mapping(sockets, results, use_tile, is_data, export_setting
     composed_image.set_is_data(is_data)
 
     for result, socket in zip(results, sockets):
-        # Assume that user know what he does, and that channels/images are already combined correctly for pbr
+
+        # TODO(jadon): Explicitly test for the below caveats.
+        # - If each channel maps to a socket, good! Each channel can be mapped via the ExportImage
+        # - If not, then the appropriate nodes need to be fed into it.
+
+        # Assume that user knows what they are doing, and that channels/images are already combined correctly for pbr
         # If not, we are going to keep only the first texture found
         # Example : If user set up 2 or 3 different textures for Metallic / Roughness / Occlusion
         # Only 1 will be used at export
