@@ -422,7 +422,7 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     export_texture_dir: StringProperty(
         name='Textures Folder',
         description='Folder to place texture files in, relative to the .gltf file. When Prefer Originals is enabled, this folder will only be used for newly-created images.',
-        default='textures',
+        default='',
     )
 
     # Keep for back compatibility
