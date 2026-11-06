@@ -444,11 +444,10 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
     )
 
     export_keep_originals: BoolProperty(
-        name='Keep Original',
-        description=('Keep original textures files if possible. '
-                     'WARNING: if you use more than one texture, '
-                     'where pbr standard requires only one, only one texture will be used. '
-                     'This can lead to unexpected results'
+        name='Use Original',
+        description=('Reference the original texture files where possible instead of packing them. '
+                     'For compatibility, the PBR metallic and roughness components must share the '
+                     'same texture for exports to work as expected.'
                      ),
         default=False,
     )
@@ -1511,9 +1510,13 @@ def export_main(layout, operator, is_file_browser):
             icon='STATUS_WARNING')
     else:
         layout.prop(operator, 'export_keep_originals')
+        if operator.export_keep_originals:
+            layout.label(
+                text="Using separate textures for metallic and roughness may cause unexpected results.",
+                icon='STATUS_INFO')
 
     if operator.export_format == 'GLTF_SEPARATE':
-        if operator.export_keep_originals is False:
+        if not operator.export_keep_originals:
             layout.prop(operator, 'export_texture_dir', icon='FILE_FOLDER')
 
     layout.prop(operator, 'export_copyright')
