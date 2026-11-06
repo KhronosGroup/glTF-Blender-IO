@@ -1113,15 +1113,15 @@ Images
    web applications due to the smaller file size.
    If WebP is chosen, all textures will be saved as WebP, without any png/jpg fallback.
    If None is chosen, materials are exported without textures.
-Use Originals
+Image Quality
+   When exporting jpeg or WebP files, the quality of the exported file.
+Prefer Originals
    Reference the original texture files where possible instead of packing them.
 .. note::
    Due to format constraints, the PBR metallic and roughness components must share the
    same texture for exports to work as expected. Roughness will always be sampled
    from the ``G`` channel, and metalness from the ``B`` channel.
 
-Image Quality
-   When exporting jpeg or WebP files, the quality of the exported file.
 Create Compressed Images
    Creates WebP or KTX textures for every textures, in addition to the existing texture.
    For already WebP textures, nothing happens.
