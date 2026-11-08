@@ -1,4 +1,4 @@
-"""Check user-approved synthetic extras on existing upstream animation assets.
+"""Check animation extras import and ordinary animation round-trip using existing fixtures.
 
 Run with Blender --background --python-exit-code 1 --python this_file --
 SOURCE_ROOT OUTPUT_DIRECTORY. No source asset is overwritten.
