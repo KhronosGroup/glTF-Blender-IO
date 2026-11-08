@@ -19,6 +19,7 @@ from .animation_weight import BlenderWeightAnim
 from .animation_pointer import BlenderPointerAnim
 from .animation_utils import simulate_stash, restore_animation_on_object
 from .vnode import VNode
+from ..com.extras import set_extras
 
 
 class BlenderAnimation():
@@ -207,6 +208,9 @@ class BlenderAnimation():
                         'EXTRAS',
                         name=cam.name,
                         target_id_type='CAMERA')
+
+        if anim_idx in gltf.action_cache:
+            set_extras(gltf.action_cache[anim_idx]['action'], gltf.data.animations[anim_idx].extras)
 
         # Push all actions onto NLA tracks with this animation's name
         track_name = gltf.data.animations[anim_idx].track_name
