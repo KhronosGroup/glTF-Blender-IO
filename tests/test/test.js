@@ -3884,10 +3884,10 @@ describe('Exporter', function () {
                     const worldMaterial = asset.materials.find(m => m.name === 'BumpWorld');
                     assert.strictEqual(asset.images[asset.textures[worldMaterial.normalTexture.index].source].uri, '01_principled_normal.png');
 
-                    // A missing heightSpace means "object", and is written explicitly on export
+                    // A missing heightSpace means "object", and is written explicitly on export; a negative bumpFactor is kept
                     const noHeightSpace = bump('BumpNoHeightSpace');
                     assert.strictEqual(noHeightSpace.heightSpace, 'object');
-                    assert.equalEpsilon(noHeightSpace.bumpFactor, 0.03);
+                    assert.equalEpsilon(noHeightSpace.bumpFactor, -0.03);
                 });
 
                 it('roundtrips an emissive map', function () {

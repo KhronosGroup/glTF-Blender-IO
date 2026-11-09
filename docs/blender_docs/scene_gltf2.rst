@@ -263,7 +263,7 @@ The extension stores the height in meters, measured either in object space or in
   The bump does not scale with the object.
 
 A Bump node *Strength* other than 1.0 is exported as *Strength* × *Distance*, which is an approximation.
-An inverted bump (*Invert* option, or a negative *Distance* or *Scale*) can't be exported.
+An inverted bump (*Invert* option, or a negative *Distance* or *Scale*) is exported as a negative bump factor.
 If both setups are used, only the Displacement node is exported.
 True displacement is not exported, only its bump effect.
 

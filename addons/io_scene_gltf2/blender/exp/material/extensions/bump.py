@@ -144,13 +144,7 @@ def __has_height_texture(node, height_socket, export_settings):
 
 
 def __check_factor(factor, bmat, export_settings):
-    # A negative factor (Bump invert, negative Distance or Scale) means the height is inverted.
-    # bumpFactor must be >= 0, so it can't be represented.
-    if factor < 0.0:
-        export_settings['log'].warning(
-            "Material '{}' has an inverted bump (Invert, or negative Distance/Scale), which EXT_materials_bump "
-            "can't represent (bumpFactor must be >= 0); bump is not exported".format(bmat.name))
-        return None
+    # A negative factor (Bump invert, negative Distance or Scale) inverts the relief; bumpFactor allows it.
     if factor == 0.0:
         return None
     return factor

@@ -82,7 +82,7 @@
       "doubleSided": true,
       "extensions": {
         "EXT_materials_bump": {
-          "bumpFactor": 0.03,
+          "bumpFactor": -0.03,
           "bumpTexture": {
             "index": 1
           }
