@@ -330,6 +330,22 @@ describe('Exporter', function () {
                 assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
             });
 
+            it('does not export a Bump height map as a normal map', function () {
+                let gltfPath = path.resolve(outDirPath, '01_bump_normal_map.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+
+                // Height texture -> Bump -> Normal, without a Normal Map node
+                const bumpOnly = asset.materials.find(m => m.name === 'BumpOnly');
+                assert.strictEqual(bumpOnly.normalTexture, undefined);
+
+                // Normal Map -> Bump.Normal, height texture -> Bump.Height
+                const normalMapAndBump = asset.materials.find(m => m.name === 'NormalMapAndBump');
+                const textureIndex = normalMapAndBump.normalTexture.index;
+                const imageIndex = asset.textures[textureIndex].source;
+                assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
+                assert.strictEqual(normalMapAndBump.normalTexture.scale, 0.5);
+            });
+
             it('can export an emissive map from the Emission node', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
