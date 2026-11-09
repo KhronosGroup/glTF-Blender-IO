@@ -36,6 +36,7 @@ from .extensions.anisotropy import export_anisotropy
 from .extensions.iridescence import export_iridescence
 from .extensions.ior import export_ior
 from .extensions.dispersion import export_dispersion
+from .extensions.bump import export_bump
 from .search_node_tree import \
     has_image_node_from_socket, \
     NodeSocket, \
@@ -567,6 +568,13 @@ def __gather_extensions(bmat, emissive_factor, export_settings):
         uvmap_infos.update(uvmap_info)
         udim_infos.update(udim_info)
 
+    # EXT_materials_bump
+    bump_extension, uvmap_info, udim_info = export_bump(bmat, export_settings)
+    if bump_extension:
+        extensions["EXT_materials_bump"] = bump_extension
+        uvmap_infos.update(uvmap_info)
+        udim_infos.update(udim_info)
+
     # KHR_materials_dispersion
     dispersion_extension = export_dispersion(bmat, extensions, export_settings)
     if dispersion_extension:
@@ -945,6 +953,9 @@ def __get_final_material_with_indices(blender_material, base_material, caching_i
         elif tex == "iridescenceThicknessTexture":
             if material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture']:
                 material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture'].tex_coord = ind
+        elif tex == "bumpTexture":
+            if material.extensions["EXT_materials_bump"].extension['bumpTexture']:
+                material.extensions["EXT_materials_bump"].extension['bumpTexture'].tex_coord = ind
         elif tex.startswith("additional"):
             export_settings['additional_texture_export'][export_settings['additional_texture_export_current_idx']
                                                          [id(blender_material)] + int(tex[10:])].tex_coord = ind
@@ -1022,6 +1033,7 @@ def get_all_textures(idx=0):
     tab.append("anisotropyTexture")
     tab.append("iridescenceTexture")
     tab.append("iridescenceThicknessTexture")
+    tab.append("bumpTexture")
 
     for i in range(idx):
         tab.append("additional" + str(i))

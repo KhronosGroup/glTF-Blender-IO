@@ -212,6 +212,7 @@ class BlenderGlTF():
                         "KHR_materials_specular",
                         "KHR_materials_anisotropy",
                         "KHR_materials_dispersion",
+                        "EXT_materials_bump",
                 ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         mat.extensions[ext]["animations"] = {}
@@ -253,6 +254,8 @@ class BlenderGlTF():
                         "iridescenceTexture") if mat.extensions and "KHR_materials_iridescence" in mat.extensions else None,
                     mat.extensions["KHR_materials_iridescence"].get(
                         "iridescenceThicknessTexture") if mat.extensions and "KHR_materials_iridescence" in mat.extensions else None,
+                    mat.extensions["EXT_materials_bump"].get(
+                        "bumpTexture") if mat.extensions and "EXT_materials_bump" in mat.extensions else None,
                 ]
 
                 for tex in [t for t in texs_ext if t is not None]:
@@ -669,6 +672,17 @@ class BlenderGlTF():
                                     ].extensions["KHR_materials_iridescence"]["animations"][anim_idx] = []
             gltf.data.materials[int(pointer_tab[2])
                                 ].extensions["KHR_materials_iridescence"]["animations"][anim_idx].append(channel_idx)
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "EXT_materials_bump" and \
+                pointer_tab[5] == "bumpFactor":
+            if anim_idx not in gltf.data.materials[int(
+                    pointer_tab[2])].extensions["EXT_materials_bump"]["animations"].keys():
+                gltf.data.materials[int(pointer_tab[2])
+                                    ].extensions["EXT_materials_bump"]["animations"][anim_idx] = []
+            gltf.data.materials[int(pointer_tab[2])
+                                ].extensions["EXT_materials_bump"]["animations"][anim_idx].append(channel_idx)
 
         # Extras on Node
         if len(pointer_tab) == 5 and pointer_tab[1] == "nodes" and pointer_tab[3] == "extras":

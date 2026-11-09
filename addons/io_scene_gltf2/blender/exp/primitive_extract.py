@@ -839,6 +839,7 @@ class PrimitiveCreator:
                             'anisotropyTexture',
                             'iridescenceTexture',
                             'iridescenceThicknessTexture',
+                            'bumpTexture',
                             'volumeTexture'] else 'DEFAULT'
 
                         new_tex = gather_udim_texture_info(
@@ -886,6 +887,8 @@ class PrimitiveCreator:
                             new_material.extensions["KHR_materials_iridescence"].extension['iridescenceTexture'] = new_tex
                         elif tex == "iridescenceThicknessTexture":
                             new_material.extensions["KHR_materials_iridescence"].extension['iridescenceThicknessTexture'] = new_tex
+                        elif tex == "bumpTexture":
+                            new_material.extensions["EXT_materials_bump"].extension['bumpTexture'] = new_tex
                         else:
                             self.export_settings['log'].warning(
                                 'We are not managing this case (UDIM for {})'.format(tex))
