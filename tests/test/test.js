@@ -376,6 +376,16 @@ describe('Exporter', function () {
                 assert.strictEqual(strength.extensions.EXT_materials_bump.heightSpace, 'world');
                 assert.equalEpsilon(strength.extensions.EXT_materials_bump.bumpFactor, 0.05);
                 assert.strictEqual(strength.normalTexture, undefined);
+
+                // Displacement only method: no bump in Blender, so no extension
+                const trueDisplacement = asset.materials.find(m => m.name === 'BumpTrueDisplacement');
+                assert.strictEqual(trueDisplacement.extensions?.EXT_materials_bump, undefined);
+
+                // Animated Displacement Scale and Bump Distance -> animation pointer on bumpFactor
+                const pointers = asset.animations.flatMap(a => a.channels.map(c => c.target.extensions?.KHR_animation_pointer?.pointer));
+                assert(pointers.includes('/materials/' + asset.materials.indexOf(object) + '/extensions/EXT_materials_bump/bumpFactor'));
+                assert(pointers.includes('/materials/' + asset.materials.indexOf(world) + '/extensions/EXT_materials_bump/bumpFactor'));
+                assert(!pointers.includes('/materials/' + asset.materials.indexOf(strength) + '/extensions/EXT_materials_bump/bumpFactor'));
             });
 
             it('can export an emissive map from the Emission node', function () {

@@ -265,7 +265,8 @@ The extension stores the height in meters, measured either in object space or in
 A Bump node *Strength* other than 1.0 is exported as *Strength* × *Distance*, which is an approximation.
 An inverted bump (*Invert* option, or a negative *Distance* or *Scale*) is exported as a negative bump factor.
 If both setups are used, only the Displacement node is exported.
-True displacement is not exported, only its bump effect.
+With the *Displacement and Bump* method, only the bump is exported.
+With the *Displacement Only* method, nothing is exported, because true displacement can't be represented in glTF.
 
 At import, an object space bump creates a Displacement node, and a world space bump creates a Bump node.
 

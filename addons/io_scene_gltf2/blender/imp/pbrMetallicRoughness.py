@@ -970,13 +970,17 @@ def normal(mh: MaterialHelper, location, normal_socket):
     mh.gltf.socket_infos[mh.material_idx]['Normal Texture'] = normal_texture_socket
 
 
-# EXT_materials_bump: height d = h * bumpFactor, in metres, in heightSpace.
+# EXT_materials_bump: height d = h * bumpFactor, in meters, in heightSpace.
 # "object" (default): [Texture] => [Separate R] => [Displacement (Object, Scale=bumpFactor)] => Output Displacement
 # "world":            [Texture] => [Separate R] => [Bump (Distance=bumpFactor)] => Normal
 def bump(mh: MaterialHelper, location, normal_socket, displacement_socket):
     ext = mh.get_ext('EXT_materials_bump', {})
     if 'bumpTexture' not in ext:
         return  # A constant height doesn't perturb the normal
+
+    mh.pymat.extensions['EXT_materials_bump']['blender_nodetree'] = mh.node_tree  # Needed for KHR_animation_pointer
+    mh.pymat.extensions['EXT_materials_bump']['blender_mat'] = mh.mat  # Needed for KHR_animation_pointer
+
     x, y = location
     factor = ext.get('bumpFactor', 1.0)
 
@@ -988,6 +992,7 @@ def bump(mh: MaterialHelper, location, normal_socket, displacement_socket):
         if normal_socket.is_linked:
             mh.links.new(node.inputs['Normal'], normal_socket.links[0].from_socket)
         mh.links.new(normal_socket, node.outputs['Normal'])
+        factor_socket = node.inputs['Distance']
     else:
         node = mh.nodes.new('ShaderNodeDisplacement')
         node.space = 'OBJECT'
@@ -995,9 +1000,11 @@ def bump(mh: MaterialHelper, location, normal_socket, displacement_socket):
         node.inputs['Scale'].default_value = factor
         mh.links.new(displacement_socket, node.outputs['Displacement'])
         mh.mat.displacement_method = 'BUMP'
+        factor_socket = node.inputs['Scale']
     node.location = x - 150, y - 40
+    mh.gltf.socket_infos[mh.material_idx]['Bump Factor'] = factor_socket
 
-    scalar_factor_and_texture(
+    new_tex_info, _, bump_texture_socket = scalar_factor_and_texture(
         mh,
         location=(x - 200, y),
         label='Bump',
@@ -1006,6 +1013,12 @@ def bump(mh: MaterialHelper, location, normal_socket, displacement_socket):
         tex_info=ext['bumpTexture'],
         channel=0,  # Red
     )
+    mh.gltf.socket_infos[mh.material_idx]['Bump Texture'] = bump_texture_socket
+
+    # Because extensions are dict, they are not passed by reference
+    # So we need to update the dict of the KHR_texture_transform extension if needed
+    if new_tex_info.extensions is not None and "KHR_texture_transform" in new_tex_info.extensions:
+        mh.pymat.extensions['EXT_materials_bump']['bumpTexture']['extensions']['KHR_texture_transform'] = new_tex_info.extensions["KHR_texture_transform"]
 
 
 # [Texture] => [Separate R] => [Mix Strength] =>

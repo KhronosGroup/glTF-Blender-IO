@@ -22,31 +22,25 @@ from ..search_node_tree import \
     get_texture_node_from_socket
 
 
-# EXT_materials_bump: d = h * bumpFactor, in metres, in heightSpace ("object" or "world").
+# EXT_materials_bump: d = h * bumpFactor, in meters, in heightSpace ("object" or "world").
 #
 # Two Blender setups map to it:
 # - Material Output Displacement <- Displacement node (bump only): heightSpace from the node space, bumpFactor = Scale.
 # - Principled BSDF Normal <- Bump node: Blender evaluates the Bump node against world space positions,
 #   so heightSpace is "world", bumpFactor = Distance (exact when Strength is 1).
+# If both are used, the Displacement node is exported.
 def export_bump(bmat, export_settings):
     export_settings['current_texture_transform'] = {}
-    log = export_settings['log']
 
     found = __find_displacement(bmat, export_settings)
-    bump = __find_bump(bmat, export_settings)
-    if found is not None and bump is not None:
-        log.warning("Material '{}' uses both a Displacement node and a Bump node; "
-                    "only the Displacement node is exported as EXT_materials_bump".format(bmat.name))
     if found is None:
-        found = bump
+        found = __find_bump(bmat, export_settings)
     if found is None:
         return None, {}, {}
 
-    height_socket, bump_factor, height_space = found
-    if bump_factor is None:
+    height_socket, bump_factor, height_space, factor_path = found
+    if bump_factor is None or bump_factor == 0.0:
         return None, {}, {}
-
-    __check_height_image(height_socket, export_settings)
 
     bump_texture, uvmap_info, udim_info, _ = gltf2_blender_gather_texture_info.gather_texture_info(
         height_socket,
@@ -63,7 +57,28 @@ def export_bump(bmat, export_settings):
     if bump_texture is not None:
         bump_extension['bumpTexture'] = bump_texture
 
-    # ponytail: no KHR_animation_pointer paths for bumpFactor / bumpTexture transform yet
+    # Storing path for KHR_animation_pointer
+    if factor_path is not None:
+        path_ = {}
+        path_['length'] = 1
+        path_['path'] = "/materials/XXX/extensions/EXT_materials_bump/bumpFactor"
+        export_settings['current_paths'][factor_path] = path_
+
+    if len(export_settings['current_texture_transform']) != 0:
+        for k in export_settings['current_texture_transform'].keys():
+            path_ = {}
+            path_['length'] = export_settings['current_texture_transform'][k]['length']
+            path_['path'] = export_settings['current_texture_transform'][k]['path'].replace(
+                "YYY", "extensions/EXT_materials_bump/bumpTexture/extensions")
+            path_['vector_type'] = export_settings['current_texture_transform'][k]['vector_type']
+            if k in export_settings['current_paths']:
+                if 'additional' not in export_settings['current_paths'][k]:
+                    export_settings['current_paths'][k]['additional'] = []
+                if path_['path'] != export_settings['current_paths'][k]['path']:
+                    export_settings['current_paths'][k]['additional'].append(path_['path'])
+            else:
+                export_settings['current_paths'][k] = path_
+
     export_settings['current_texture_transform'] = {}
 
     return Extension('EXT_materials_bump', bump_extension, False), \
@@ -72,6 +87,11 @@ def export_bump(bmat, export_settings):
 
 
 def __find_displacement(bmat, export_settings):
+    # With 'DISPLACEMENT' method, Blender only moves the vertices: there is no bump to export
+    # TODO: true displacement can't be represented in glTF. With 'BOTH', only the bump part is exported
+    if bmat.material.displacement_method == 'DISPLACEMENT':
+        return None
+
     outputs = [n for n in bmat.get_all_nodes_of_type(bpy.types.ShaderNodeOutputMaterial) if n[0].is_active_output]
     if not outputs:
         return None
@@ -87,19 +107,16 @@ def __find_displacement(bmat, export_settings):
     if not __has_height_texture(node, height_socket, export_settings):
         return None
 
-    log = export_settings['log']
-    if bmat.material.displacement_method != 'BUMP':
-        log.warning("Material '{}' uses true displacement; only its bump (normal perturbation) is exported "
-                    "as EXT_materials_bump".format(bmat.name))
-
     scale = node.inputs['Scale']
     if scale.is_linked:
-        log.warning("Displacement node Scale is linked; EXT_materials_bump is not exported for material '{}'".format(
-            bmat.name))
-        return height_socket, None, None
+        export_settings['log'].warning(
+            "Displacement node Scale is linked; EXT_materials_bump is not exported for material '{}'".format(
+                bmat.name))
+        return height_socket, None, None, None
 
-    return height_socket, __check_factor(scale.default_value, bmat, export_settings), \
-        'world' if node.space == 'WORLD' else 'object'
+    # Midlevel only adds a constant to the height, so it doesn't change the bump
+    return height_socket, scale.default_value, 'world' if node.space == 'WORLD' else 'object', \
+        "node_tree." + scale.path_from_id() + ".default_value"
 
 
 def __find_bump(bmat, export_settings):
@@ -114,24 +131,26 @@ def __find_bump(bmat, export_settings):
     if not __has_height_texture(node, height_socket, export_settings):
         return None
 
-    log = export_settings['log']
     strength, distance = node.inputs['Strength'], node.inputs['Distance']
     if strength.is_linked or distance.is_linked:
-        log.warning("Bump node Strength or Distance is linked; EXT_materials_bump is not exported for "
-                    "material '{}'".format(bmat.name))
-        return height_socket, None, None
+        export_settings['log'].warning(
+            "Bump node Strength or Distance is linked; EXT_materials_bump is not exported for material '{}'".format(
+                bmat.name))
+        return height_socket, None, None, None
 
-    factor = distance.default_value
-    if strength.default_value != 1.0:
-        # Blender Bump Strength blends normals: normalize(s * N_bump + (1 - s) * N).
-        # For small slopes this is close to scaling the height by s.
-        factor *= strength.default_value
-        log.warning("Bump node Strength {} is not 1.0; exported as bumpFactor = Strength * Distance, "
-                    "which is an approximation".format(strength.default_value))
+    # Blender Bump Strength blends normals: normalize(s * N_bump + (1 - s) * N).
+    # For small slopes this is close to scaling the height by s, so bumpFactor = Strength * Distance.
+    # Invert negates the height.
+    factor = distance.default_value * strength.default_value
     if node.invert:
         factor = -factor
 
-    return height_socket, __check_factor(factor, bmat, export_settings), 'world'
+    # Distance animation can only be exported as is when it is the bumpFactor
+    path = None
+    if strength.default_value == 1.0 and not node.invert:
+        path = "node_tree." + distance.path_from_id() + ".default_value"
+
+    return height_socket, factor, 'world', path
 
 
 def __has_height_texture(node, height_socket, export_settings):
@@ -141,25 +160,3 @@ def __has_height_texture(node, height_socket, export_settings):
         export_settings['log'].warning(
             "{} node Height is not driven by an image texture; EXT_materials_bump is not exported".format(node.name))
     return False
-
-
-def __check_factor(factor, bmat, export_settings):
-    # A negative factor (Bump invert, negative Distance or Scale) inverts the relief; bumpFactor allows it.
-    if factor == 0.0:
-        return None
-    return factor
-
-
-def __check_height_image(height_socket, export_settings):
-    result = get_texture_node_from_socket(height_socket, export_settings)
-    image = result.shader_node.image
-    log = export_settings['log']
-    if not image.colorspace_settings.is_data and image.colorspace_settings.name != 'Non-Color':
-        log.warning("Height image '{}' uses color space '{}'; EXT_materials_bump reads it as linear data, "
-                    "set it to Non-Color".format(image.name, image.colorspace_settings.name))
-    via_channel = any(isinstance(link.from_node, bpy.types.ShaderNodeSeparateColor)
-                      or link.from_socket.identifier == 'Alpha' for link in result.path)
-    # ponytail: depth >= 24 is a cheap "this image has RGB channels" check, no pixel scan
-    if not via_channel and image.depth >= 24:
-        log.warning("Height image '{}' is plugged in through its Color output: Blender uses its luminance, "
-                    "the red channel is exported".format(image.name))
