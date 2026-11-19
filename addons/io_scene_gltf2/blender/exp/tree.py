@@ -1183,7 +1183,7 @@ class VExportTree:
         for collection in node.blender_object.data.collections:  # Root bone collections
             node.bone_collections.recursive_bone_collection(node, collection)
 
-        # Propagate the collection visibility, and set solo
+        # Propagate the collection visibility
         for coll in node.bone_collections.collections.values():  # Root collections
             node.bone_collections.recursive_set_visibility_collection(coll, None)
 
