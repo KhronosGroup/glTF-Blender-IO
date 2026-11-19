@@ -1232,9 +1232,6 @@ class BoneCollection:
     def set_is_visible(self, visible):
         self.is_visible = visible
 
-    def set_is_solo(self, solo):
-        self.is_solo = solo
-
 
 class BoneCollectionTree:
     def __init__(self):
