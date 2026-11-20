@@ -406,6 +406,8 @@ def __get_image_data_mapping(sockets, results, use_tile, is_data, export_setting
                 dst_chan = Channel.A
             elif socket.socket.identifier == "Sheen Roughness":  # For KHR_materials_sheen
                 dst_chan = Channel.A
+            elif socket.socket.identifier == 'Height':  # For EXT_materials_bump
+                dst_chan = Channel.R
 
             if dst_chan is not None:
                 if use_tile is None:
