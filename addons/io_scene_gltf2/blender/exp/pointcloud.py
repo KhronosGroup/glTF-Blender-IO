@@ -15,6 +15,7 @@
 
 import numpy as np
 
+from ...io.com.gltf2_io_extensions import Extension
 from ..com import conversion as gltf2_blender_conversion
 from .material.materials import get_base_material
 from .primitive_extract import LoopData, PrimitiveCreator, single_extract_attribute_data
@@ -70,6 +71,7 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
     # This point cloud can be a Gaussian Splat, or a regular point cloud, depending on the attributes present
     sh_order = detect_sh_order(blender_pointcloud.attributes)
 
+    extensions = None
     if sh_order is None:
         # Regular point cloud, trying to retrieve color attributes
         custom_attributes.update(__get_color_attribute(blender_pointcloud, materials, export_settings))
@@ -77,12 +79,24 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
         # Gaussian Splat, retrieving all SH attributes
         custom_attributes.update(get_sh_attributes(blender_pointcloud, sh_order, export_settings))
 
+        # Set extensions for Gaussian Splat
+        extension_data = {
+            "kernel": "ellipse",
+            "color_space": "srgb_rec709_display",
+            "projection": "perspective",
+            "sortingMethod": "cameraDistance"
+        }
+        extensions = {}
+        extensions["KHR_gaussian_splat"] = Extension(
+            name="KHR_gaussian_splat", extension=extension_data, required=False)
+
     # And now, create the primitive infos
     primitives.append({
         'attributes': custom_attributes,
         'mode': 0,  # POINTS
         'material': 0,  # TODOPC
-        'uvmap_attributes_index': {}
+        'uvmap_attributes_index': {},
+        'extensions': extensions
     })
 
     export_settings['log'].info(
