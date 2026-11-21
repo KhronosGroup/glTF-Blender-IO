@@ -235,7 +235,7 @@ def __gather_extensions(vnode, export_settings):
                 extensions["KHR_node_visibility"] = gltf2_io_extensions.Extension(
                     name="KHR_node_visibility",
                     extension={"visible": False},
-                    required=True
+                    required=False
                 )
 
     if vnode.blender_type == VExportNode.COLLECTION:
