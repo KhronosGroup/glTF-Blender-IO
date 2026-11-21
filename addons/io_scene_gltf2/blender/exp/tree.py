@@ -31,13 +31,21 @@ def _natural_sort_key(name):
     Splits name into text/number chunks so that numeric parts sort numerically.
     E.g. Object2 < Object10, matching the Outliner's display order.
     """
-    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', name)]
+    return [int(c) if c.isdecimal() else c.lower() for c in re.split(r'(\d+)', name)]
 
 
 def _sort_by_name(iterable):
     """Sort Blender objects/collections/bones using natural sort to match
     the Outliner's default alphabetical display order."""
     return sorted(iterable, key=lambda x: _natural_sort_key(x.name))
+
+
+class NodeFlagStatus:
+    def __init__(self):
+        self.is_visible = True
+        self.is_selected = True
+        self.is_rendered = True
+        self.is_filtered = False  # use for Camera, light, or other nodes that may be filtered
 
 
 class VExportNode:
@@ -88,6 +96,7 @@ class VExportNode:
 
         # Only for armature
         self.bones = {}
+        self.bone_collections = BoneCollectionTree()
 
         # For deformed object
         self.armature = None  # for deformed object and for bone
@@ -106,6 +115,9 @@ class VExportNode:
         self.blender_object_id = None
 
         self.is_instancer = False
+
+        # Set default for filtering
+        self.flag_status = NodeFlagStatus()
 
     def add_child(self, uuid):
         self.children.append(uuid)
@@ -368,6 +380,10 @@ class VExportTree:
         # Storing this node
         self.add_node(node)
 
+        # For armature, we need to store the collection tree, in order to be able to retrieve visiblity
+        if node.blender_type == VExportNode.ARMATURE:
+            self.manage_bone_collections(node)
+
         ###### Manage children ######
 
         # GN instance have no children
@@ -484,7 +500,8 @@ class VExportTree:
                         node.matrix_world,
                         new_delta or delta,
                         blender_children,
-                        is_collection=True)
+                        is_collection=True,
+                        is_children_in_collection=True)
 
         if is_collection is True:  # Only for gltf_hierarchy_full_collections == True or hierarchy of instanced collections
             # Manage children objects
@@ -690,7 +707,7 @@ class VExportTree:
     def filter_tag(self):
         roots = self.roots.copy()
         for r in roots:
-            self.recursive_filter_tag(r, None)
+            self.recursive_filter_tag(r, NodeFlagStatus())
 
     def filter_perform(self):
         roots = self.roots.copy()
@@ -698,36 +715,83 @@ class VExportTree:
             self.recursive_filter(r, None)  # Root, so no parent
 
     def filter(self):
+        self.filter_modes()
         self.filter_tag()
         export_user_extensions('gather_tree_filter_tag_hook', self.export_settings, self)
         self.filter_perform()
         self.remove_empty_collections()  # Used only when exporting full collection hierarchy
         self.remove_filtered_nodes()
 
-    def recursive_filter_tag(self, uuid, parent_keep_tag, in_instance=False):
-        # parent_keep_tag is for collection instance
+    def filter_modes(self):
+        # Check what kind of filtering we need to apply based on export settings (or KHR_node_visibility)
+        self.filter_visibility = self.export_settings['gltf_visible']
+        self.filter_selectability = self.export_settings['gltf_selected']
+        self.filter_renderability = self.export_settings['gltf_renderable']
+
+    def recursive_filter_tag(self, uuid, parent_status, in_instance=False, instance_filtered=False):
+        # in_instance is True when the node is inside a collection instance (at any depth)
+
+        # Inside an instance collection,
         # some properties (selection, visibility)
         # are defined at collection level, and we need to use these values
         # for all objects of the collection instance.
+
+        # Renderability is also inherited from the collection instance
+        # But if instance collection is rendered,
+        # Everything inside can overwrite the inherited renderability to False
+
         # But some properties (camera, lamp ...) are not defined at collection level
-        # in_instance is True when the node is inside a collection instance (at any depth)
-        if parent_keep_tag is None or parent_keep_tag is True:
-            self.nodes[uuid].keep_tag = self.node_filter_not_inheritable_is_kept(
-                uuid) and self.node_filter_inheritable_is_kept(uuid, in_instance)
-        elif parent_keep_tag is False:
-            self.nodes[uuid].keep_tag = False
+
+        if in_instance:
+            self.nodes[uuid].flag_status.is_selected = parent_status.is_selected
+            self.nodes[uuid].flag_status.is_visible = parent_status.is_visible
+            self.nodes[uuid].flag_status.is_rendered = parent_status.is_rendered
+            # Keep the filtered status from the upper instance
+            self.nodes[uuid].flag_status.is_filtered = instance_filtered
+
+        self.node_filter_not_inheritable_is_kept(uuid) or self.node_filter_inheritable_is_kept(uuid, in_instance)
+
+        # Set keep_tag based on the filtering status
+        self.nodes[uuid].keep_tag = not self.nodes[uuid].flag_status.is_filtered
+
+        # Bones are always kept if they are not filtered by the flag status
+        if self.nodes[uuid].blender_bone is None:
+            if self.filter_visibility:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_visible
+            if self.filter_selectability:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_selected
+            if self.filter_renderability:
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[uuid].flag_status.is_rendered
         else:
-            self.export_settings['log'].error("This should not happen")
+            # For Bones:
+            # They are filtered base of the status of the armature too
+            # Warning: There is a special case if we are trying to remove the armature object itself
+            armature_uuid = self.nodes[uuid].armature
+            if hasattr(self.nodes[armature_uuid], "arma_exported"):
+                # This "arma_exported" is set only if we are removing the armature object itself
+                # whatever the keep_tag of the armature is (removed only because we are removing the armature object itself,
+                # or because of some other filters applied to the armature)
+                # So checking directly the status of the armature
+                if self.filter_visibility:
+                    self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[armature_uuid].flag_status.is_visible
+                if self.filter_selectability:
+                    self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[armature_uuid].flag_status.is_selected
+                if self.filter_renderability:
+                    self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[armature_uuid].flag_status.is_rendered
+            else:
+                # Otherwise, we also use the status of the armature to determine if the bone should be kept
+                self.nodes[uuid].keep_tag = self.nodes[uuid].keep_tag and self.nodes[armature_uuid].keep_tag
 
         for child in self.nodes[uuid].children:
             if self.nodes[uuid].blender_type == VExportNode.INST_COLLECTION or self.nodes[uuid].is_instancer:
                 # We need to split children into 2 categories: real children, and objects inside the collection
                 if self.nodes[uuid].children_type[child] == VExportNode.CHILDREN_IS_IN_COLLECTION:
-                    self.recursive_filter_tag(child, self.nodes[uuid].keep_tag, True)
+                    new_instance_filtered = instance_filtered if in_instance else self.nodes[uuid].flag_status.is_filtered
+                    self.recursive_filter_tag(child, self.nodes[uuid].flag_status, True, new_instance_filtered)
                 else:
-                    self.recursive_filter_tag(child, parent_keep_tag, in_instance)
+                    self.recursive_filter_tag(child, self.nodes[uuid].flag_status, in_instance, instance_filtered)
             else:
-                self.recursive_filter_tag(child, parent_keep_tag, in_instance)
+                self.recursive_filter_tag(child, self.nodes[uuid].flag_status, in_instance, instance_filtered)
 
         # When coming from collection instance, we can have some collection here
         # There were kept to be able to manage the visibility/renderability recursive propagation
@@ -785,12 +849,12 @@ class VExportTree:
         # Export Camera or not
         if self.nodes[uuid].blender_type == VExportNode.CAMERA:
             if self.export_settings['gltf_cameras'] is False:
-                return False
+                self.nodes[uuid].flag_status.is_filtered = True
 
         # Export Lamp or not
         if self.nodes[uuid].blender_type == VExportNode.LIGHT:
             if self.export_settings['gltf_lights'] is False:
-                return False
+                self.nodes[uuid].flag_status.is_filtered = True
 
         # Export deform bones only
         if self.nodes[uuid].blender_type == VExportNode.BONE:
@@ -798,80 +862,86 @@ class VExportTree:
                 # Check if bone has some objected parented to bone. We need to keep it in
                 # that case, even if this is not a def bone
                 if len([c for c in self.nodes[uuid].children if self.nodes[c].blender_type != VExportNode.BONE]) != 0:
-                    return True
-                return False
-
-        return True
+                    return
+                self.nodes[uuid].is_filtered = True
 
     def node_filter_inheritable_is_kept(self, uuid, in_instance=False):
 
         if self.nodes[uuid].blender_object is None:
             # geometry node instances
-            return True
+            return
 
         if self.nodes[uuid].blender_type == VExportNode.COLLECTION:
             # Collections, can't be filtered => we always keep them
-            return True
+            # When using visibility (for example), all objects inside the collection will inherit the visibility from the collection
+            # So the collection will be empty, and filtered at the end of process
+            return
+
+        if self.nodes[uuid].blender_bone is not None:
+            # Bones, set filter flags (but will be not be used by fitlers)
+            self.nodes[uuid].flag_status.is_visible = self.nodes[self.nodes[uuid]
+                                                                 .armature].bone_collections.bone_visibility[self.nodes[uuid].blender_bone.name]
 
         # Selection and visibility (the eye in outliner) are stored on object level.
-        # Objects inside a collection instance (for example from a linked library) always return False forselect_get() / visible_get().
+        # Objects inside a collection instance (for example from a linked library) always return False for select_get() / visible_get().
         # For these objects, the values are inherited from the instancer.
-        if self.export_settings['gltf_selected'] and in_instance is False \
-                and self.nodes[uuid].blender_object.select_get() is False:
-            return False
+        if in_instance is False and self.nodes[uuid].blender_object.select_get() is False:
+            self.nodes[uuid].flag_status.is_selected = False
 
-        if self.export_settings['gltf_visible']:
-            # The eye in outliner (object)
-            if in_instance is False and self.nodes[uuid].blender_object.visible_get() is False:
-                return False
+        # The eye in outliner (object)
+        if in_instance is False and self.nodes[uuid].blender_object.visible_get() is False:
+            self.nodes[uuid].flag_status.is_visible = False
 
-            # The screen in outliner (object)
-            if self.nodes[uuid].blender_object.hide_viewport is True:
-                return False
+        # The screen in outliner (object)
+        if self.nodes[uuid].blender_object.hide_viewport is True:
+            self.nodes[uuid].flag_status.is_visible = False
 
-            # The screen in outliner (collections)
-            if all([c.hide_viewport for c in self.nodes[uuid].blender_object.users_collection]):
-                return False
+        # The screen in outliner (collections)
+        if all([c.hide_viewport for c in self.nodes[uuid].blender_object.users_collection]):
+            self.nodes[uuid].flag_status.is_visible = False
 
         # The camera in outliner (object)
-        if self.export_settings['gltf_renderable']:
-            if self.nodes[uuid].blender_object.hide_render is True:
-                return False
+        if self.nodes[uuid].blender_object.hide_render is True:
+            self.nodes[uuid].flag_status.is_rendered = False
 
-            # The camera in outliner (collections)
-            if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
-                return False
+        # The camera in outliner (collections)
+        if all([c.hide_render for c in self.nodes[uuid].blender_object.users_collection]):
+            self.nodes[uuid].flag_status.is_rendered = False
 
-        # If we are given a collection, use all objects from it
-        if self.export_settings['gltf_collection']:
+        # If we are in an instance collection, the filter already applied
+        # So this check is only needed if we are not in an instance collection.
+        if in_instance is False and self.export_settings['gltf_collection']:
             local_collection = bpy.data.collections.get((self.export_settings['gltf_collection'], None))
             if not local_collection:
-                return False
+                self.nodes[uuid].flag_status.is_filtered = True
+                return
             found = any(x == self.nodes[uuid].blender_object for x in local_collection.all_objects)
             if not found:
-                return False
-        else:
+                self.nodes[uuid].flag_status.is_filtered = True
+                return
+        elif in_instance is False:
             if self.export_settings['gltf_active_collection'] and not self.export_settings['gltf_active_collection_with_nested']:
                 found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.objects)
                 if not found:
-                    return False
+                    self.nodes[uuid].flag_status.is_filtered = True
+                    return
 
             if self.export_settings['gltf_active_collection'] and self.export_settings['gltf_active_collection_with_nested']:
                 found = any(x == self.nodes[uuid].blender_object for x in bpy.context.collection.all_objects)
                 if not found:
-                    return False
+                    self.nodes[uuid].flag_status.is_filtered = True
+                    return
 
         if BLENDER_GLTF_SPECIAL_COLLECTION in bpy.data.collections and self.nodes[uuid].blender_object.name in \
                 bpy.data.collections[BLENDER_GLTF_SPECIAL_COLLECTION].objects:
-            return False
+            self.nodes[uuid].flag_status.is_filtered = True
 
         if self.export_settings['gltf_armature_object_remove'] is True:
             # If we remove the Armature object
             if self.nodes[uuid].blender_type == VExportNode.ARMATURE:
                 self.nodes[uuid].arma_exported = True
-                return False
-
-        return True
+                self.nodes[uuid].flag_status.is_filtered = True
+                return
 
     def remove_filtered_nodes(self):
         if self.export_settings['gltf_armature_object_remove'] is True:
@@ -1127,3 +1197,100 @@ class VExportTree:
             return
 
         self.export_settings['gltf_collection_center'] = sum(centers, Vector()) / len(centers)
+
+    def manage_bone_collections(self, node):
+        for collection in node.blender_object.data.collections:  # Root bone collections
+            node.bone_collections.recursive_bone_collection(node, collection)
+
+        # Propagate the collection visibility
+        for coll in node.bone_collections.collections.values():  # Root collections
+            node.bone_collections.recursive_set_visibility_collection(coll, None)
+
+        # Check if there is any collection marked as solo
+        any_solo = any(coll.is_solo for coll in node.bone_collections.collections.values())
+
+        # If any collection is solo, only those collections are considered visible
+        # (No check on collection visibility is done here, only solo status is considered)
+        if any_solo:
+            for bone in node.bone_collections.bones:
+                node.bone_collections.bone_visibility[bone] = any(
+                    node.bone_collections.collections[coll].is_solo for coll in node.bone_collections.bones[bone])
+
+            # Some bones may not belong to any collection
+            # In that case, the bone is considered not visible, whatever its hidden state in the pose
+            for bone in node.blender_object.pose.bones:
+                if bone.name not in node.bone_collections.bone_visibility:
+                    node.bone_collections.bone_visibility[bone.name] = False
+
+        else:
+            # No solo, so check visibility base on the collection's visibility
+            # Calculate visibility for bones
+            for bone in node.bone_collections.bones:
+                node.bone_collections.bone_visibility[bone] = any(
+                    node.bone_collections.collections[coll].is_visible
+                    for coll in node.bone_collections.bones[bone]
+                ) and not node.blender_object.pose.bones[bone].hide
+
+            # Some bones may not belong to any collection
+            # In that case, the bone is considered visible if it is not hidden in the pose
+            for bone in node.blender_object.pose.bones:
+                if bone.name not in node.bone_collections.bone_visibility:
+                    node.bone_collections.bone_visibility[bone.name] = not bone.hide
+
+
+class BoneCollection:
+    def __init__(self, name):
+        self.name = name
+        self.children = []
+        self.is_visible = True
+        self.is_solo = False
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def set_is_visible(self, visible):
+        self.is_visible = visible
+
+
+class BoneCollectionTree:
+    def __init__(self):
+        self.collections = {}
+        self.bones = {}     # Bone name -> list of collection names
+        self.bone_visibility = {}  # Bone name -> visibility (True/False)
+
+    def add_collection(self, name):
+        if name not in self.collections:
+            self.collections[name] = BoneCollection(name)
+        return self.collections[name]
+
+    def add_bone(self, bone_name, collection_name):
+        if bone_name not in self.bones:
+            self.bones[bone_name] = []
+        if collection_name not in self.bones[bone_name]:
+            self.bones[bone_name].append(collection_name)
+
+    def recursive_bone_collection(self, node, collection, parent_coll=None):
+        # Create the collection in the node's bone collection tree
+        coll = node.bone_collections.add_collection(collection.name)
+        coll.is_visible = collection.is_visible
+        coll.is_solo = collection.is_solo
+
+        # Store bones of the collection
+        for bone in collection.bones:
+            node.bone_collections.add_bone(bone.name, coll.name)
+
+        for child in collection.children:
+            self.recursive_bone_collection(node, child, coll)
+
+        # Store collection
+        if parent_coll is not None:
+            parent_coll.add_child(coll)
+
+    def recursive_set_visibility_collection(self, collection, parent_collection):
+        if parent_collection is not None:
+            collection.set_is_visible(parent_collection.is_visible and collection.is_visible)
+        else:
+            collection.set_is_visible(collection.is_visible)  # should be already set :)
+
+        for child in collection.children:
+            self.recursive_set_visibility_collection(child, collection)
