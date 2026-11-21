@@ -1196,6 +1196,8 @@ class ExportGLTF2_Base(ConvertGLTF2_Base):
         export_settings['gltf_loglevel'] = self.export_loglevel
         if export_settings['gltf_loglevel'] < 0:
             export_settings['loglevel'] = set_debug_log()
+        else:
+            export_settings['loglevel'] = export_settings['gltf_loglevel']
 
         export_settings['exported_images'] = {}
         export_settings['exported_texture_nodes'] = []
