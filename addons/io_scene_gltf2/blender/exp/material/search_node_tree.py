@@ -17,7 +17,7 @@
 #
 
 import bpy
-from io_scene_gltf2.blender.exp.cache import cached, cached_by_key
+from io_scene_gltf2.blender.exp.cache import cached
 from ....blender.com.conversion import texture_transform_blender_to_gltf, inverted_trs_mapping_node
 import typing
 
@@ -87,67 +87,7 @@ class NodeTreeSearcher:
         if start_socket.socket is None:
             return []
 
-        # Search if direct node of the socket matches the filter
-        if filter(start_socket.socket.node):
-            return [NodeTreeSearchResult(start_socket.socket.node, [], start_socket.group_path.copy())]
-
-        return cls.__search_from_socket(
-            start_socket.socket,
-            start_socket.group_path.copy(),
-            [],
-            filter,
-            export_settings)
-
-    @classmethod
-    @cached_by_key(key=lambda cls, start_socket, group_path, search_path, filter,
-                   export_settings: (start_socket.as_pointer(), tuple(id(g) for g in group_path), filter.__name__))
-    def __search_from_socket(cls, start_socket, group_path, search_path, filter, export_settings):
-        def __get_socket_index(sockets, socket):
-            for i, soc in enumerate(sockets):
-                if soc == socket:
-                    return i
-            assert False
-
-        results = []
-        for link in start_socket.links:  # TODO perf ?
-            # follow the link to a shader node
-            linked_node = link.from_node
-
-            if linked_node.type == "GROUP":
-                group_output_node = [node for node in linked_node.node_tree.nodes if node.type == "GROUP_OUTPUT"][0]
-                i = __get_socket_index(linked_node.outputs, link.from_socket)
-                socket = group_output_node.inputs[i]
-                new_group_path = group_path.copy()
-                new_group_path.append(linked_node)
-                linked_results = cls.__search_from_socket(
-                    socket, new_group_path, search_path + [link], filter, export_settings)
-                if linked_results:
-                    search_path.append(link)
-                    results += linked_results
-                continue
-
-            if linked_node.type == "GROUP_INPUT":
-                i = __get_socket_index(linked_node.outputs, link.from_socket)
-                socket = group_path[-1].inputs[i]
-                linked_results = cls.__search_from_socket(
-                    socket, group_path[:-1].copy(), search_path + [link], filter, export_settings)
-                if linked_results:
-                    search_path.append(link)
-                    results += linked_results
-                continue
-
-            # check if the node matches the filter
-            if filter(linked_node):
-                results.append(NodeTreeSearchResult(linked_node, search_path + [link], group_path.copy()))
-            # traverse into inputs of the node
-            for input_socket in linked_node.inputs:
-                linked_results = cls.__search_from_socket(
-                    input_socket, group_path.copy(), search_path + [link], filter, export_settings)
-                if linked_results:
-                    search_path.append(link)
-                    results += linked_results
-
-        return results
+        return start_socket.to_node_nav().search_back(filter)
 
 
 @cached
@@ -331,7 +271,7 @@ class NodeNav:
             self.ascend_forward()
             self.move_forward()
 
-    def move_back(self, in_soc=None, no_moved_reinit=False):
+    def move_back(self, in_soc=None, no_moved_reinit=False, use_link_index=0):
         """Move backwards through an input socket to the next node."""
         if not no_moved_reinit:
             self.moved = False
@@ -342,7 +282,7 @@ class NodeNav:
             return
 
         # Warning, slow! socket.links is O(total number of links)!
-        link = self.in_socket.links[0]
+        link = self.in_socket.links[use_link_index]
 
         self.node = link.from_node
         self.out_socket = link.from_socket
@@ -368,6 +308,54 @@ class NodeNav:
         s.select_input_socket(in_soc)
         s.move_back()
         return s
+
+    def search_back(self, filter: Filter, in_soc=None):
+        """Searches backwards through an input socket for a node that matches the filter."""
+
+        self.select_input_socket(in_soc)
+
+        if not self.in_socket:
+            return []
+
+        # Search if direct node of the socket matches the filter
+        if filter(self.node):
+            return [NodeTreeSearchResult(self.node, [], [g for g, _ in self.stack])]
+
+        return self.__search_back([], filter, None)
+
+    def __search_back(self, search_path, filter: Filter, in_soc=None):
+        """Searches backwards through an input socket for a node that matches the filter."""
+
+        results = []
+
+        self.select_input_socket(in_soc)
+
+        links = self.in_socket.links if self.in_socket and self.in_socket.is_linked else []
+
+        for idx_link, link_index in enumerate(links):
+            s = self.copy()
+            s.move_back(in_soc, use_link_index=idx_link)
+
+            # Group output, group or reroute without any link for this socket
+            if s.in_socket is not None:
+                continue
+            # Group without any node_tree
+            if s.node.type == "GROUP":
+                continue
+
+            if filter(s.node):
+                res = NodeTreeSearchResult(s.node, search_path +
+                                           [link_index], [g for g, _ in s.stack])
+                results.append(res)
+
+            # Recursivity for all socket of the current node
+            for input_socket in s.node.inputs:
+                sub_results = s.__search_back(
+                    search_path + [link_index], filter, input_socket)
+                if sub_results:
+                    results.extend(sub_results)
+
+        return results
 
     def get_constant(self, in_soc=None):
         """Gets a constant from an input socket. Returns None if non-constant."""
