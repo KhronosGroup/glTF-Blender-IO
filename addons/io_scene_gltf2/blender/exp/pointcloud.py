@@ -87,8 +87,8 @@ def gather_point_cloud(blender_pointcloud, materials, export_settings):
             "sortingMethod": "cameraDistance"
         }
         extensions = {}
-        extensions["KHR_gaussian_splat"] = Extension(
-            name="KHR_gaussian_splat", extension=extension_data, required=False)
+        extensions["KHR_gaussian_splatting"] = Extension(
+            name="KHR_gaussian_splatting", extension=extension_data, required=False)
 
     # And now, create the primitive infos
     primitives.append({
