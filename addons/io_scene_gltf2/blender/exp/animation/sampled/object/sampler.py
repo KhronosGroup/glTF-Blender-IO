@@ -131,9 +131,12 @@ def __convert_keyframes(obj_uuid: str, channel: str, keyframes, action_name: str
 
     transform = mathutils.Matrix.Identity(4)
 
-    need_rotation_correction = (
-        export_settings['gltf_cameras'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or (
-        export_settings['gltf_lights'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+    need_rotation_correction = is_yup and (
+        (export_settings['gltf_cameras'] and
+         export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or
+        (export_settings['gltf_lights'] and
+         export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+    )
 
     values = []
     for keyframe in keyframes:

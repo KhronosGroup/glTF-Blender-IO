@@ -126,9 +126,12 @@ def __convert_keyframes(
     is_yup = export_settings['gltf_yup']
 
     if id_type == "OBJECT":
-        need_rotation_correction = (
-            export_settings['gltf_cameras'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or (
-            export_settings['gltf_lights'] and export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+        need_rotation_correction = is_yup and (
+            (export_settings['gltf_cameras'] and
+             export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.CAMERA) or
+            (export_settings['gltf_lights'] and
+             export_settings['vtree'].nodes[obj_uuid].blender_type == VExportNode.LIGHT)
+        )
     else:
         need_rotation_correction = False
 
