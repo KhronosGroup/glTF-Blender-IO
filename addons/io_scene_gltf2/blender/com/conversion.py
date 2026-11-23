@@ -17,9 +17,10 @@ from mathutils import Matrix, Vector
 import numpy as np
 from ...io.com import constants as gltf2_io_constants
 
-PBR_WATTS_TO_LUMENS = 683
+PBR_WATTS_TO_LUMENS = 177
 # Industry convention, biological peak at 555nm, scientific standard as part of SI candela definition.
-
+# See https://github.com/KhronosGroup/glTF/issues/2473#issuecomment-2688156071
+# See https://github.com/KhronosGroup/glTF-Blender-IO/issues/2554
 
 # This means use the inverse of the TRS transform.
 def inverted_trs_mapping_node(mapping_transform):
