@@ -376,7 +376,7 @@ def __gather_extensions(blender_data,
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
         return None
 
-    if not bpy.data.scenes[0].gltf2_KHR_materials_variants_variants:
+    if not bpy.context.scene.gltf2_KHR_materials_variants_variants:
         return None
 
     # Material idx is the slot idx. Retrieve associated variant, if any
