@@ -695,6 +695,7 @@ are supported directly by this add-on:
 - ``EXT_texture_webp``
 - ``KHR_texture_basisu``
 - ``KHR_gaussian_splatting``
+- ``KHR_node_visibility``
 
 .. rubric:: Export
 
@@ -725,12 +726,13 @@ are supported directly by this add-on:
 KHR_node_visibility
 -------------------
 
-Export using ``KHR_node_visibility`` extension.
+Using ``KHR_node_visibility`` extension, for importer and exporter
 Blender is not fully compatible with this extension:
 - In glTF, the visibility of a node is recursively propagated to its children.
-- Blender does not support this behavior, so visibility may not be accurately represented for nested nodes.
+- Blender does not support this behavior, so visibility may not be accurately represented for nested nodes during export
+- At import, we manually propagate visibility to child nodes to approximate the glTF behavior.
 
-``KHR_animation_pointer`` for ``KHR_node_visibility`` is not implemented yet.
+``KHR_animation_pointer`` for ``KHR_node_visibility`` is not implemented yet, neither for import nor export.
 
 Third-party glTF Extensions
 ---------------------------
