@@ -647,18 +647,6 @@ If you are using EEVEE render engine, the node setup will be ignored,
 and only the strength field on the light object is used.
 
 
-Visibility
-==========
-
-Blender can import node visibility from glTF files that use the ``KHR_node_visibility`` extension.
-Note that this support is limited to not animated visibility, ``KHR_animation_pointer`` is not supported by the importer for the visibility.
-
-The technical reason is that glTF visibility is recursive for all children, while Blender visibility is per object.
-So, if a parent node is hidden in glTF file, all children are hidden too.
-
-During import, the add-on will set the visibility of all children to match the parent node visibility.
-This workaround prevents the importer to manage visibility animation coming from the glTF file.
-
 Extensions
 ==========
 
@@ -727,10 +715,11 @@ KHR_node_visibility
 -------------------
 
 Using ``KHR_node_visibility`` extension, for importer and exporter
+
 Blender is not fully compatible with this extension:
 - In glTF, the visibility of a node is recursively propagated to its children.
-- Blender does not support this behavior, so visibility may not be accurately represented for nested nodes during export
-- At import, we manually propagate visibility to child nodes to approximate the glTF behavior.
+- Blender does not support this behavior, so visibility may not be accurately represented for nested nodes during export.
+- We manually propagate visibility to recursives children nodes to approximate the glTF behavior during import.
 
 ``KHR_animation_pointer`` for ``KHR_node_visibility`` is not implemented yet, neither for import nor export.
 
