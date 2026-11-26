@@ -522,7 +522,11 @@ class PrimitiveCreator:
                     loop_data.warning_already_displayed_vc_nodetree = True
 
         # There is only alpha Vertex Color in node tree
-        elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None:
+        # This case is not managed in MATERIAL mode only: in NAME and ACTIVE modes,
+        # the requested Vertex Color is exported as COLOR_0 by the branch below,
+        # as it is when the node tree uses its color (or no Vertex Color at all)
+        elif material_info['vc_info']['color_type'] is None and material_info['vc_info']['alpha_type'] is not None and \
+                export_settings['gltf_vertex_color'] == "MATERIAL":
             export_settings['log'].warning(
                 'We are not managing this case for now (Vertex Color alpha without color)')
 
