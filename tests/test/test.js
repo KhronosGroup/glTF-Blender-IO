@@ -346,6 +346,48 @@ describe('Exporter', function () {
                 assert.strictEqual(normalMapAndBump.normalTexture.scale, 0.5);
             });
 
+            it('exports EXT_materials_bump', function () {
+                let gltfPath = path.resolve(outDirPath, '01_ext_materials_bump.gltf');
+                const asset = JSON.parse(fs.readFileSync(gltfPath));
+                assert(asset.extensionsUsed.includes('EXT_materials_bump'));
+                const bumpImage = (material) => {
+                    const ext = material.extensions.EXT_materials_bump;
+                    return asset.images[asset.textures[ext.bumpTexture.index].source].uri;
+                };
+
+                // Displacement node (Object space) -> heightSpace object, bumpFactor = Scale
+                const object = asset.materials.find(m => m.name === 'BumpObject');
+                const objectExt = object.extensions.EXT_materials_bump;
+                assert.strictEqual(objectExt.heightSpace, 'object');
+                assert.equalEpsilon(objectExt.bumpFactor, 0.02);
+                assert.strictEqual(bumpImage(object), '01_ext_materials_bump_height.png');
+                assert.strictEqual(object.normalTexture, undefined);
+
+                // Bump node -> heightSpace world, bumpFactor = Distance, Normal Map still exported as normalTexture
+                const world = asset.materials.find(m => m.name === 'BumpWorld');
+                const worldExt = world.extensions.EXT_materials_bump;
+                assert.strictEqual(worldExt.heightSpace, 'world');
+                assert.equalEpsilon(worldExt.bumpFactor, 0.05);
+                assert.strictEqual(bumpImage(world), '01_ext_materials_bump_height.png');
+                assert.strictEqual(asset.images[asset.textures[world.normalTexture.index].source].uri, '01_principled_normal.png');
+
+                // Bump Strength 0.5, Distance 0.1 -> bumpFactor = Strength * Distance
+                const strength = asset.materials.find(m => m.name === 'BumpStrength');
+                assert.strictEqual(strength.extensions.EXT_materials_bump.heightSpace, 'world');
+                assert.equalEpsilon(strength.extensions.EXT_materials_bump.bumpFactor, 0.05);
+                assert.strictEqual(strength.normalTexture, undefined);
+
+                // Displacement only method: no bump in Blender, so no extension
+                const trueDisplacement = asset.materials.find(m => m.name === 'BumpTrueDisplacement');
+                assert.strictEqual(trueDisplacement.extensions?.EXT_materials_bump, undefined);
+
+                // Animated Displacement Scale and Bump Distance -> animation pointer on bumpFactor
+                const pointers = asset.animations.flatMap(a => a.channels.map(c => c.target.extensions?.KHR_animation_pointer?.pointer));
+                assert(pointers.includes('/materials/' + asset.materials.indexOf(object) + '/extensions/EXT_materials_bump/bumpFactor'));
+                assert(pointers.includes('/materials/' + asset.materials.indexOf(world) + '/extensions/EXT_materials_bump/bumpFactor'));
+                assert(!pointers.includes('/materials/' + asset.materials.indexOf(strength) + '/extensions/EXT_materials_bump/bumpFactor'));
+            });
+
             it('can export an emissive map from the Emission node', function () {
                 let gltfPath = path.resolve(outDirPath, '01_principled_material.gltf');
                 const asset = JSON.parse(fs.readFileSync(gltfPath));
@@ -3827,6 +3869,35 @@ describe('Exporter', function () {
 
                     assert.strictEqual(asset.images[imageIndex].uri, '01_principled_normal.png');
                     assert(fs.existsSync(path.resolve(outDirPath, '01_principled_normal.png')));
+                });
+
+                it('roundtrips EXT_materials_bump', function () {
+                    let dir = '01_ext_materials_bump';
+                    let outDirPath = path.resolve(OUT_PREFIX, 'roundtrip', dir, outDirName);
+                    let gltfPath = path.resolve(outDirPath, dir + '.gltf');
+                    const asset = JSON.parse(fs.readFileSync(gltfPath));
+                    const bump = name => asset.materials.find(m => m.name === name).extensions.EXT_materials_bump;
+                    const bumpImage = ext => asset.images[asset.textures[ext.bumpTexture.index].source].uri;
+
+                    const object = bump('BumpObject');
+                    assert.strictEqual(object.heightSpace, 'object');
+                    assert.equalEpsilon(object.bumpFactor, 0.02);
+                    assert.strictEqual(bumpImage(object), '01_ext_materials_bump_height.png');
+                    const transform = object.bumpTexture.extensions.KHR_texture_transform;
+                    assert.equalEpsilonArray(transform.offset, [0.25, 0.5]);
+                    assert.equalEpsilonArray(transform.scale, [2, 3]);
+
+                    const world = bump('BumpWorld');
+                    assert.strictEqual(world.heightSpace, 'world');
+                    assert.equalEpsilon(world.bumpFactor, 0.05);
+                    assert.strictEqual(bumpImage(world), '01_ext_materials_bump_height.png');
+                    const worldMaterial = asset.materials.find(m => m.name === 'BumpWorld');
+                    assert.strictEqual(asset.images[asset.textures[worldMaterial.normalTexture.index].source].uri, '01_principled_normal.png');
+
+                    // A missing heightSpace means "object", and is written explicitly on export; a negative bumpFactor is kept
+                    const noHeightSpace = bump('BumpNoHeightSpace');
+                    assert.strictEqual(noHeightSpace.heightSpace, 'object');
+                    assert.equalEpsilon(noHeightSpace.bumpFactor, -0.03);
                 });
 
                 it('roundtrips an emissive map', function () {

@@ -362,6 +362,10 @@ class BlenderPointerAnim():
                 socket = NodeSocket(
                     gltf.socket_infos[asset_idx]['Anisotropy Texture'], [
                         asset['blender_nodetree']])
+            elif pointer_tab[-4] == "bumpTexture":
+                socket = NodeSocket(
+                    gltf.socket_infos[asset_idx]['Bump Texture'], [
+                        asset['blender_nodetree']])
             else:
                 print("Some Texture are not managed for KHR_animation_pointer / KHR_texture_transform")
 
@@ -606,6 +610,19 @@ class BlenderPointerAnim():
                 blender_path = dispersion_socket.socket.path_from_id() + ".default_value"
                 group_name = 'Material'
                 num_components = 1
+
+        if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
+                pointer_tab[3] == "extensions" and \
+                pointer_tab[4] == "EXT_materials_bump" and \
+                pointer_tab[5] == "bumpFactor" and \
+                'Bump Factor' in gltf.socket_infos[asset_idx]:  # No bump nodes are created without bumpTexture
+
+            bump_factor_socket = NodeSocket(
+                gltf.socket_infos[asset_idx]['Bump Factor'], [
+                    asset['blender_nodetree']])
+            blender_path = bump_factor_socket.socket.path_from_id() + ".default_value"
+            group_name = 'Material'
+            num_components = 1
 
         if len(pointer_tab) == 6 and pointer_tab[1] == "materials" and \
                 pointer_tab[3] == "extensions" and \

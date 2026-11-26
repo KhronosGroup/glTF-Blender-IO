@@ -56,7 +56,10 @@ def gather_material_normal_texture_info_class(
         FilterByType(bpy.types.ShaderNodeNormalMap),
         export_settings)
     if not result:
-        if get_texture_node_from_socket(primary_socket, export_settings) is not None:
+        # A height texture through a Bump node on the base Normal is exported by EXT_materials_bump, don't warn
+        is_bump = primary_socket.socket.identifier == 'Normal' and NodeTreeSearcher.from_socket(
+            primary_socket, FilterByType(bpy.types.ShaderNodeBump), export_settings)
+        if not is_bump and get_texture_node_from_socket(primary_socket, export_settings) is not None:
             export_settings['log'].warning(
                 "Texture plugged into '{}' socket without a Normal Map node is not exported as normal texture".format(
                     primary_socket.socket.name))

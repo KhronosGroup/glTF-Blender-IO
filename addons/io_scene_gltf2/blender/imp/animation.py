@@ -120,6 +120,8 @@ class BlenderAnimation():
                             "iridescenceTexture") if "KHR_materials_iridescence" in mat.extensions else None,
                         mat.extensions["KHR_materials_iridescence"].get(
                             "iridescenceThicknessTexture") if "KHR_materials_iridescence" in mat.extensions else None,
+                        mat.extensions["EXT_materials_bump"].get(
+                            "bumpTexture") if "EXT_materials_bump" in mat.extensions else None,
                     ]
 
                     for tex in [t for t in texs if t is not None]:
@@ -143,6 +145,7 @@ class BlenderAnimation():
                         "KHR_materials_specular",
                         "KHR_materials_anisotropy",
                         "KHR_materials_dispersion",
+                        "EXT_materials_bump",
                 ]:
                     if mat.extensions is not None and ext in mat.extensions:
                         BlenderPointerAnim.anim(gltf, anim_idx, mat.extensions[ext], mat_idx, 'EXT', name=mat.name)

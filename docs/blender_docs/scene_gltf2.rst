@@ -244,6 +244,33 @@ the correct image and will copy the strength setting into the glTF.
    See: :doc:`Cycles Render Baking </render/cycles/baking>`
 
 
+Bump Map
+^^^^^^^^
+
+A height (bump) map is exported using the ``EXT_materials_bump`` extension.
+The height is read from the red (``R``) channel of an image, as linear data,
+so the Image Texture node should have its *Color Space* set to Non-Color.
+The extension stores the height in meters, measured either in object space or in world space.
+
+- Object space: plug the image into the *Height* input of a Displacement node set to *Object Space*,
+  connected to the *Displacement* input of the Material Output node,
+  with the material *Displacement* method set to *Bump Only*.
+  The Displacement node *Scale* is exported as the bump factor. *Midlevel* has no effect on bump.
+  The bump scales with the object.
+- World space: plug the image into the *Height* input of a Bump node connected to the *Normal* input of the
+  Principled BSDF. The Bump node *Distance* is exported as the bump factor.
+  A Normal Map node can be chained into the Bump node *Normal* input; it is exported as the normal texture.
+  The bump does not scale with the object.
+
+A Bump node *Strength* other than 1.0 is exported as *Strength* × *Distance*, which is an approximation.
+An inverted bump (*Invert* option, or a negative *Distance* or *Scale*) is exported as a negative bump factor.
+If both setups are used, only the Displacement node is exported.
+With the *Displacement and Bump* method, only the bump is exported.
+With the *Displacement Only* method, nothing is exported, because true displacement can't be represented in glTF.
+
+At import, an object space bump creates a Displacement node, and a world space bump creates a Bump node.
+
+
 Emissive
 ^^^^^^^^
 
@@ -672,6 +699,7 @@ are supported directly by this add-on:
 - ``KHR_materials_dispersion``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
+- ``EXT_materials_bump``
 - ``KHR_lights_punctual``
 - ``KHR_texture_transform``
 - ``KHR_mesh_quantization``
@@ -698,6 +726,7 @@ are supported directly by this add-on:
 - ``KHR_materials_dispersion``
 - ``KHR_materials_ior``
 - ``KHR_materials_variants``
+- ``EXT_materials_bump``
 - ``KHR_texture_transform``
 - ``EXT_mesh_gpu_instancing``
 - ``EXT_meshopt_compression``
