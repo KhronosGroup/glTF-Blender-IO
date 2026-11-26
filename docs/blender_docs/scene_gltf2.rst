@@ -683,7 +683,6 @@ are supported directly by this add-on:
 - ``EXT_texture_webp``
 - ``KHR_texture_basisu``
 - ``KHR_gaussian_splatting``
-- ``KHR_node_visibility``
 
 .. rubric:: Export
 
