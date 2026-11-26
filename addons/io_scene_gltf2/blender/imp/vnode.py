@@ -71,6 +71,11 @@ class VNode:
         # Store in which glTF scene(s) this node is used.
         self.scenes = []
 
+        # Note that visibility will be overridden by KHR_node_visibility extension if present.
+        # This default value is mostly set for fake/additional nodes that do not come from glTF,
+        # During VNodeTree construction
+        self.visibility = True  # Default to visible (for KHR_node_visibility)
+
     def trs(self):
         # (final TRS) = (rotation after) (base TRS) (rotation before)
         t, r, s = self.base_trs
