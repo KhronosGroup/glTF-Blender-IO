@@ -704,7 +704,20 @@ are supported directly by this add-on:
 - ``KHR_meshopt_compression``
 - ``KHR_animation_pointer``
 - ``EXT_texture_webp``
-- ``KHR_texture_basisu``
+- ``KHR_texture_basisu``,
+- ``KHR_node_visibility``
+
+
+
+KHR_node_visibility
+-------------------
+
+Export using ``KHR_node_visibility`` extension.
+Blender is not fully compatible with this extension:
+- In glTF, the visibility of a node is recursively propagated to its children.
+- Blender does not support this behavior, so visibility may not be accurately represented for nested nodes.
+
+``KHR_animation_pointer`` for ``KHR_node_visibility`` is not implemented yet.
 
 Third-party glTF Extensions
 ---------------------------
@@ -1044,8 +1057,7 @@ Data - Scene Graph
 Geometry Nodes Instances
    Export Geometry nodes instances. This feature is experimental.
 
-GPU Instances
-   Export using ``EXT_mesh_gpu_instancing`` extensions.
+
 
 Flatten Object Hierarchy
    Useful in case of non-decomposable TRS matrix. Only skinned meshes will stay children of armature.
@@ -1054,6 +1066,14 @@ Full Collection Hierarchy
    Export collections as empty, keeping full hierarchy. If an object is in multiple collections,
    it will be exported only once, in the first collection it is found.
 
+Data - Scene Graph - Extensions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+GPU Instances
+   Export using ``EXT_mesh_gpu_instancing`` extensions.
+
+Node Visibility
+   Export using ``KHR_node_visibility`` extension.
 
 Data - Mesh
 ^^^^^^^^^^^
