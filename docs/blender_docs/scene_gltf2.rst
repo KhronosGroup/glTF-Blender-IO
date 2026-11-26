@@ -1124,8 +1124,8 @@ Create Compressed Images
    For already WebP textures, nothing happens.
 Compressed images Type
    Choose the type of compressed images to create: WebP or KTX.
-   Compressed Images Fallback
-      For all WebP textures, create a png fallback texture.
+Compressed Images Fallback
+   For all WebP textures, create a png fallback texture.
 Unused images
    Export images that are not used in any material.
 Unused textures
