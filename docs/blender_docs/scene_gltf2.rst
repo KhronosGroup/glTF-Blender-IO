@@ -1319,8 +1319,29 @@ See :doc:`/scene_layout/collections/collections` for more information about coll
 Here are the options & specificity for collection export:
 
 - Include part of options are not available for collection exporter (like every other exporter).
-- Option to export at collection center (at center of mass of all root objects of the collection).
 - Custom Properties of the collection are exported as Scene glTF extras.
+
+The *Collection* panel contains options for choosing the exported scene origin.
+These options are only available for collection exporters, not in the file browser export dialog.
+
+Collection Center
+   Determines which position becomes the origin of the exported scene.
+   Exported root objects are translated relative to this position without changing their rotation or scale.
+
+   :World Origin:
+      Uses the Blender world origin, preserving the objects' world-space positions.
+   :Center of Mass:
+      Uses the average world-space position of the exported root objects' origins.
+      This is not weighted by object mass or based on geometry bounds.
+   :Object Position:
+      Uses the world-space position of the object specified by *Center Object*.
+   :Instance Offset:
+      Uses the collection's :ref:`Instance Offset <bpy.types.Collection.instance_offset>`.
+
+Center Object :guilabel:`Object Position`
+   Object in the current scene whose position becomes the exported scene origin.
+   Only the object's position is used; its rotation and scale do not affect the origin.
+   If no valid object is specified, the world origin is used.
 
 
 Contributing
