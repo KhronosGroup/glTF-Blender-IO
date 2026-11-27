@@ -132,7 +132,11 @@ def __filter_image(sockets, export_settings):
 
 
 @cached
-def __gather_buffer_view(image_data, mime_type, name, export_settings):
+def __gather_buffer_view(image_data: ExportImage, mime_type: str, name: str, export_settings):
+    if export_settings['gltf_use_original_textures'] is True:
+        if image_data.original is not None:
+            return None, None
+
     if export_settings['gltf_format'] != 'GLTF_SEPARATE':
         data, factor = image_data.encode(mime_type, export_settings)
         if len(data) == 0:
@@ -330,12 +334,12 @@ def __get_image_data_mapping(sockets, results, use_tile, is_data, export_setting
     composed_image.set_is_data(is_data)
 
     for result, socket in zip(results, sockets):
-        # Assume that user know what he does, and that channels/images are already combined correctly for pbr
+        # Assume that user knows what they are doing, and that channels/images are already combined correctly for pbr
         # If not, we are going to keep only the first texture found
         # Example : If user set up 2 or 3 different textures for Metallic / Roughness / Occlusion
         # Only 1 will be used at export
         # This Warning is displayed in UI of this option
-        if export_settings['gltf_keep_original_textures']:
+        if export_settings['gltf_use_original_textures']:
             composed_image = ExportImage.from_original(result.shader_node.image)
             composed_image.set_is_data(is_data)
 

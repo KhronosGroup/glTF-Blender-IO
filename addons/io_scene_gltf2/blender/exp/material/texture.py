@@ -87,7 +87,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, ktx2_image, 
 
     # If user want to keep original textures, and these textures are WebP, we need to remove source from
     # gltf2_io.Texture, and populate extension
-    if export_settings['gltf_keep_original_textures'] is True \
+    if export_settings['gltf_use_original_textures'] is True \
             and source is not None \
             and source.mime_type == "image/webp":
         ext_webp["source"] = source
@@ -96,7 +96,7 @@ def __gather_extensions(blender_shader_sockets, source, webp_image, ktx2_image, 
 
     # If user want to keep original textures, and these textures are KTX2, we need to remove source from
     # gltf2_io.Texture, and populate extension
-    if export_settings['gltf_keep_original_textures'] is True \
+    if export_settings['gltf_use_original_textures'] is True \
             and source is not None \
             and source.mime_type == "image/ktx2":
         ext_ktx2["source"] = source
@@ -325,7 +325,7 @@ def __gather_source(blender_shader_sockets, use_tile, is_data, export_settings):
     source, image_data, factor, udim_image = image.gather_image(
         blender_shader_sockets, use_tile, is_data, export_settings)
 
-    if export_settings['gltf_keep_original_textures'] is False \
+    if export_settings['gltf_use_original_textures'] is False \
             and export_settings['gltf_image_format'] != "KTX2" \
             and source is not None \
             and source.mime_type == "image/ktx2":
@@ -360,7 +360,7 @@ def __gather_source(blender_shader_sockets, use_tile, is_data, export_settings):
         # We inverted the png & KTX2 image, to have the png as main source
         return png_image, None, source, image_data, factor, udim_image
 
-    if export_settings['gltf_keep_original_textures'] is False \
+    if export_settings['gltf_use_original_textures'] is False \
             and export_settings['gltf_image_format'] != "WEBP" \
             and source is not None \
             and source.mime_type == "image/webp":

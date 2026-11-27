@@ -72,6 +72,7 @@ def __export(export_settings):
     if not os.path.isdir(export_settings['gltf_filedirectory']):
         os.makedirs(export_settings['gltf_filedirectory'])
     if export_settings['gltf_format'] == "GLTF_SEPARATE" \
+            and export_settings['gltf_image_format'] != "NONE" \
             and not os.path.isdir(export_settings['gltf_texturedirectory']):
         os.makedirs(export_settings['gltf_texturedirectory'])
 
