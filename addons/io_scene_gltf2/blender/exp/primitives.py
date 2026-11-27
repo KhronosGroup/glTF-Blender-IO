@@ -26,6 +26,7 @@ from . import primitive_attributes as gltf2_blender_gather_primitive_attributes
 from .accessors import gather_accessor, array_to_accessor
 from .material.materials import get_final_material, gather_material, get_base_material, get_material_from_idx
 from .material.extensions import variants as ext_variants
+from ..com import conversion as gltf2_blender_conversion
 
 
 @cached
@@ -77,6 +78,18 @@ def gather_primitives(
             _, base_material, material_info = get_base_material(
                 internal_primitive['material'], materials, export_settings)
 
+            # If UV Map is requested by material, but no UV Map in primitive
+            # We are going to create a fake UVMap TEXCOORD_0 for the primitive, with all 0.0,0.0
+
+            # TODO seems we have some empty dict here for some of the textures. We
+            # should probably avoid it at the root of uv_info creation
+            # When done, we can replace the check with len(material_info["uv_info"]) > 0
+
+            if any(len(i) for i in material_info["uv_info"].values()
+                   ) and internal_primitive['attributes'].get('TEXCOORD_0') is None:
+                size = internal_primitive['attributes']['POSITION'].count
+                internal_primitive['attributes']['TEXCOORD_0'] = __get_empty_uvmap(size, export_settings)
+
             # Now, we can retrieve the real material, by checking attributes and active maps
             blender_mat = get_material_from_idx(internal_primitive['material'], materials, export_settings)
             material = get_final_material(
@@ -110,6 +123,7 @@ def gather_primitives(
                 blender_data,
                 internal_primitive['material'],
                 internal_primitive['uvmap_attributes_index'],
+                internal_primitive.get('extensions'),
                 export_settings),
             extras=None,
             indices=internal_primitive['indices'],
@@ -119,6 +133,18 @@ def gather_primitives(
         primitives.append(primitive)
 
     return primitives
+
+
+def __get_empty_uvmap(size: int, export_settings):
+    empty_data = np.zeros((size, 2), dtype=gltf2_blender_conversion.get_numpy_type('FLOAT2'))
+
+    return array_to_accessor(
+        "TEXCOORD_0",
+        empty_data,
+        export_settings,
+        gltf2_io_constants.ComponentType.Float,
+        gltf2_io_constants.DataType.Vec2
+    )
 
 
 @cached
@@ -211,7 +237,8 @@ def __gather_cache_primitives(
                 "mode": internal_primitive.get('mode'),
                 "material": internal_primitive.get('material'),
                 "targets": __gather_targets(internal_primitive, blender_data, modifiers, export_settings),
-                "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index')
+                "uvmap_attributes_index": internal_primitive.get('uvmap_attributes_index'),
+                "extensions": internal_primitive.get('extensions')
             }
             primitives.append(primitive)
 
@@ -342,12 +369,7 @@ def __gather_targets(blender_primitive, blender_data, modifiers, export_settings
     return None
 
 
-def __gather_extensions(blender_data,
-                        material_idx: int,
-                        attr_indices: dict,
-                        export_settings):
-    extensions = {}
-
+def __gather_variant_extension(blender_data, material_idx: int, attr_indices: dict, export_settings):
     if bpy.context.preferences.addons['io_scene_gltf2'].preferences.KHR_materials_variants_ui is False:
         return None
 
@@ -415,12 +437,29 @@ def __gather_extensions(blender_data,
             mapping.append({'material': mat, 'variants': variants})
 
     if len(mapping) > 0:
-        extensions["KHR_materials_variants"] = gltf2_io_extensions.Extension(
+        return gltf2_io_extensions.Extension(
             name="KHR_materials_variants",
             extension={
                 "mappings": mapping
             },
             required=False
         )
+
+    return None
+
+
+def __gather_extensions(blender_data,
+                        material_idx: int,
+                        attr_indices: dict,
+                        already_declared_extensions,
+                        export_settings):
+    extensions = {}
+
+    variant_extension = __gather_variant_extension(blender_data, material_idx, attr_indices, export_settings)
+    if variant_extension:
+        extensions["KHR_materials_variants"] = variant_extension
+
+    if already_declared_extensions:
+        extensions.update(already_declared_extensions)
 
     return extensions if extensions else None

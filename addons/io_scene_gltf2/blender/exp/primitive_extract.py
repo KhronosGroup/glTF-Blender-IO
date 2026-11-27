@@ -727,13 +727,15 @@ class PrimitiveCreator:
             all_uvmaps = {}
             for tex in material_info['udim_info'].keys():
                 if material_info['uv_info'][tex]['type'] == "Render":
-                    index_uvmap = self.blender_mesh.uv_layers.active_render_index
+                    active_render_index = self.blender_mesh.uv_layers.active_render_index
+                    index_uvmap = active_render_index if active_render_index >= 0 else 0
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 elif material_info['uv_info'][tex]['type'] == "Fixed":
                     index_uvmap = self.blender_mesh.uv_layers.find(material_info['uv_info'][tex]['value'])
                     if index_uvmap < 0:
                         # Using render index
-                        index_uvmap = self.blender_mesh.uv_layers.active_render_index
+                        active_render_index = self.blender_mesh.uv_layers.active_render_index
+                        index_uvmap = active_render_index if active_render_index >= 0 else 0
                     uvmap_name = "TEXCOORD_" + str(index_uvmap)
                 else:  # Attribute
                     # This can be a regular UVMap, or a custom attribute
@@ -1769,3 +1771,26 @@ class PrimitiveCreator:
                             ]["component_type"] = gltf2_blender_conversion.get_component_type(attr['blender_data_type'])
             self.attributes[attr['gltf_attribute_name']
                             ]["data_type"] = gltf2_blender_conversion.get_data_type(attr['blender_data_type'])
+
+
+def single_extract_attribute_data(attribute, export_settings):
+
+    if not attribute:
+        return None
+
+    len_attr = gltf2_blender_conversion.get_data_length(attribute.data_type)
+
+    data = extract_attribute_data(
+        attribute,
+        len(attribute.data),
+        np.float32,
+        attribute.data_type,
+        attribute.domain,
+        len_attr,
+        export_settings=export_settings
+    )
+
+    if len_attr > 1:
+        data = data.reshape(-1, len_attr)
+
+    return data
